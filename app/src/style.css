@@ -1,0 +1,106 @@
+
+.msg {
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center; /* Centraliza o conteúdo horizontalmente */
+    font-size: 16px;
+    text-align: center; /* Centraliza o texto */
+}
+
+.msg.error {
+    color: #a94442;
+    background-color: #f2dede;
+    border-color: #ebccd1;
+}
+
+.msg.success {
+    color: #3c763d;
+    background-color: #dff0d8;
+    border-color: #d6e9c6;
+}
+
+.msg i {
+    margin-right: 10px;
+    font-size: 20px;
+}
+
+.header-with-filter {
+    display: flex; /* Ativa o Flexbox */
+    justify-content: space-between; /* Alinha o título à esquerda e o filtro à direita */
+    align-items: center; /* Centraliza verticalmente os elementos */
+    margin-bottom: 20px; /* Espaçamento abaixo do cabeçalho */
+}
+
+.filter-container {
+    display: flex; /* Alinha o rótulo e o select horizontalmente */
+    align-items: center; /* Centraliza verticalmente */
+}
+
+.filter-select {
+    width: auto; /* Ajusta a largura do select para caber apenas no conteúdo */
+    margin-left: 10px; /* Espaçamento entre o rótulo e o select */
+}
+
+#novoItem {
+    max-width: 80%; /* Limita a largura */
+    margin: 20px auto; /* Centraliza na tela */
+    padding: 20px;
+    background: #fff; /* Fundo branco */
+    border-radius: 10px; /* Bordas arredondadas */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Sombra suave */
+    display: none; /* Inicialmente oculto */
+}
+
+#containerFerramentas {
+    max-width: 80%; /* Limita a largura */
+    margin: 20px auto; /* Espaçamento externo */
+    padding: 20px;
+    background: #fff; /* Fundo branco */
+    border-radius: 10px; /* Bordas arredondadas */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Sombra suave */
+    display: none; /* Inicialmente oculto */
+}
+
+body{
+    padding-top: 56px;
+    font-family: Arial, Helvetica, sans-serif, serif;
+}
+
+.dropdown-menu {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra inicial */
+    transition: box-shadow 0.3s ease; /* Transição suave */
+}
+
+.dropdown-menu:hover {
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Sombra mais acentuada */
+}
+.nav-link.dropdown-toggle:hover {
+    background-color: #343a40; /* Cor de fundo ao passar o mouse */
+    color: #fff; /* Cor do texto ao passar o mouse */
+    border-radius: 5px; /* Bordas arredondadas */
+    transition: background-color 0.3s ease, color 0.3s ease; /* Transição suave */
+}
+
+.nav-link.dropdown-toggle {
+    background-color: #343a40; /* Cor de fundo ao passar o mouse */
+    color: #fff; /* Cor do texto ao passar o mouse */
+    border-radius: 5px; /* Bordas arredondadas */
+    padding-right: 15px; /* Espaçamento interno */
+    padding-left: 15px; /* Espaçamento interno */
+}
+
+.navbar-nav .nav-item {
+    margin-right: 20px; /* Aumenta o espaçamento */
+}
+
+.navbar .user-info {
+    font-size: 14px;
+    white-space: nowrap;
+}
+.navbar .user-info span {
+    margin-right: 10px;
+}
