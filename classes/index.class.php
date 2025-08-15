@@ -7,24 +7,20 @@ class Index
 {
 
 
-    public static function validaLogin($sessao)
+    public static function validaLogin($sessao, $tempo)
     {
         $tempo_maximo = 30 * 60;
 
-
         if($sessao){
-            $_SESSION['msg'] = '<p>Você precisa logar para acessar o painel</p>';
-            return false;
-
-        }elseif(time() - $sessao['login_time'] > $tempo_maximo){
-            $_SESSION['msg'] = '<p>Sua sessão expirou. Faça login novamente.</p>';
+            if(time() - $tempo > $tempo_maximo){
             return false;
    
-        }else{
-            $_SESSION['login_time'] = time();
-            return true;
+            }else{
+                $_SESSION['login_time'] = time();
+                return true;
+            }
         }
-        
+        return false;
     }
 
 
