@@ -7,7 +7,7 @@ include"../classes/index.class.php";
 include"classes/conteudo.totem.class.php";
 
 if (Index::validaLogin($_SESSION['data_user'], $_SESSION['login_time'])){}else{
-    $_SESSION['msg'] = '<p>Você precisa logar para acessar o painelasdad</p>';
+    $_SESSION['msg'] = '<p>Realize o login para acessar o painel</p>';
     header('Location:../');
     exit;
 }
@@ -16,10 +16,9 @@ if (Index::validaLogin($_SESSION['data_user'], $_SESSION['login_time'])){}else{
 if(isset($_GET['sair'])){Index::logOut();}
 
 
-$pagina = new ContentPainel;
+$pagina = new ContentPainelTotem;
 echo $pagina->renderHeader();
 echo $pagina->renderBody();
 
 
 
-?>
