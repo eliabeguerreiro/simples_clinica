@@ -19,6 +19,3 @@ if(isset($_GET['sair'])){Index::logOut();}
 $pagina = new ContentPainelInicial;
 echo $pagina->renderHeader();
 echo $pagina->renderBody();
-
-
-

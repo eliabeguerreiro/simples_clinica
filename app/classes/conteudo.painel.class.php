@@ -1,5 +1,4 @@
 <?php
-
 class ContentPainelInicial
 {
     public function renderHeader()
@@ -10,24 +9,22 @@ class ContentPainelInicial
             <head>
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Vivenciar - Espaço Terapêutico</title>
+                <title>clinica</title>
                 <link rel="stylesheet" href="./src/style.css">
             </head>
         HTML;
-
         return $html;
     }
 
     public function renderBody()
     {
-        $nome = htmlspecialchars($_SESSION['data_user']['nm_usuario']); // Escapa caracteres especiais para evitar XSS
-       
+        $nome = htmlspecialchars($_SESSION['data_user']['nm_usuario']);
 
         $html = <<<HTML
             <body>
                 <header>
                     <div class="logo">
-                        <img src="./style/vivenciar_logov2.png" alt="Logo Vivenciar">
+                        <img src="#" alt="Logo">
                     </div>
                     <nav>
                         <ul>
@@ -50,25 +47,20 @@ class ContentPainelInicial
                 <section class="new-appointment">
                     <h2>Modulos</h2>
                   
-                        
                           <nav>
                             <ul>
                                 <li><a href="./">RECEPÇÃO</a></li>
                                 <li><a href="/atendimentos.php">FINANCEIRO</a></li>
-                                <li><a href="/paciente">ATENDIMENTOS</a></li>
-                                <li><a href="/profissional">CONFIGURAÇÕES</a></li>
+                                <li><a href="/paciente">ATENDIMENTO</a></li>
+                                <li><a href="/profissional">GESTÃO</a></li>
                                 <li><a href="/procedimento">RELATÓRIOS</a></li>
                             </ul>
                           </nav>
-                        
-
                 </section>
             <script src="src/script.js"></script>
             </body>
             
         HTML;
-
         return $html;
     }
 }
-?>
