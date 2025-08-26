@@ -9,7 +9,7 @@ class ContentPainelInicial
             <head>
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>clinica</title>
+                <title>Clinica - Home</title>
                 <link rel="stylesheet" href="./src/style.css">
             </head>
         HTML;
@@ -28,7 +28,8 @@ class ContentPainelInicial
                     </div>
                     <nav>
                         <ul>
-                            <li><a href="./">EMPRESA</a></li>
+                            <li><a href="./">Home</a></li>
+                            <li><a href="./">Empresa</a></li>
                             <li><a href="/atendimentos.php">SUPORTE</a></li>
                             <li><a href="/paciente">SAIR</a></li>
                         </ul>
