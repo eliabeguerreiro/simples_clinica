@@ -1,1 +1,0 @@
-// chamas as senhas do banco de dados e as exibe na tela
