@@ -1,7 +1,7 @@
 <?php
 session_start();
 ob_start();
-var_dump($_SESSION);
+//var_dump($_SESSION);
 
 include"../classes/index.class.php";
 include"classes/conteudo.painel.class.php";

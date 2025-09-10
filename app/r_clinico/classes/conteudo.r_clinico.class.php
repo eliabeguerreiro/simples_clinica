@@ -1,5 +1,5 @@
 <?php
-class ContentPainelInicial
+class ContentRClinico
 {
     public function renderHeader()
     {
@@ -9,7 +9,7 @@ class ContentPainelInicial
             <head>
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Clinica - Home</title>
+                <title>Registro Clínico</title>
                 <link rel="stylesheet" href="./src/style.css">
             </head>
         HTML;
@@ -36,17 +36,7 @@ class ContentPainelInicial
                 </header>
 
 
-                <section class="simple-box">
-                    <h2>Modulos</h2>
-                  
-                          <nav>
-                            <ul>
-                                <li><a href="r_clinico/">Registro Clínico</a></li>
-                                <li><a href="c_admin/">Configurações Administrativas</a></li>
-                                <li><a href="bpa/">BPA</a></li>
-                            </ul>
-                          </nav>
-                </section>
+
             <script src="src/script.js"></script>
             </body>
             
