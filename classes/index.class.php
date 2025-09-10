@@ -1,21 +1,14 @@
 <?php
-
-
-
-// if(Usuarios::verificar($conn, $headers)){  }  
 class Index
 {
-
-
     public static function validaLogin($sessao, $tempo)
     {
-        $tempo_maximo = 30 * 60;
+        $tempo_maximo = 30 * 60; // 30 minutos
 
-        if($sessao){
-            if(time() - $tempo > $tempo_maximo){
-            return false;
-   
-            }else{
+        if ($sessao && isset($tempo)) {
+            if (time() - $tempo > $tempo_maximo) {
+                return false;
+            } else {
                 $_SESSION['login_time'] = time();
                 return true;
             }
@@ -23,62 +16,60 @@ class Index
         return false;
     }
 
-
     public static function logOut()
     {
-    
         // Destrói a sessão
         session_unset();
         session_destroy();
-    
-        // Define uma mensagem de sucesso
-        $_SESSION['msg'] = 'Usuário deslogado com sucesso.';
-    
+        
         // Redireciona para a página de login
-        header('Location: ../');
+        header('Location: ./');
         exit;
     }
     
     public static function login($data)
     {
+        if (!isset($data['login']) || !isset($data['senha'])) {
+            $_SESSION['msg'] = "<p id='aviso'>Preencha todos os campos</p>";
+            return false;
+        }
 
-        if(isset($data)){
+        // Limpeza dos valores coletados
+        $login = trim(htmlspecialchars($data['login']));
+        $senha = $data['senha']; // Não precisa de htmlspecialchars para senha
 
-            //limpeza dos valores coletados
-            $login = addslashes(htmlspecialchars($data['login'])) ?? '';
-            $senha = addslashes(htmlspecialchars($data['senha'])) ?? '';
+        if (empty($login) || empty($senha)) {
+            $_SESSION['msg'] = "<p id='aviso'>Preencha todos os campos</p>";
+            return false;
+        }
 
+        try {
             $db = DB::connect();
-            $rs = $db->prepare("SELECT login, senha FROM usuarios WHERE login = '{$login}' LIMIT 1");
-            $rs->execute();
-            $obj = $rs->fetchObject();
-            $rows = $rs->rowCount();
-
-
-            if ($rows > 0) {
-                $passDB        = $obj->senha;
-                $validPassword = password_verify($senha, $passDB) ? true : false;
-            }else{
-                $validPassword = false;
-            }
-
-            if($validPassword){
-
-                $rs = $db->prepare("SELECT id, nm_usuario FROM usuarios WHERE login = '{$login}' LIMIT 1");
-                $rs->execute();
-                $obj = $rs->fetchObject();
-
-                $obj = (array)$obj;
-                $_SESSION['data_user'] = $obj;
+            
+            // Usando prepared statements para evitar SQL Injection
+            $stmt = $db->prepare("SELECT id, nm_usuario, login, senha FROM usuarios WHERE login = ? LIMIT 1");
+            $stmt->execute([$login]);
+            $usuario = $stmt->fetchObject();
+            
+            if ($usuario && password_verify($senha, $usuario->senha)) {
+                // Regenera o ID da sessão para segurança
+                session_regenerate_id(true);
+                
+                $_SESSION['data_user'] = [
+                    'id' => $usuario->id,
+                    'nm_usuario' => $usuario->nm_usuario,
+                    'login' => $usuario->login
+                ];
                 $_SESSION['login_time'] = time();
                 return true;
-                
-            }else{$_SESSION['msg'] =  "<p id='aviso'>login ou senha incorreto</p>";}
-
-        }else{
-            $_SESSION['msg'] =  "faltam informações";
-            exit;
+            } else {
+                $_SESSION['msg'] = "<p id='aviso'>Login ou senha incorreto</p>";
+                return false;
+            }
+        } catch (Exception $e) {
+            $_SESSION['msg'] = "<p id='aviso'>Erro no sistema. Tente novamente.</p>";
+            return false;
         }
     }
-   
 }
+?>
