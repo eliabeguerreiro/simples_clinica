@@ -21,7 +21,7 @@ class ContentRClinico
         $html = '<div class="tabs" id="main-tabs">';
         foreach ($tabs as $index => $tab) {
             $activeClass = $index === 0 ? 'active' : '';
-            $html .= "<button class=\"tab-btn {$activeClass}\" data-tab=\"{$tab['id']}\" onclick=\"showMainTab('{$tab['id']}', this)\">{$tab['label']}</button>";
+            $html .= "<button class=\"tab-btn {$activeClass}\" data-tab=\"{$tab['id']}\" onclick=\"redirectToTab('{$tab['id']}')\">{$tab['label']}</button>";
         }
         $html .= '</div>';
         return $html;
