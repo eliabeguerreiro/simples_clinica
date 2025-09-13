@@ -247,8 +247,225 @@ nav ul li a:hover {
     content: "";
 }
 
+/* Selector de procedimentos - estilos adicionais */
+.procedure-selector {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    margin: 20px 0;
+    flex-wrap: wrap;
+}
+
+.list-container {
+    flex: 1;
+    min-width: 200px;
+    border: 2px solid #e1e1ff;
+    border-radius: 8px;
+    padding: 10px;
+    background: #fafaff;
+    transition: border-color 0.3s ease;
+}
+
+.list-container:hover {
+    border-color: #6c63ff;
+}
+
+.list-container select {
+    width: 100%;
+    height: 200px;
+    border: none;
+    background: transparent;
+    font-size: 13px;
+    padding: 5px;
+    outline: none;
+}
+
+.list-container select:focus {
+    box-shadow: none;
+    border: none;
+}
+
+.buttons-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Botões de seleção - estilos adicionais */
+.btn-add-patient,
+.btn-remove-patient,
+.btn-add-all-patients,
+.btn-remove-all-patients,
+.btn-add-professional,
+.btn-remove-professional,
+.btn-add-all-professionals,
+.btn-remove-all-professionals,
+.btn-add-single,
+.btn-remove-single,
+.btn-add-all,
+.btn-remove-all {
+    padding: 8px 12px;
+    background: #28a745;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 12px;
+    transition: all 0.2s ease;
+    min-width: 40px;
+}
+
+.btn-add-patient:hover,
+.btn-add-professional:hover,
+.btn-add-single:hover,
+.btn-add-all:hover,
+.btn-add-all-patients:hover,
+.btn-add-all-professionals:hover {
+    background: #218838;
+    transform: translateY(-1px);
+}
+
+.btn-remove-patient:hover,
+.btn-remove-professional:hover,
+.btn-remove-single:hover,
+.btn-remove-all:hover,
+.btn-remove-all-patients:hover,
+.btn-remove-all-professionals:hover {
+    background: #dc3545;
+    transform: translateY(-1px);
+}
+
+/* Botão "Usar mês atual" - estilos adicionais */
+.input-with-button {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.input-with-button input {
+    flex: 1;
+}
+
+.btn-mes-atual {
+    background: #6c63ff;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 15px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    min-width: 120px;
+}
+
+.btn-mes-atual:hover {
+    background: #574b90;
+    transform: translateY(-1px);
+}
+
+/* Overlay de carregamento - estilos adicionais */
+#loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.spinner-container {
+    text-align: center;
+    background: white;
+    padding: 30px;
+    border-radius: 16px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    min-width: 250px;
+}
+
+.spinner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.spinner div {
+    width: 12px;
+    height: 12px;
+    background-color: #6c63ff;
+    border-radius: 50%;
+    animation: bounce 1.4s infinite ease-in-out both;
+}
+
+.spinner div:nth-child(1) {
+    animation-delay: -0.32s;
+}
+.spinner div:nth-child(2) {
+    animation-delay: -0.16s;
+}
+
+@keyframes bounce {
+    0%, 80%, 100% { transform: scale(0); }
+    40% { transform: scale(1.0); }
+}
+
+/* Alertas - estilos adicionais */
+.alert-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 15px 0;
+}
+
+.alert {
+    width: 100%;
+    max-width: 500px;
+    padding: 15px;
+    border-radius: 8px;
+    font-weight: 500;
+    text-align: center;
+}
+
+.alert-success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.alert-error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f1b0b7;
+}
+
 /* Responsividade */
 @media (max-width: 768px) {
+
+        .procedure-selector {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .buttons-container {
+        flex-direction: row;
+        justify-content: center;
+        gap: 10px;
+        margin: 10px 0;
+    }
+    
+    .list-container {
+        min-width: 100%;
+    }
     .simple-box {
         margin: 20px;
         padding: 20px;
