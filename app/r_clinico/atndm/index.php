@@ -17,6 +17,5 @@ if (Index::validaLogin($_SESSION['data_user'], $_SESSION['login_time'])){}else{
 if(isset($_GET['sair'])){Index::logOut();}
 
 
-$pagina = new ContentRClinico;
-echo $pagina->renderHeader();
-echo $pagina->renderBody();
+$pagina = new ContentRClinicoAtdnm;
+echo $pagina->render();
