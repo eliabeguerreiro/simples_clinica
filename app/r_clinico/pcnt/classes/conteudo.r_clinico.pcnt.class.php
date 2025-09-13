@@ -1,5 +1,6 @@
 <?php
-class ContentRClinico
+class ContentRClinicoPctn
+
 {
     public function render()
     {
@@ -35,18 +36,6 @@ class ContentRClinico
     {
         $nome = htmlspecialchars($_SESSION['data_user']['nm_usuario']);
 
-        $mainTabs = [
-            [
-                'id' => 'pacientes',
-                'label' => 'Pacientes',
-                'subtabs' => [
-                    ['id' => 'cadastro', 'label' => 'Cadastro', 'content' => $this->getFormularioCadastro()],
-                    ['id' => 'documentos', 'label' => 'Documentos', 'content' => 'Conteúdo Documentos de Pacientes.'],
-                    ['id' => 'historico', 'label' => 'Histórico', 'content' => 'Conteúdo Histórico de Pacientes.']
-                ]
-            ]
-        ];
-
         $html = <<<HTML
             <body>
                 <header>
@@ -65,12 +54,15 @@ class ContentRClinico
                 <section class="simple-box">
                     <h2>Registro Clínico</h2>
                     
-                    <!-- Abas principais -->
+                    <!-- Abas principais de navegação entre módulos -->
                     <div class="tabs" id="main-tabs">
-                        <button class="tab-btn active" data-tab="pacientes" onclick="showMainTab('pacientes', this)">Pacientes</button>
+                        <button class="tab-btn active" onclick="redirectToTab('pacientes')">Pacientes</button>
+                        <button class="tab-btn" onclick="redirectToTab('atendimentos')">Atendimentos</button>
+                        <button class="tab-btn" onclick="redirectToTab('evolucoes')">Evoluções</button>
                     </div>
                     
-                    <!-- Sub-abas -->                    <div id="sub-tabs">
+                    <!-- Sub-abas do módulo atual -->
+                    <div id="sub-tabs">
                         <div class="sub-tabs" id="sub-pacientes">
                             <button class="tab-btn active" data-main="pacientes" data-sub="cadastro" onclick="showSubTab('pacientes', 'cadastro', this)">Cadastro</button>
                             <button class="tab-btn" data-main="pacientes" data-sub="documentos" onclick="showSubTab('pacientes', 'documentos', this)">Documentos</button>
@@ -78,7 +70,8 @@ class ContentRClinico
                         </div>
                     </div>
                     
-                    <!-- Conteúdo das abas -->                    <div id="tab-content">
+                    <!-- Conteúdo das abas -->
+                    <div id="tab-content">
                         <div id="pacientes-cadastro" class="tab-content active">
                             {$this->getFormularioCadastro()}
                         </div>
