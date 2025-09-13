@@ -4,7 +4,7 @@ ob_start();
 //var_dump($_SESSION);
 
 //include"classes/r_clinico.class.php";
-include"classes/conteudo.r_clinico.atdnm.class.php";
+include"classes/conteudo.r_clinico.evlt.class.php";
 include"../../../classes/index.class.php";
 
 if (Index::validaLogin($_SESSION['data_user'], $_SESSION['login_time'])){}else{
@@ -16,6 +16,5 @@ if (Index::validaLogin($_SESSION['data_user'], $_SESSION['login_time'])){}else{
 
 if(isset($_GET['sair'])){Index::logOut();}
 
-
-$pagina = new ContentRClinicoAtdnm;
+$pagina = new ContentRClinicoEvlt;
 echo $pagina->render();
