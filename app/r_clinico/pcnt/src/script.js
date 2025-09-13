@@ -2,7 +2,7 @@
 function redirectToTab(tabId) {
     let destino = '';
     if (tabId === 'pacientes') destino = 'pcnt';
-    if (tabId === 'atendimentos') destino = 'atnd';
+    if (tabId === 'atendimentos') destino = 'atndm';
     if (tabId === 'evolucoes') destino = 'evlt';
     window.location.href = '../index.php?A=' + destino;
 }
