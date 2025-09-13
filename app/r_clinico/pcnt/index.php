@@ -18,5 +18,4 @@ if(isset($_GET['sair'])){Index::logOut();}
 
 
 $pagina = new ContentRClinico;
-echo $pagina->renderHeader();
-echo $pagina->renderBody();
+echo $pagina->render();
