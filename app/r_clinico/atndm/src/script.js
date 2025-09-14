@@ -1,36 +1,10 @@
-// Função para mostrar aba principal
-function showMainTab(tabId, clickedButton) {
-    // Oculta todas as sub-abas
-    document.querySelectorAll('.sub-tabs').forEach(el => {
-        el.style.display = 'none';
-    });
-
-    // Oculta todos os conteúdos
-    document.querySelectorAll('.tab-content').forEach(el => {
-        el.style.display = 'none';
-    });
-
-    // Remove ativação dos botões principais
-    document.querySelectorAll('#main-tabs .tab-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-
-    // Ativa a sub-aba correspondente
-    const subTabsContainer = document.getElementById(`sub-${tabId}`);
-    if (subTabsContainer) {
-        subTabsContainer.style.display = 'flex';
-    }
-
-    // Ativa o botão principal clicado
-    if (clickedButton) {
-        clickedButton.classList.add('active');
-    }
-
-    // Ativa a primeira sub-aba
-    const firstSubBtn = document.querySelector(`#sub-${tabId} .tab-btn`);
-    if (firstSubBtn) {
-        firstSubBtn.click(); // Dispara o clique na primeira sub-aba
-    }
+// Redireciona para a pasta correta via GET
+function redirectToTab(tabId) {
+    let destino = '';
+    if (tabId === 'pacientes') destino = 'pcnt';
+    if (tabId === 'atendimentos') destino = 'atndm';
+    if (tabId === 'evolucoes') destino = 'evlt';
+    window.location.href = '../index.php?A=' + destino;
 }
 
 // Função para mostrar sub-aba
@@ -70,23 +44,7 @@ function moveAll(from, to) {
 
 // Inicialização quando o DOM estiver pronto
 document.addEventListener('DOMContentLoaded', function() {
-    // Inicializa a primeira aba
-    const firstMainTab = document.querySelector('#main-tabs .tab-btn');
-    if (firstMainTab) {
-        firstMainTab.click();
-    }
-});
-
-// Inicialização com jQuery (para máscaras e funcionalidades adicionais)
-$(document).ready(function(){
-    // Máscaras para campos
-    if ($.fn.mask) {
-        $('#telefone').mask('(00) 00000-0000');
-        $('#cep').mask('00000-000');
-        $('#cns').mask('000 0000 0000 0000');
-    }
-    
-    // Eventos dos seletores múltiplos (apenas se existirem na página)
+    // Configura eventos dos seletores múltiplos
     const setupSelectors = function() {
         const selectors = {
             patients: {
@@ -169,4 +127,12 @@ $(document).ready(function(){
     
     // Configura os seletores
     setupSelectors();
+});
+
+// Inicialização com jQuery (para máscaras e funcionalidades adicionais)
+$(document).ready(function(){
+    // Máscaras para campos (se necessário)
+    if ($.fn.mask) {
+        // Adicione máscaras específicas se necessário
+    }
 });

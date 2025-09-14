@@ -1,0 +1,495 @@
+/* Reset básico */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f9f6fc;
+    color: #333;
+    line-height: 1.6;
+}
+
+/* Header */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 40px;
+    background: white;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    border-bottom: 3px solid #6c63ff;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.logo img {
+    width: 120px;
+    height: auto;
+}
+
+nav ul {
+    list-style: none;
+    display: flex;
+    gap: 24px;
+    padding: 0;
+    margin: 0;
+}
+
+nav ul li a {
+    text-decoration: none;
+    color: #6c63ff;
+    font-weight: 600;
+    font-size: 15px;
+    transition: color 0.2s ease;
+}
+
+nav ul li a:hover {
+    color: #333;
+}
+
+/* Container principal */
+.simple-box {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 30px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+}
+
+.simple-box h2 {
+    color: #6c63ff;
+    font-size: 24px;
+    margin-bottom: 24px;
+    text-align: center;
+    font-weight: 600;
+}
+
+/* Abas principais */
+.tabs {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin: 20px 0;
+    flex-wrap: wrap;
+}
+
+.tab-btn {
+    background: #f5f5f7;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-size: 15px;
+    cursor: pointer;
+    font-weight: 500;
+    color: #574b90;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.tab-btn.active {
+    background: #6c63ff;
+    color: white;
+    border-color: #6c63ff;
+    box-shadow: 0 2px 6px rgba(108, 99, 255, 0.3);
+}
+
+.tab-btn:hover:not(.active) {
+    background: #e8e8f0;
+    transform: translateY(-1px);
+}
+
+/* Sub-abas */
+.sub-tabs {
+    display: flex;
+    gap: 8px;
+    margin: 16px 0;
+    flex-wrap: wrap;
+}
+
+.sub-tabs button {
+    background: #f5f5f7;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 14px;
+    cursor: pointer;
+    font-weight: 500;
+    color: #574b90;
+    transition: all 0.2s ease;
+    min-width: 100px;
+}
+
+.sub-tabs button.active {
+    background: #6c63ff;
+    color: white;
+    border-color: #6c63ff;
+}
+
+.sub-tabs button:hover:not(.active) {
+    background: #e8e8f0;
+}
+
+/* Conteúdo das abas */
+.tab-content {
+    padding: 20px 0;
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.form-container {
+    margin-top: 20px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    color: #574b90;
+    font-weight: 500;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.form-group input,
+.form-group select {
+    padding: 12px 15px;
+    border: 2px solid #e1e1ff;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    background: #fafaff;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #6c63ff;
+    box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.1);
+    background: white;
+}
+
+.form-group input::placeholder {
+    color: #aaa;
+}
+
+.btn-add {
+    background: linear-gradient(135deg, #6c63ff 0%, #574b90 100%);
+    color: white;
+    border: none;
+    padding: 14px 25px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+    max-width: 200px;
+    margin: 30px auto 0;
+    display: block;
+}
+
+.btn-add:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(108, 99, 255, 0.3);
+}
+
+.btn-add:active {
+    transform: translateY(0);
+}
+
+/* Mensagens de formulário */
+.form-message {
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    text-align: center;
+    font-weight: 500;
+}
+
+.form-message.success {
+    background: #e8f5e9;
+    border: 1px solid #c8e6c9;
+    color: #2e7d32;
+}
+
+.form-message.error {
+    background: #ffebee;
+    border: 1px solid #ffcdd2;
+    color: #c62828;
+}
+
+/* Estilo para campos obrigatórios */
+.form-group label::after {
+    content: " *";
+    color: #ff6b6b;
+    font-weight: bold;
+}
+
+.form-group label.no-required::after {
+    content: "";
+}
+
+/* Selector de procedimentos - estilos adicionais */
+.procedure-selector {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    margin: 20px 0;
+    flex-wrap: wrap;
+}
+
+.list-container {
+    flex: 1;
+    min-width: 200px;
+    border: 2px solid #e1e1ff;
+    border-radius: 8px;
+    padding: 10px;
+    background: #fafaff;
+    transition: border-color 0.3s ease;
+}
+
+.list-container:hover {
+    border-color: #6c63ff;
+}
+
+.list-container select {
+    width: 100%;
+    height: 200px;
+    border: none;
+    background: transparent;
+    font-size: 13px;
+    padding: 5px;
+    outline: none;
+}
+
+.list-container select:focus {
+    box-shadow: none;
+    border: none;
+}
+
+.buttons-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Botões de seleção - estilos adicionais */
+.btn-add-patient,
+.btn-remove-patient,
+.btn-add-all-patients,
+.btn-remove-all-patients,
+.btn-add-professional,
+.btn-remove-professional,
+.btn-add-all-professionals,
+.btn-remove-all-professionals,
+.btn-add-single,
+.btn-remove-single,
+.btn-add-all,
+.btn-remove-all {
+    padding: 8px 12px;
+    background: #28a745;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 12px;
+    transition: all 0.2s ease;
+    min-width: 40px;
+}
+
+.btn-add-patient:hover,
+.btn-add-professional:hover,
+.btn-add-single:hover,
+.btn-add-all:hover,
+.btn-add-all-patients:hover,
+.btn-add-all-professionals:hover {
+    background: #218838;
+    transform: translateY(-1px);
+}
+
+.btn-remove-patient:hover,
+.btn-remove-professional:hover,
+.btn-remove-single:hover,
+.btn-remove-all:hover,
+.btn-remove-all-patients:hover,
+.btn-remove-all-professionals:hover {
+    background: #dc3545;
+    transform: translateY(-1px);
+}
+
+/* Botão "Usar mês atual" - estilos adicionais */
+.input-with-button {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.input-with-button input {
+    flex: 1;
+}
+
+.btn-mes-atual {
+    background: #6c63ff;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 15px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    min-width: 120px;
+}
+
+.btn-mes-atual:hover {
+    background: #574b90;
+    transform: translateY(-1px);
+}
+
+/* Overlay de carregamento - estilos adicionais */
+#loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.spinner-container {
+    text-align: center;
+    background: white;
+    padding: 30px;
+    border-radius: 16px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    min-width: 250px;
+}
+
+.spinner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.spinner div {
+    width: 12px;
+    height: 12px;
+    background-color: #6c63ff;
+    border-radius: 50%;
+    animation: bounce 1.4s infinite ease-in-out both;
+}
+
+.spinner div:nth-child(1) {
+    animation-delay: -0.32s;
+}
+.spinner div:nth-child(2) {
+    animation-delay: -0.16s;
+}
+
+@keyframes bounce {
+    0%, 80%, 100% { transform: scale(0); }
+    40% { transform: scale(1.0); }
+}
+
+/* Alertas - estilos adicionais */
+.alert-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 15px 0;
+}
+
+.alert {
+    width: 100%;
+    max-width: 500px;
+    padding: 15px;
+    border-radius: 8px;
+    font-weight: 500;
+    text-align: center;
+}
+
+.alert-success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.alert-error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f1b0b7;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+
+        .procedure-selector {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .buttons-container {
+        flex-direction: row;
+        justify-content: center;
+        gap: 10px;
+        margin: 10px 0;
+    }
+    
+    .list-container {
+        min-width: 100%;
+    }
+    .simple-box {
+        margin: 20px;
+        padding: 20px;
+    }
+    
+    .tabs,
+    .sub-tabs {
+        gap: 6px;
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .tab-btn,
+    .sub-tabs button {
+        width: 100%;
+        text-align: center;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .btn-add {
+        max-width: 100%;
+    }
+}
