@@ -97,7 +97,15 @@ class Paciente
     /**
      * Lista pacientes com paginação
      */
-    public function listar($limite = 50, $offset = 0, $busca = '')
+    public function listar()
+    {
+        $stmt = $this->db->prepare("SELECT * FROM paciente");
+        $stmt->execute();
+        $pacientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $pacientes;
+    }
+
+        public function getTotalPacientes($busca = '')
     {
         try {
             $where = '';
@@ -108,20 +116,12 @@ class Paciente
                 $params = ["%$busca%", "%$busca%"];
             }
             
-            $sql = "SELECT id, cns, nome, data_nascimento, telefone 
-                    FROM paciente 
-                    $where
-                    ORDER BY nome 
-                    LIMIT ? OFFSET ?";
-            
-            $params[] = $limite;
-            $params[] = $offset;
-            
+            $sql = "SELECT COUNT(*) FROM paciente $where";
             $stmt = $this->db->prepare($sql);
             $stmt->execute($params);
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            return $stmt->fetchColumn();
         } catch (Exception $e) {
-            return [];
+            return 0;
         }
     }
     
@@ -418,23 +418,5 @@ class Paciente
     /**
      * Busca total de pacientes
      */
-    public function getTotalPacientes($busca = '')
-    {
-        try {
-            $where = '';
-            $params = [];
-            
-            if (!empty($busca)) {
-                $where = "WHERE nome LIKE ? OR cns LIKE ?";
-                $params = ["%$busca%", "%$busca%"];
-            }
-            
-            $sql = "SELECT COUNT(*) FROM paciente $where";
-            $stmt = $this->db->prepare($sql);
-            $stmt->execute($params);
-            return $stmt->fetchColumn();
-        } catch (Exception $e) {
-            return 0;
-        }
-    }
+
 }
