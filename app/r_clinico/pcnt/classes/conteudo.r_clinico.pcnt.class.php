@@ -1,8 +1,8 @@
 <?php
 include_once "../../../classes/db.class.php";
-include_once "paciente.class.php";
+include_once "Paciente.class.php";
 
-class ContentRClinicoPctn
+class ConteudoRClinicoPCNT
 {
     private $paciente;
     
@@ -47,8 +47,18 @@ class ContentRClinicoPctn
         
         // Processa formulário se foi enviado
         $resultado = null;
-        if ($_POST) {
-            $resultado = $this->paciente->cadastrar($_POST);
+        if ($_POST && isset($_POST['acao'])) {
+            switch ($_POST['acao']) {
+                case 'cadastrar':
+                    $resultado = $this->paciente->cadastrar($_POST);
+                    break;
+                case 'excluir':
+                    $resultado = $this->paciente->excluir($_POST['id']);
+                    break;
+                case 'excluir_multiplos':
+                    $resultado = $this->excluirMultiplos($_POST['ids']);
+                    break;
+            }
         }
 
         $html = <<<HTML
@@ -79,25 +89,43 @@ class ContentRClinicoPctn
                     <!-- Sub-abas do módulo atual -->
                     <div id="sub-tabs">
                         <div class="sub-tabs" id="sub-pacientes">
-                            <button class="tab-btn active" data-main="pacientes" data-sub="cadastro" onclick="showSubTab('pacientes', 'cadastro', this)">Cadastro</button>
-                            <button class="tab-btn" data-main="pacientes" data-sub="documentos" onclick="showSubTab('pacientes', 'documentos', this)">Documentos</button>
+                            <button class="tab-btn" data-main="pacientes" data-sub="cadastro" onclick="showSubTab('pacientes', 'cadastro', this)">Cadastro</button>
+                            <button class="tab-btn active" data-main="pacientes" data-sub="documentos" onclick="showSubTab('pacientes', 'documentos', this)">Listagem</button>
                             <button class="tab-btn" data-main="pacientes" data-sub="historico" onclick="showSubTab('pacientes', 'historico', this)">Histórico</button>
                         </div>
                     </div>
                     
                     <!-- Conteúdo das abas -->
                     <div id="tab-content">
-                        <div id="pacientes-cadastro" class="tab-content active">
+                        <div id="pacientes-cadastro" class="tab-content" style="display:none;">
                             {$this->getFormularioCadastro($resultado)}
                         </div>
-                        <div id="pacientes-documentos" class="tab-content" style="display:none;">
-                            <p>Conteúdo Documentos de Pacientes.</p>
+                        <div id="pacientes-documentos" class="tab-content active">
+                            {$this->getListagemPacientes($resultado)}
                         </div>
                         <div id="pacientes-historico" class="tab-content" style="display:none;">
                             <p>Conteúdo Histórico de Pacientes.</p>
                         </div>
                     </div>
                 </section>
+
+                <!-- Modal de confirmação de exclusão -->
+                <div id="modal-exclusao" class="modal" style="display:none;">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>Confirmar Exclusão</h3>
+                            <span class="close-modal" onclick="fecharModal()">&times;</span>
+                        </div>
+                        <div class="modal-body">
+                            <p>Tem certeza que deseja excluir este paciente?</p>
+                            <p><strong>Esta ação não pode ser desfeita.</strong></p>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn-cancel" onclick="fecharModal()">Cancelar</button>
+                            <button class="btn-delete" id="confirmar-exclusao">Excluir</button>
+                        </div>
+                    </div>
+                </div>
 
                 <script src="./src/script.js"></script>
                 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
@@ -114,16 +142,16 @@ class ContentRClinicoPctn
         $dadosForm = [];
         if ($resultado && isset($resultado['dados'])) {
             $dadosForm = $resultado['dados'];
-        } elseif (isset($_POST)) {
+        } elseif (isset($_POST) && (!isset($_POST['acao']) || $_POST['acao'] == 'cadastrar')) {
             $dadosForm = $_POST;
         }
         
         // Exibe mensagens de sucesso/erro
         $mensagens = '';
-        if ($resultado) {
-            if ($resultado['sucesso']) {
+        if ($resultado && (!isset($_POST['acao']) || $_POST['acao'] == 'cadastrar')) {
+            if (isset($resultado['sucesso']) && $resultado['sucesso']) {
                 $mensagens = '<div class="form-message success">' . $resultado['mensagem'] . '</div>';
-            } else {
+            } elseif (isset($resultado['erros'])) {
                 $mensagens = '<div class="form-message error">';
                 foreach ($resultado['erros'] as $erro) {
                     $mensagens .= '<p>' . htmlspecialchars($erro) . '</p>';
@@ -136,6 +164,7 @@ class ContentRClinicoPctn
         <div class="form-container">
             ' . $mensagens . '
             <form action="" method="POST">
+                <input type="hidden" name="acao" value="cadastrar">
                 <div class="form-row">
                     <div class="form-group">
                         <label for="nome">Nome Completo*</label>
@@ -256,4 +285,135 @@ class ContentRClinicoPctn
             </form>
         </div>';
     }
+    
+    private function getListagemPacientes($resultado = null)
+    {
+        // Exibe mensagens de sucesso/erro
+        $mensagens = '';
+        if ($resultado && isset($_POST['acao']) && ($_POST['acao'] == 'excluir' || $_POST['acao'] == 'excluir_multiplos')) {
+            if (isset($resultado['sucesso']) && $resultado['sucesso']) {
+                $mensagens = '<div class="form-message success">' . $resultado['mensagem'] . '</div>';
+            } elseif (isset($resultado['erros'])) {
+                $mensagens = '<div class="form-message error">';
+                foreach ($resultado['erros'] as $erro) {
+                    $mensagens .= '<p>' . htmlspecialchars($erro) . '</p>';
+                }
+                $mensagens .= '</div>';
+            }
+        }
+        
+        // Busca pacientes
+        $busca = isset($_GET['busca']) ? trim($_GET['busca']) : '';
+        $pacientes = $this->paciente->listar(100, 0, $busca); // Limitando a 100 por enquanto
+        $total = $this->paciente->getTotalPacientes($busca);
+        
+        $tabelaPacientes = '';
+        if (!empty($pacientes)) {
+            $tabelaPacientes = '
+            <div class="table-container">
+                <table class="pacientes-table">
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox" id="select-all" onclick="selecionarTodos(this)"></th>
+                            <th>Nome</th>
+                            <th>CNS</th>
+                            <th>Data Nasc.</th>
+                            <th>Telefone</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>';
+            
+            foreach ($pacientes as $paciente) {
+                $dataNasc = date('d/m/Y', strtotime($paciente['data_nascimento']));
+                $tabelaPacientes .= '
+                    <tr>
+                        <td><input type="checkbox" name="paciente_ids[]" value="' . $paciente['id'] . '" class="checkbox-paciente"></td>
+                        <td>' . htmlspecialchars($paciente['nome']) . '</td>
+                        <td>' . (!empty($paciente['cns']) ? htmlspecialchars($paciente['cns']) : '-') . '</td>
+                        <td>' . $dataNasc . '</td>
+                        <td>' . (!empty($paciente['telefone']) ? htmlspecialchars($paciente['telefone']) : '-') . '</td>
+                        <td>
+                            <button class="btn-edit" onclick="editarPaciente(' . $paciente['id'] . ')" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn-delete" onclick="confirmarExclusao(' . $paciente['id'] . ')" title="Excluir">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>';
+            }
+            
+            $tabelaPacientes .= '
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="table-actions">
+                <button class="btn-delete-multiple" onclick="excluirSelecionados()" id="btn-excluir-selecionados" style="display:none;">
+                    <i class="fas fa-trash"></i> Excluir Selecionados
+                </button>
+            </div>';
+        } else {
+            $tabelaPacientes = '<div class="no-data">Nenhum paciente encontrado.</div>';
+        }
+
+        return '
+        <div class="listagem-container">
+            ' . $mensagens . '
+            
+            <div class="search-bar">
+                <form method="GET" class="search-form">
+                    <input type="text" name="busca" placeholder="Buscar por nome ou CNS..." 
+                           value="' . htmlspecialchars($busca) . '">
+                    <button type="submit" class="btn-search">
+                        <i class="fas fa-search"></i> Buscar
+                    </button>
+                    <a href="?" class="btn-clear">Limpar</a>
+                </form>
+            </div>
+            
+            <div class="table-header">
+                <h3>Listagem de Pacientes (' . $total . ' encontrado' . ($total != 1 ? 's' : '') . ')</h3>
+            </div>
+            
+            ' . $tabelaPacientes . '
+        </div>';
+    }
+    
+    private function excluirMultiplos($ids)
+    {
+        if (empty($ids) || !is_array($ids)) {
+            return [
+                'sucesso' => false,
+                'erros' => ['Nenhum paciente selecionado para exclusão.']
+            ];
+        }
+        
+        $sucessos = 0;
+        $erros = [];
+        
+        foreach ($ids as $id) {
+            $resultado = $this->paciente->excluir($id);
+            if ($resultado['sucesso']) {
+                $sucessos++;
+            } else {
+                $erros[] = "Erro ao excluir paciente ID $id: " . implode(', ', $resultado['erros']);
+            }
+        }
+        
+        if (empty($erros)) {
+            return [
+                'sucesso' => true,
+                'mensagem' => "$sucessos paciente(s) excluído(s) com sucesso!"
+            ];
+        } else {
+            return [
+                'sucesso' => $sucessos > 0,
+                'mensagem' => "$sucessos paciente(s) excluído(s) com sucesso.",
+                'erros' => $erros
+            ];
+        }
+    }
 }
+?>
