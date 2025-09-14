@@ -1,41 +1,38 @@
 <?php
-/* Classe de controle dos dados cadastrais dos pacientes*/
+include_once "../../../classes/db.class.php";
 
-include_once "db.class.php";
-
-Class Paciente_class
+class Paciente
 {
-     private $db;
-
-
+    private $db;
+    
     public function __construct()
-{
-    try {
-        $this->db = DB::connect();
-    } catch (Exception $e) {
-        throw new Exception("Erro na conexão com o banco de dados: " . $e->getMessage());
+    {
+        try {
+            $this->db = DB::connect();
+        } catch (Exception $e) {
+            throw new Exception("Erro na conexão com o banco de dados: " . $e->getMessage());
+        }
     }
-}
-
- /**
-     * Processa o cadastro de paciente - Fluxo completo
+    
+    /**
+     * Cadastra um novo paciente
      */
-    public function processarCadastroPaciente($dados)
+    public function cadastrar($dados)
     {
         try {
             // Valida os dados
-            $erros = $this->validarDadosPaciente($dados);
+            $erros = $this->validarDados($dados);
             
             if (!empty($erros)) {
                 return [
                     'sucesso' => false,
                     'erros' => $erros,
-                    'dados' => $dados // Retorna dados para manter no formulário
+                    'dados' => $dados
                 ];
             }
             
             // Verifica se o CNS já existe
-            if ($this->existeCNS(trim($dados['cns']))) {
+            if (!empty(trim($dados['cns'])) && $this->existeCNS(trim($dados['cns']))) {
                 return [
                     'sucesso' => false,
                     'erros' => ['Já existe um paciente cadastrado com este CNS'],
@@ -44,22 +41,22 @@ Class Paciente_class
             }
             
             // Prepara os dados para inserção
-            $dadosLimpos = $this->limparDadosPaciente($dados);
+            $dadosLimpos = $this->limparDados($dados);
             
             // Insere o paciente
-            $sql = "INSERT INTO pacientes (
-                nome, cns, data_nascimento, raca_cor, sexo, etnia, nacionalidade,
+            $sql = "INSERT INTO paciente (
+                cns, nome, data_nascimento, sexo, raca_cor, etnia, nacionalidade,
                 codigo_logradouro, endereco, numero, complemento, bairro, cep,
-                telefone, email, situacao_rua, data_cadastro
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
+                telefone, email, situacao_rua
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             
             $stmt = $this->db->prepare($sql);
             $resultado = $stmt->execute([
-                $dadosLimpos['nome'],
                 $dadosLimpos['cns'],
+                $dadosLimpos['nome'],
                 $dadosLimpos['data_nascimento'],
-                $dadosLimpos['raca_cor'],
                 $dadosLimpos['sexo'],
+                $dadosLimpos['raca_cor'],
                 $dadosLimpos['etnia'],
                 $dadosLimpos['nacionalidade'],
                 $dadosLimpos['codigo_logradouro'],
@@ -78,7 +75,7 @@ Class Paciente_class
                     'sucesso' => true,
                     'mensagem' => 'Paciente cadastrado com sucesso!',
                     'id' => $this->db->lastInsertId(),
-                    'dados' => [] // Limpa os dados após sucesso
+                    'dados' => []
                 ];
             } else {
                 return [
@@ -98,9 +95,175 @@ Class Paciente_class
     }
     
     /**
+     * Lista pacientes com paginação
+     */
+    public function listar($limite = 50, $offset = 0, $busca = '')
+    {
+        try {
+            $where = '';
+            $params = [];
+            
+            if (!empty($busca)) {
+                $where = "WHERE nome LIKE ? OR cns LIKE ?";
+                $params = ["%$busca%", "%$busca%"];
+            }
+            
+            $sql = "SELECT id, cns, nome, data_nascimento, telefone 
+                    FROM paciente 
+                    $where
+                    ORDER BY nome 
+                    LIMIT ? OFFSET ?";
+            
+            $params[] = $limite;
+            $params[] = $offset;
+            
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute($params);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            return [];
+        }
+    }
+    
+    /**
+     * Busca paciente por ID
+     */
+    public function buscarPorId($id)
+    {
+        try {
+            $stmt = $this->db->prepare("SELECT * FROM paciente WHERE id = ? LIMIT 1");
+            $stmt->execute([$id]);
+            return $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            return false;
+        }
+    }
+    
+    /**
+     * Atualiza paciente
+     */
+    public function atualizar($id, $dados)
+    {
+        try {
+            // Valida os dados
+            $erros = $this->validarDados($dados, $id);
+            
+            if (!empty($erros)) {
+                return [
+                    'sucesso' => false,
+                    'erros' => $erros,
+                    'dados' => $dados
+                ];
+            }
+            
+            // Verifica se o CNS já existe (exceto para o próprio paciente)
+            if (!empty(trim($dados['cns'])) && $this->existeCNS(trim($dados['cns']), $id)) {
+                return [
+                    'sucesso' => false,
+                    'erros' => ['Já existe um paciente cadastrado com este CNS'],
+                    'dados' => $dados
+                ];
+            }
+            
+            // Prepara os dados para atualização
+            $dadosLimpos = $this->limparDados($dados);
+            
+            // Atualiza o paciente
+            $sql = "UPDATE paciente SET 
+                cns = ?, nome = ?, data_nascimento = ?, sexo = ?, raca_cor = ?, 
+                etnia = ?, nacionalidade = ?, codigo_logradouro = ?, endereco = ?, 
+                numero = ?, complemento = ?, bairro = ?, cep = ?, telefone = ?, 
+                email = ?, situacao_rua = ?
+                WHERE id = ?";
+            
+            $stmt = $this->db->prepare($sql);
+            $resultado = $stmt->execute([
+                $dadosLimpos['cns'],
+                $dadosLimpos['nome'],
+                $dadosLimpos['data_nascimento'],
+                $dadosLimpos['sexo'],
+                $dadosLimpos['raca_cor'],
+                $dadosLimpos['etnia'],
+                $dadosLimpos['nacionalidade'],
+                $dadosLimpos['codigo_logradouro'],
+                $dadosLimpos['endereco'],
+                $dadosLimpos['numero'],
+                $dadosLimpos['complemento'],
+                $dadosLimpos['bairro'],
+                $dadosLimpos['cep'],
+                $dadosLimpos['telefone'],
+                $dadosLimpos['email'],
+                $dadosLimpos['situacao_rua'],
+                $id
+            ]);
+            
+            if ($resultado) {
+                return [
+                    'sucesso' => true,
+                    'mensagem' => 'Paciente atualizado com sucesso!',
+                    'dados' => []
+                ];
+            } else {
+                return [
+                    'sucesso' => false,
+                    'erros' => ['Erro ao atualizar paciente. Tente novamente.'],
+                    'dados' => $dados
+                ];
+            }
+            
+        } catch (Exception $e) {
+            return [
+                'sucesso' => false,
+                'erros' => ['Erro no sistema: ' . $e->getMessage()],
+                'dados' => $dados
+            ];
+        }
+    }
+    
+    /**
+     * Exclui paciente
+     */
+    public function excluir($id)
+    {
+        try {
+            // Verifica se paciente tem atendimentos vinculados
+            $stmt = $this->db->prepare("SELECT COUNT(*) FROM atendimento WHERE paciente_id = ?");
+            $stmt->execute([$id]);
+            $temAtendimentos = $stmt->fetchColumn();
+            
+            if ($temAtendimentos > 0) {
+                return [
+                    'sucesso' => false,
+                    'erros' => ['Não é possível excluir paciente com atendimentos registrados.']
+                ];
+            }
+            
+            $stmt = $this->db->prepare("DELETE FROM paciente WHERE id = ?");
+            $resultado = $stmt->execute([$id]);
+            
+            if ($resultado) {
+                return [
+                    'sucesso' => true,
+                    'mensagem' => 'Paciente excluído com sucesso!'
+                ];
+            } else {
+                return [
+                    'sucesso' => false,
+                    'erros' => ['Erro ao excluir paciente.']
+                ];
+            }
+        } catch (Exception $e) {
+            return [
+                'sucesso' => false,
+                'erros' => ['Erro no sistema: ' . $e->getMessage()]
+            ];
+        }
+    }
+    
+    /**
      * Valida os dados do paciente
      */
-    private function validarDadosPaciente($dados)
+    private function validarDados($dados, $idExcluir = null)
     {
         $erros = [];
         
@@ -111,24 +274,18 @@ Class Paciente_class
             $erros[] = "Nome completo deve ter no máximo 100 caracteres";
         }
         
-        if (empty(trim($dados['cns']))) {
-            $erros[] = "CNS é obrigatório";
-        } elseif (!$this->validarCNS(trim($dados['cns']))) {
-            $erros[] = "CNS inválido";
-        }
-        
         if (empty($dados['data_nascimento'])) {
             $erros[] = "Data de nascimento é obrigatória";
         } elseif (!$this->validarData($dados['data_nascimento'])) {
             $erros[] = "Data de nascimento inválida";
         }
         
-        if (empty($dados['raca_cor']) || !in_array($dados['raca_cor'], ['01', '02', '03', '04', '05', '99'])) {
-            $erros[] = "Raça/Cor é obrigatória";
-        }
-        
         if (empty($dados['sexo']) || !in_array($dados['sexo'], ['M', 'F'])) {
             $erros[] = "Sexo é obrigatório";
+        }
+        
+        if (empty($dados['raca_cor']) || !in_array($dados['raca_cor'], ['01', '02', '03', '04', '05', '99'])) {
+            $erros[] = "Raça/Cor é obrigatória";
         }
         
         if (empty($dados['nacionalidade']) || !in_array($dados['nacionalidade'], ['10', '20', '30'])) {
@@ -171,20 +328,25 @@ Class Paciente_class
             $erros[] = "Situação de rua é obrigatória";
         }
         
+        // Valida CNS se informado
+        if (!empty(trim($dados['cns'])) && !$this->validarCNS(trim($dados['cns']))) {
+            $erros[] = "CNS inválido";
+        }
+        
         return $erros;
     }
     
     /**
      * Limpa e formata os dados do paciente
      */
-    private function limparDadosPaciente($dados)
+    private function limparDados($dados)
     {
         return [
+            'cns' => !empty($dados['cns']) ? preg_replace('/[^0-9]/', '', trim($dados['cns'])) : null,
             'nome' => trim(htmlspecialchars($dados['nome'])),
-            'cns' => preg_replace('/[^0-9]/', '', trim($dados['cns'])),
             'data_nascimento' => $dados['data_nascimento'],
-            'raca_cor' => $dados['raca_cor'],
             'sexo' => $dados['sexo'],
+            'raca_cor' => $dados['raca_cor'],
             'etnia' => !empty($dados['etnia']) ? trim(htmlspecialchars($dados['etnia'])) : null,
             'nacionalidade' => $dados['nacionalidade'],
             'codigo_logradouro' => $dados['codigo_logradouro'],
@@ -202,10 +364,18 @@ Class Paciente_class
     /**
      * Verifica se CNS já existe
      */
-    private function existeCNS($cns)
+    private function existeCNS($cns, $idExcluir = null)
     {
-        $stmt = $this->db->prepare("SELECT id FROM pacientes WHERE cns = ? LIMIT 1");
-        $stmt->execute([$cns]);
+        $sql = "SELECT id FROM paciente WHERE cns = ?";
+        $params = [$cns];
+        
+        if ($idExcluir) {
+            $sql .= " AND id != ?";
+            $params[] = $idExcluir;
+        }
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
         return $stmt->rowCount() > 0;
     }
     
@@ -246,37 +416,25 @@ Class Paciente_class
     }
     
     /**
-     * Lista pacientes
+     * Busca total de pacientes
      */
-    public function listarPacientes($limite = 50, $offset = 0)
+    public function getTotalPacientes($busca = '')
     {
         try {
-            $stmt = $this->db->prepare("
-                SELECT id, nome, cns, data_nascimento, telefone 
-                FROM pacientes 
-                ORDER BY nome 
-                LIMIT ? OFFSET ?
-            ");
-            $stmt->execute([$limite, $offset]);
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $where = '';
+            $params = [];
+            
+            if (!empty($busca)) {
+                $where = "WHERE nome LIKE ? OR cns LIKE ?";
+                $params = ["%$busca%", "%$busca%"];
+            }
+            
+            $sql = "SELECT COUNT(*) FROM paciente $where";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute($params);
+            return $stmt->fetchColumn();
         } catch (Exception $e) {
-            return [];
+            return 0;
         }
     }
-    
-    /**
-     * Busca paciente por ID
-     */
-    public function buscarPaciente($id)
-    {
-        try {
-            $stmt = $this->db->prepare("SELECT * FROM pacientes WHERE id = ? LIMIT 1");
-            $stmt->execute([$id]);
-            return $stmt->fetch(PDO::FETCH_ASSOC);
-        } catch (Exception $e) {
-            return false;
-        }
-    }
-
-
 }
