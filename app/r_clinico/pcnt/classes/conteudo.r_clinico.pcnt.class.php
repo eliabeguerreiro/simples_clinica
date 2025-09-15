@@ -302,83 +302,164 @@ class ConteudoRClinicoPCNT
             }
         }
         
-        // Busca pacientes
-        $busca = isset($_GET['busca']) ? trim($_GET['busca']) : '';
-        $pacientes = $this->paciente->listar(100, 0, $busca); // Limitando a 100 por enquanto
-        $total = $this->paciente->getTotalPacientes($busca);
+        // Verificar se é uma busca por ID
+        $pacienteBuscado = null;
+        $buscaId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+        
+        if ($buscaId > 0) {
+            $pacienteBuscado = $this->paciente->buscarPorId($buscaId);
+        }
+        
+        // Buscar todos os pacientes
+        $pacientes = $this->paciente->listar();
+        $total = count($pacientes);
         
         $tabelaPacientes = '';
-        if (!empty($pacientes)) {
+        
+        // Se foi feita uma busca por ID e encontrou o paciente
+        if ($pacienteBuscado) {
+            $dataNasc = date('d/m/Y', strtotime($pacienteBuscado['data_nascimento']));
             $tabelaPacientes = '
             <div class="table-container">
-                <table class="pacientes-table">
-                    <thead>
-                        <tr>
-                            <th><input type="checkbox" id="select-all" onclick="selecionarTodos(this)"></th>
-                            <th>Nome</th>
-                            <th>CNS</th>
-                            <th>Data Nasc.</th>
-                            <th>Telefone</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>';
-            
-            foreach ($pacientes as $paciente) {
-                $dataNasc = date('d/m/Y', strtotime($paciente['data_nascimento']));
-                $tabelaPacientes .= '
-                    <tr>
-                        <td><input type="checkbox" name="paciente_ids[]" value="' . $paciente['id'] . '" class="checkbox-paciente"></td>
-                        <td>' . htmlspecialchars($paciente['nome']) . '</td>
-                        <td>' . (!empty($paciente['cns']) ? htmlspecialchars($paciente['cns']) : '-') . '</td>
-                        <td>' . $dataNasc . '</td>
-                        <td>' . (!empty($paciente['telefone']) ? htmlspecialchars($paciente['telefone']) : '-') . '</td>
-                        <td>
-                            <button class="btn-edit" onclick="editarPaciente(' . $paciente['id'] . ')" title="Editar">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="btn-delete" onclick="confirmarExclusao(' . $paciente['id'] . ')" title="Excluir">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </td>
-                    </tr>';
-            }
-            
-            $tabelaPacientes .= '
-                    </tbody>
-                </table>
-            </div>
-            
-            <div class="table-actions">
-                <button class="btn-delete-multiple" onclick="excluirSelecionados()" id="btn-excluir-selecionados" style="display:none;">
-                    <i class="fas fa-trash"></i> Excluir Selecionados
-                </button>
+                <div class="paciente-detalhe">
+                    <h3>Dados do Paciente Encontrado</h3>
+                    <div class="paciente-info">
+                        <p><strong>ID:</strong> ' . htmlspecialchars($pacienteBuscado['id']) . '</p>
+                        <p><strong>Nome:</strong> ' . htmlspecialchars($pacienteBuscado['nome']) . '</p>
+                        <p><strong>CNS:</strong> ' . (!empty($pacienteBuscado['cns']) ? htmlspecialchars($pacienteBuscado['cns']) : '-') . '</p>
+                        <p><strong>Data de Nascimento:</strong> ' . $dataNasc . '</p>
+                        <p><strong>Sexo:</strong> ' . ($pacienteBuscado['sexo'] == 'M' ? 'Masculino' : 'Feminino') . '</p>
+                        <p><strong>Telefone:</strong> ' . (!empty($pacienteBuscado['telefone']) ? htmlspecialchars($pacienteBuscado['telefone']) : '-') . '</p>
+                        <p><strong>Email:</strong> ' . (!empty($pacienteBuscado['email']) ? htmlspecialchars($pacienteBuscado['email']) : '-') . '</p>
+                        <p><strong>Endereço:</strong> ' . htmlspecialchars($pacienteBuscado['endereco'] . ', ' . $pacienteBuscado['numero'] . (!empty($pacienteBuscado['complemento']) ? ' - ' . $pacienteBuscado['complemento'] : '')) . '</p>
+                        <p><strong>Bairro:</strong> ' . htmlspecialchars($pacienteBuscado['bairro']) . '</p>
+                        <p><strong>CEP:</strong> ' . (!empty($pacienteBuscado['cep']) ? htmlspecialchars($pacienteBuscado['cep']) : '-') . '</p>
+                        <p><strong>Raça/Cor:</strong> ' . $this->getDescricaoRacaCor($pacienteBuscado['raca_cor']) . '</p>
+                        <p><strong>Nacionalidade:</strong> ' . $this->getDescricaoNacionalidade($pacienteBuscado['nacionalidade']) . '</p>
+                        <p><strong>Situação de Rua:</strong> ' . ($pacienteBuscado['situacao_rua'] == 'S' ? 'Sim' : 'Não') . '</p>
+                    </div>
+                    <div class="paciente-actions">
+                        <button class="btn-edit" onclick="editarPaciente(' . $pacienteBuscado['id'] . ')">
+                            <i class="fas fa-edit"></i> Editar
+                        </button>
+                        <button class="btn-delete" onclick="confirmarExclusao(' . $pacienteBuscado['id'] . ')">
+                            <i class="fas fa-trash"></i> Excluir
+                        </button>
+                        <button class="btn-evolucao" onclick="abrirEvolucao(' . $pacienteBuscado['id'] . ')">
+                            <i class="fas fa-file-medical"></i> Evolução
+                        </button>
+                        <a href="?sub=documentos" class="btn-clear">
+                            <i class="fas fa-arrow-left"></i> Voltar
+                        </a>
+                    </div>
+                </div>
             </div>';
         } else {
-            $tabelaPacientes = '<div class="no-data">Nenhum paciente encontrado.</div>';
+            // Formulário de busca por ID
+            $formularioBusca = '
+            <div class="search-bar">
+                <form method="GET" class="search-form">
+                    <input type="hidden" name="sub" value="documentos">
+                    <input type="number" name="id" placeholder="Digite o ID do paciente" min="1" required>
+                    <button type="submit" class="btn-search">
+                        <i class="fas fa-search"></i> Buscar Paciente
+                    </button>
+                    <a href="?sub=documentos" class="btn-clear">Limpar Busca</a>
+                </form>
+            </div>';
+            
+            // Mostrar lista de todos os pacientes
+            if (!empty($pacientes)) {
+                $tabelaPacientes = '
+                <div class="table-container">
+                    <table class="pacientes-table">
+                        <thead>
+                            <tr>
+                                <th><input type="checkbox" id="select-all" onclick="selecionarTodos(this)"></th>
+                                <th>ID</th>
+                                <th>Nome</th>
+                                <th>CNS</th>                            
+                                <th>Telefone</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>';
+                
+                foreach ($pacientes as $paciente) {
+                    $tabelaPacientes .= '
+                        <tr>
+                            <td><input type="checkbox" name="paciente_ids[]" value="' . $paciente['id'] . '" class="checkbox-paciente"></td>
+                            <td>' . htmlspecialchars($paciente['id']) . '</td>
+                            <td>' . htmlspecialchars($paciente['nome']) . '</td>
+                            <td>' . (!empty($paciente['cns']) ? htmlspecialchars($paciente['cns']) : '-') . '</td>   
+                            <td>' . (!empty($paciente['telefone']) ? htmlspecialchars($paciente['telefone']) : '-') . '</td>
+                            <td>
+                                <a href="?id=' . $paciente['id'] . '&sub=documentos" class="btn-view" title="Visualizar">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <button class="btn-edit" onclick="editarPaciente(' . $paciente['id'] . ')" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn-delete" onclick="confirmarExclusao(' . $paciente['id'] . ')" title="Excluir">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                <button class="btn-edit" onclick="abrirEvolucao(' . $paciente['id'] . ')" title="Evolucao">
+                                    <i class="fas fa-file-medical"></i>
+                                </button>
+                            </td>
+                        </tr>';
+                }
+                
+                $tabelaPacientes .= '
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="table-actions">
+                    <button class="btn-delete-multiple" onclick="excluirSelecionados()" id="btn-excluir-selecionados" style="display:none;">
+                        <i class="fas fa-trash"></i> Excluir Selecionados
+                    </button>
+                </div>';
+            } else {
+                $tabelaPacientes = '<div class="no-data">Nenhum paciente encontrado.</div>';
+            }
         }
 
         return '
         <div class="listagem-container">
             ' . $mensagens . '
             
-            <div class="search-bar">
-                <form method="GET" class="search-form">
-                    <input type="text" name="busca" placeholder="Buscar por nome ou CNS..." 
-                           value="' . htmlspecialchars($busca) . '">
-                    <button type="submit" class="btn-search">
-                        <i class="fas fa-search"></i> Buscar
-                    </button>
-                    <a href="?" class="btn-clear">Limpar</a>
-                </form>
-            </div>
+            ' . (isset($formularioBusca) ? $formularioBusca : '') . '
             
             <div class="table-header">
-                <h3>Listagem de Pacientes (' . $total . ' encontrado' . ($total != 1 ? 's' : '') . ')</h3>
+                <h3>' . ($pacienteBuscado ? 'Detalhes do Paciente' : 'Listagem de Pacientes (' . $total . ' cadastrado' . ($total != 1 ? 's' : '') . ')') . '</h3>
             </div>
             
             ' . $tabelaPacientes . '
         </div>';
+    }
+    
+    private function getDescricaoRacaCor($codigo)
+    {
+        $racas = [
+            '01' => 'Branca',
+            '02' => 'Preta',
+            '03' => 'Parda',
+            '04' => 'Amarela',
+            '05' => 'Indígena',
+            '99' => 'Sem informação'
+        ];
+        return isset($racas[$codigo]) ? $racas[$codigo] : $codigo;
+    }
+    
+    private function getDescricaoNacionalidade($codigo)
+    {
+        $nacionalidades = [
+            '10' => 'Brasileira',
+            '20' => 'Naturalizado',
+            '30' => 'Estrangeiro'
+        ];
+        return isset($nacionalidades[$codigo]) ? $nacionalidades[$codigo] : $codigo;
     }
     
     private function excluirMultiplos($ids)

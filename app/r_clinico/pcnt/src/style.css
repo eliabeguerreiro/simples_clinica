@@ -251,6 +251,7 @@ nav ul li a:hover {
     margin-top: 20px;
 }
 
+/* Formulário de busca por ID */
 .search-bar {
     margin-bottom: 20px;
     padding: 15px;
@@ -266,7 +267,8 @@ nav ul li a:hover {
     flex-wrap: wrap;
 }
 
-.search-form input[type="text"] {
+.search-form input[type="text"],
+.search-form input[type="number"] {
     flex: 1;
     min-width: 200px;
     padding: 10px 15px;
@@ -275,7 +277,8 @@ nav ul li a:hover {
     font-size: 14px;
 }
 
-.search-form input[type="text"]:focus {
+.search-form input[type="text"]:focus,
+.search-form input[type="number"]:focus {
     border-color: #6c63ff;
     box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.1);
 }
@@ -317,12 +320,18 @@ nav ul li a:hover {
 
 .table-header {
     margin-bottom: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
 }
 
 .table-header h3 {
     color: #574b90;
     font-size: 18px;
     font-weight: 600;
+    margin: 0;
 }
 
 .table-container {
@@ -368,8 +377,10 @@ nav ul li a:hover {
     color: #333;
 }
 
+/* Botões de ação */
 .btn-edit,
-.btn-delete {
+.btn-delete,
+.btn-view {
     background: none;
     border: none;
     padding: 8px;
@@ -398,6 +409,15 @@ nav ul li a:hover {
     color: white;
 }
 
+.btn-view {
+    color: #28a745;
+}
+
+.btn-view:hover {
+    background: #28a745;
+    color: white;
+}
+
 .btn-delete-multiple {
     background: #dc3545;
     color: white;
@@ -421,6 +441,94 @@ nav ul li a:hover {
     padding: 40px;
     color: #666;
     font-size: 16px;
+}
+
+/* Estilos para detalhes do paciente */
+.paciente-detalhe {
+    background: #f8f9ff;
+    border: 1px solid #e1e1ff;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.paciente-detalhe h3 {
+    color: #574b90;
+    margin-bottom: 15px;
+    font-size: 18px;
+}
+
+.paciente-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.paciente-info p {
+    margin: 5px 0;
+    padding: 8px;
+    background: white;
+    border-radius: 4px;
+    border-left: 3px solid #6c63ff;
+}
+
+.paciente-info strong {
+    color: #574b90;
+    margin-right: 5px;
+}
+
+.paciente-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.paciente-actions .btn-edit,
+.paciente-actions .btn-delete,
+.paciente-actions .btn-clear {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 10px 15px;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.paciente-actions .btn-edit {
+    background: #6c63ff;
+    color: white;
+    border: none;
+}
+
+.paciente-actions .btn-edit:hover {
+    background: #574b90;
+    transform: translateY(-1px);
+}
+
+.paciente-actions .btn-delete {
+    background: #dc3545;
+    color: white;
+    border: none;
+}
+
+.paciente-actions .btn-delete:hover {
+    background: #c82333;
+    transform: translateY(-1px);
+}
+
+.paciente-actions .btn-clear {
+    background: #f5f5f7;
+    color: #574b90;
+    border: 1px solid #ddd;
+}
+
+.paciente-actions .btn-clear:hover {
+    background: #e8e8f0;
+    transform: translateY(-1px);
 }
 
 /* Modal de confirmação */
@@ -514,8 +622,106 @@ nav ul li a:hover {
     background: #e8e8f0;
 }
 
+/* Botão de evolução */
+.btn-evolucao {
+    background: #28a745;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 15px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
 
+.btn-evolucao:hover {
+    background: #218838;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+}
 
+.btn-evolucao i {
+    font-size: 12px;
+}
+
+/* Botão de evolução pequeno (para tabelas) */
+.btn-evolucao-small {
+    background: #28a745;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin: 0 2px;
+}
+
+.btn-evolucao-small:hover {
+    background: #218838;
+    transform: translateY(-1px);
+}
+
+/* Ajuste nos botões de ação para incluir o botão de evolução */
+.paciente-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.paciente-actions .btn-edit,
+.paciente-actions .btn-delete,
+.paciente-actions .btn-clear,
+.paciente-actions .btn-evolucao {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 10px 15px;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+}
+
+.paciente-actions .btn-evolucao {
+    background: #28a745;
+    color: white;
+}
+
+.paciente-actions .btn-evolucao:hover {
+    background: #218838;
+    transform: translateY(-1px);
+}
+
+/* Botões na tabela */
+.btn-evolucao-small {
+    background: #28a745;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin: 0 2px;
+}
+
+.btn-evolucao-small:hover {
+    background: #218838;
+    color: white;
+    transform: translateY(-1px);
+}
+
+.btn-evolucao-small i {
+    font-size: 12px;
+}
 /* Responsividade */
 @media (max-width: 768px) {
     .simple-box {
@@ -545,11 +751,12 @@ nav ul li a:hover {
         max-width: 100%;
     }
 
-     .search-form {
+    .search-form {
         flex-direction: column;
     }
     
-    .search-form input[type="text"] {
+    .search-form input[type="text"],
+    .search-form input[type="number"] {
         width: 100%;
     }
     
@@ -563,28 +770,29 @@ nav ul li a:hover {
     }
     
     .btn-edit,
-    .btn-delete {
+    .btn-delete,
+    .btn-view {
         padding: 6px;
         font-size: 12px;
     }
 
-        .table-header {
+    .table-header {
         flex-direction: column;
         align-items: stretch;
     }
     
-    .pagination-controls {
-        margin-left: 0;
+    .paciente-info {
+        grid-template-columns: 1fr;
+    }
+    
+    .paciente-actions {
+        flex-direction: column;
+    }
+    
+    .paciente-actions .btn-edit,
+    .paciente-actions .btn-delete,
+    .paciente-actions .btn-clear {
+        width: 100%;
         justify-content: center;
-    }
-    
-    .pagination {
-        gap: 3px;
-    }
-    
-    .pagination-btn {
-        padding: 6px 10px;
-        font-size: 12px;
-        min-width: 35px;
     }
 }
