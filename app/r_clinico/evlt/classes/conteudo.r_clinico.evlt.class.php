@@ -136,7 +136,7 @@ class ConteudoEvolucoesEVLT
         return $html;
     }
     
-    private function getFormularioCadastro($resultado = null)
+private function getFormularioCadastro($resultado = null)
     {
         // Mantém os dados no formulário em caso de erro
         $dadosForm = [];
@@ -185,21 +185,16 @@ class ConteudoEvolucoesEVLT
                 <input type="hidden" name="acao" value="cadastrar">
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="paciente_id">Paciente*</label>
-                        <select required id="paciente_id" name="paciente_id" required>
-                            ' . $optionsPacientes . '
-                        </select>
-                    </div>
-                    <div class="form-group">
                         <label for="profissional_id">Profissional*</label>
                         <select required id="profissional_id" name="profissional_id" required>
                             ' . $optionsProfissionais . '
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="data_evolucao">Data e Hora*</label>
-                        <input type="datetime-local" id="data_evolucao" name="data_evolucao" required
-                               value="' . (isset($dadosForm['data_evolucao']) ? htmlspecialchars($dadosForm['data_evolucao']) : date('Y-m-d\TH:i')) . '">
+                        <label for="paciente_id">Paciente*</label>
+                        <select required id="paciente_id" name="paciente_id" required>
+                            ' . $optionsPacientes . '
+                        </select>
                     </div>
                 </div>
 
@@ -216,6 +211,15 @@ class ConteudoEvolucoesEVLT
                         <label for="observacao">Observações</label>
                         <textarea id="observacao" name="observacao" rows="3" maxlength="500" placeholder="Observações adicionais...">' . (isset($dadosForm['observacao']) ? htmlspecialchars($dadosForm['observacao']) : '') . '</textarea>
                         <small class="form-text">Máximo 500 caracteres</small>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="assinatura_digital">Assinatura Digital</label>
+                        <input type="text" id="assinatura_digital" name="assinatura_digital" maxlength="255" placeholder="Digite a assinatura digital"
+                            value="' . (isset($dadosForm['assinatura_digital']) ? htmlspecialchars($dadosForm['assinatura_digital']) : '') . '">
+                        <small class="form-text">Máximo 255 caracteres</small>
                     </div>
                 </div>
 
