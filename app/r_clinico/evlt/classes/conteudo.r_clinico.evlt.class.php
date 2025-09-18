@@ -41,100 +41,200 @@ class ConteudoEvolucoesEVLT
         return $html;
     }
     
-    private function renderBody()
-    {
-        $nome = htmlspecialchars($_SESSION['data_user']['nm_usuario']);
-        
-        // Processa formulário se foi enviado
-        $resultado = null;
-        if ($_POST && isset($_POST['acao'])) {
-            switch ($_POST['acao']) {
-                case 'cadastrar':
-                    $resultado = $this->evolucao->cadastrar($_POST);
-                    break;
-                case 'atualizar':
-                    $resultado = $this->evolucao->atualizar($_POST['id'], $_POST);
-                    break;
-                case 'excluir':
-                    $resultado = $this->evolucao->excluir($_POST['id']);
-                    break;
-            }
+private function renderBody()
+{
+    $nome = htmlspecialchars($_SESSION['data_user']['nm_usuario']);
+    
+    // Processa formulário se foi enviado
+    $resultado = null;
+    if ($_POST && isset($_POST['acao'])) {
+        switch ($_POST['acao']) {
+            case 'cadastrar':
+                $resultado = $this->evolucao->cadastrar($_POST);
+                break;
+            case 'atualizar':
+                $resultado = $this->evolucao->atualizar($_POST['id'], $_POST);
+                break;
+            case 'excluir':
+                $resultado = $this->evolucao->excluir($_POST['id']);
+                break;
         }
+    }
 
-        $html = <<<HTML
-            <body>
-                <header>
-                    <div class="logo">
-                        <img src="#" alt="Logo">
-                    </div>
-                    <nav>
-                        <ul>
-                            <li><a href="./">INICIO</a></li>
-                            <li><a href="/atendimentos.php">SUPORTE</a></li>
-                            <li><a href="/paciente">SAIR</a></li>
-                        </ul>
-                    </nav>
-                </header>
+    $html = <<<HTML
+        <body>
+            <header>
+                <div class="logo">
+                    <img src="#" alt="Logo">
+                </div>
+                <nav>
+                    <ul>
+                        <li><a href="./">INICIO</a></li>
+                        <li><a href="/atendimentos.php">SUPORTE</a></li>
+                        <li><a href="/paciente">SAIR</a></li>
+                    </ul>
+                </nav>
+            </header>
 
-                <section class="simple-box">
-                    <h2>Registro Clínico - Evoluções</h2>
-                    
-                    <!-- Abas principais de navegação entre módulos -->
-                    <div class="tabs" id="main-tabs">
-                        <button class="tab-btn" onclick="redirectToTab('pacientes')">Pacientes</button>
-                        <button class="tab-btn" onclick="redirectToTab('atendimentos')">Atendimentos</button>
-                        <button class="tab-btn active" onclick="redirectToTab('evolucoes')">Evoluções</button>
-                    </div>
-                    
-                    <!-- Sub-abas do módulo atual -->
-                    <div id="sub-tabs">
-                        <div class="sub-tabs" id="sub-evolucoes">
-                            <button class="tab-btn active" data-main="evolucoes" data-sub="nova" onclick="showSubTab('evolucoes', 'nova', this)">Nova</button>
-                            <button class="tab-btn" data-main="evolucoes" data-sub="listar" onclick="showSubTab('evolucoes', 'listar', this)">Listar</button>
-                            <button class="tab-btn" data-main="evolucoes" data-sub="graficos" onclick="showSubTab('evolucoes', 'graficos', this)">Gráficos</button>
-                        </div>
-                    </div>
-                    
-                    <!-- Conteúdo das abas -->
-                    <div id="tab-content">
-                        <div id="evolucoes-nova" class="tab-content active">
-                            {$this->getFormularioCadastro($resultado)}
-                        </div>
-                        <div id="evolucoes-listar" class="tab-content" style="display:none;">
-                            {$this->getListagemEvolucoes($resultado)}
-                        </div>
-                        <div id="evolucoes-graficos" class="tab-content" style="display:none;">
-                            <p>Conteúdo Gráficos de Evoluções.</p>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Modal de confirmação de exclusão -->
-                <div id="modal-exclusao" class="modal" style="display:none;">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h3>Confirmar Exclusão</h3>
-                            <span class="close-modal" onclick="fecharModal()">&times;</span>
-                        </div>
-                        <div class="modal-body">
-                            <p>Tem certeza que deseja excluir esta evolução?</p>
-                            <p><strong>Esta ação não pode ser desfeita.</strong></p>
-                        </div>
-                        <div class="modal-footer">
-                            <button class="btn-cancel" onclick="fecharModal()">Cancelar</button>
-                            <button class="btn-delete" id="confirmar-exclusao">Excluir</button>
-                        </div>
+            <section class="simple-box">
+                <h2>Registro Clínico - Evoluções</h2>
+                
+                <!-- Abas principais de navegação entre módulos -->
+                <div class="tabs" id="main-tabs">
+                    <button class="tab-btn" onclick="redirectToTab('pacientes')">Pacientes</button>
+                    <button class="tab-btn" onclick="redirectToTab('atendimentos')">Atendimentos</button>
+                    <button class="tab-btn active" onclick="redirectToTab('evolucoes')">Evoluções</button>
+                </div>
+                
+                <!-- Sub-abas do módulo atual -->
+                <div id="sub-tabs">
+                    <div class="sub-tabs" id="sub-evolucoes">
+                        <button class="tab-btn active" data-main="evolucoes" data-sub="nova" onclick="showSubTab('evolucoes', 'nova', this)">Nova</button>
+                        <button class="tab-btn" data-main="evolucoes" data-sub="listar" onclick="showSubTab('evolucoes', 'listar', this)">Formulários</button>
+                        <button class="tab-btn" data-main="evolucoes" data-sub="graficos" onclick="showSubTab('evolucoes', 'graficos', this)">Gráficos</button>
                     </div>
                 </div>
+                
+                <!-- Conteúdo das abas -->
+                <div id="tab-content">
+                    <div id="evolucoes-nova" class="tab-content active">
+                        {$this->getFormularioCadastro($resultado)}
+                    </div>
+                    <div id="evolucoes-listar" class="tab-content" style="display:none;">
+                        {$this->getFormulariosEvolucoes($resultado)}
+                    </div>
+                    <div id="evolucoes-graficos" class="tab-content" style="display:none;">
+                        <p>Conteúdo Gráficos de Evoluções.</p>
+                    </div>
+                </div>
+            </section>
 
-                <script src="./src/script.js"></script>
-                <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-                <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
-            </body>
-        HTML;
+            <!-- Modal de confirmação de exclusão -->
+            <div id="modal-exclusao" class="modal" style="display:none;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>Confirmar Exclusão</h3>
+                        <span class="close-modal" onclick="fecharModal()">&times;</span>
+                    </div>
+                    <div class="modal-body">
+                        <p>Tem certeza que deseja excluir esta evolução?</p>
+                        <p><strong>Esta ação não pode ser desfeita.</strong></p>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn-cancel" onclick="fecharModal()">Cancelar</button>
+                        <button class="btn-delete" id="confirmar-exclusao">Excluir</button>
+                    </div>
+                </div>
+            </div>
 
-        return $html;
+            <script src="./src/script.js"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+        </body>
+    HTML;
+
+    return $html;
+}
+
+private function getFormulariosEvolucoes($resultado = null)
+{
+    // Exibe mensagens de sucesso/erro
+    $mensagens = '';
+    if ($resultado && isset($_POST['acao']) && $_POST['acao'] == 'excluir') {
+        if (isset($resultado['sucesso']) && $resultado['sucesso']) {
+            $mensagens = '<div class="form-message success">' . $resultado['mensagem'] . '</div>';
+        } elseif (isset($resultado['erros'])) {
+            $mensagens = '<div class="form-message error">';
+            foreach ($resultado['erros'] as $erro) {
+                $mensagens .= '<p>' . htmlspecialchars($erro) . '</p>';
+            }
+            $mensagens .= '</div>';
+        }
     }
+    
+    return '
+    <div class="listagem-container">
+        ' . $mensagens . '
+        
+        <div class="table-header">
+            <h3>Formulários de Evolução</h3>
+            <p>Gerencie e utilize formulários padronizados para evoluções</p>
+        </div>
+        
+        <div class="formularios-grid">
+            <div class="formulario-card">
+                <div class="card-header">
+                    <i class="fas fa-plus-circle"></i>
+                    <h4>Criar Novo Formulário</h4>
+                </div>
+                <div class="card-body">
+                    <p>Crie formulários personalizados para diferentes áreas de atendimento</p>
+                </div>
+                <div class="card-footer">
+                    <button class="btn-add" onclick="acessarCriacaoFormulario()">
+                        <i class="fas fa-plus"></i> Criar Formulário
+                    </button>
+                </div>
+            </div>
+            
+            <div class="formulario-card">
+                <div class="card-header">
+                    <i class="fas fa-list"></i>
+                    <h4>Formulários Existentes</h4>
+                </div>
+                <div class="card-body">
+                    <p>Gerencie formulários já criados e seus campos</p>
+                </div>
+                <div class="card-footer">
+                    <button class="btn-edit" onclick="acessarGerenciamentoFormularios()">
+                        <i class="fas fa-edit"></i> Gerenciar
+                    </button>
+                </div>
+            </div>
+            
+            <div class="formulario-card">
+                <div class="card-header">
+                    <i class="fas fa-file-medical"></i>
+                    <h4>Aplicar Formulário</h4>
+                </div>
+                <div class="card-body">
+                    <p>Utilize formulários padronizados para registrar evoluções</p>
+                </div>
+                <div class="card-footer">
+                    <button class="btn-evolucao" onclick="acessarAplicacaoFormulario()">
+                        <i class="fas fa-play"></i> Aplicar
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="info-section">
+            <h4>Sistema de Formulários Padronizados</h4>
+            <p>Este sistema permite criar formulários personalizados para diferentes áreas de atendimento, 
+            como Fonoaudiologia, Psicologia, Fisioterapia, entre outras. Os formulários podem conter diversos 
+            tipos de campos: texto, áreas de texto, radio buttons, checkboxes, listas suspensas, números e datas.</p>
+            
+            <div class="beneficios-grid">
+                <div class="beneficio-item">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Padronização de avaliações</span>
+                </div>
+                <div class="beneficio-item">
+                    <i class="fas fa-sync-alt"></i>
+                    <span>Reutilização de templates</span>
+                </div>
+                <div class="beneficio-item">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Análises estatísticas</span>
+                </div>
+                <div class="beneficio-item">
+                    <i class="fas fa-file-export"></i>
+                    <span>Exportação de dados</span>
+                </div>
+            </div>
+        </div>
+    </div>';
+}
     
 private function getFormularioCadastro($resultado = null)
     {
