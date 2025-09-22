@@ -185,54 +185,15 @@ private function getFormulariosEvolucoes($resultado = null)
                 <div class="card-body">
                     <p>Gerencie formulários já criados e seus campos</p>
                 </div>
-                <div class="card-footer">
+               <div class="card-footer">
                     <button class="btn-edit" onclick="acessarGerenciamentoFormularios()">
                         <i class="fas fa-edit"></i> Gerenciar
                     </button>
                 </div>
             </div>
             
-            <div class="formulario-card">
-                <div class="card-header">
-                    <i class="fas fa-file-medical"></i>
-                    <h4>Aplicar Formulário</h4>
-                </div>
-                <div class="card-body">
-                    <p>Utilize formulários padronizados para registrar evoluções</p>
-                </div>
-                <div class="card-footer">
-                    <button class="btn-evolucao" onclick="acessarAplicacaoFormulario()">
-                        <i class="fas fa-play"></i> Aplicar
-                    </button>
-                </div>
-            </div>
         </div>
-        
-        <div class="info-section">
-            <h4>Sistema de Formulários Padronizados</h4>
-            <p>Este sistema permite criar formulários personalizados para diferentes áreas de atendimento, 
-            como Fonoaudiologia, Psicologia, Fisioterapia, entre outras. Os formulários podem conter diversos 
-            tipos de campos: texto, áreas de texto, radio buttons, checkboxes, listas suspensas, números e datas.</p>
-            
-            <div class="beneficios-grid">
-                <div class="beneficio-item">
-                    <i class="fas fa-check-circle"></i>
-                    <span>Padronização de avaliações</span>
-                </div>
-                <div class="beneficio-item">
-                    <i class="fas fa-sync-alt"></i>
-                    <span>Reutilização de templates</span>
-                </div>
-                <div class="beneficio-item">
-                    <i class="fas fa-chart-bar"></i>
-                    <span>Análises estatísticas</span>
-                </div>
-                <div class="beneficio-item">
-                    <i class="fas fa-file-export"></i>
-                    <span>Exportação de dados</span>
-                </div>
-            </div>
-        </div>
+
     </div>';
 }
     

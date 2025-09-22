@@ -5,6 +5,7 @@
     box-sizing: border-box;
 }
 
+/* ======= Estrutura e Layout ======= */
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background-color: #f9f6fc;
@@ -12,7 +13,25 @@ body {
     line-height: 1.6;
 }
 
-/* Header */
+.simple-box {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 30px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+}
+
+.simple-box h2 {
+    color: #6c63ff;
+    font-size: 24px;
+    margin-bottom: 24px;
+    text-align: center;
+    font-weight: 600;
+}
+
+/* ======= Header e Navegação ======= */
 header {
     display: flex;
     justify-content: space-between;
@@ -51,26 +70,7 @@ nav ul li a:hover {
     color: #333;
 }
 
-/* Container principal */
-.simple-box {
-    max-width: 800px;
-    margin: 40px auto;
-    padding: 30px;
-    background: white;
-    border-radius: 16px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-    overflow: hidden;
-}
-
-.simple-box h2 {
-    color: #6c63ff;
-    font-size: 24px;
-    margin-bottom: 24px;
-    text-align: center;
-    font-weight: 600;
-}
-
-/* Abas principais */
+/* ======= Abas e Sub-Abas ======= */
 .tabs {
     display: flex;
     justify-content: center;
@@ -104,7 +104,6 @@ nav ul li a:hover {
     transform: translateY(-1px);
 }
 
-/* Sub-abas */
 .sub-tabs {
     display: flex;
     gap: 8px;
@@ -135,7 +134,7 @@ nav ul li a:hover {
     background: #e8e8f0;
 }
 
-/* Conteúdo das abas */
+/* ======= Conteúdo das Abas ======= */
 .tab-content {
     padding: 20px 0;
     display: none;
@@ -145,6 +144,7 @@ nav ul li a:hover {
     display: block;
 }
 
+/* ======= Formulários ======= */
 .form-container {
     margin-top: 20px;
 }
@@ -190,7 +190,9 @@ nav ul li a:hover {
     color: #aaa;
 }
 
-.btn-add {
+/* ======= Botões Principais ======= */
+.btn-add,
+.btn-edit {
     background: linear-gradient(135deg, #6c63ff 0%, #574b90 100%);
     color: white;
     border: none;
@@ -206,16 +208,18 @@ nav ul li a:hover {
     display: block;
 }
 
-.btn-add:hover {
+.btn-add,
+.btn-edit :hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 20px rgba(108, 99, 255, 0.3);
 }
 
-.btn-add:active {
+.btn-add,
+.btn-edit :active {
     transform: translateY(0);
 }
 
-/* Mensagens de formulário */
+/* ======= Mensagens de Formulário ======= */
 .form-message {
     padding: 15px;
     border-radius: 8px;
@@ -236,7 +240,7 @@ nav ul li a:hover {
     color: #c62828;
 }
 
-/* Estilo para campos obrigatórios */
+/* ======= Campos Obrigatórios ======= */
 .form-group label::after {
     content: " *";
     color: #ff6b6b;
@@ -247,11 +251,12 @@ nav ul li a:hover {
     content: "";
 }
 
+/* ======= Listagem ======= */
 .listagem-container {
     margin-top: 20px;
 }
 
-/* Formulário de busca por ID */
+/* ======= Busca ======= */
 .search-bar {
     margin-bottom: 20px;
     padding: 15px;
@@ -318,6 +323,7 @@ nav ul li a:hover {
     transform: translateY(-1px);
 }
 
+/* ======= Tabelas ======= */
 .table-header {
     margin-bottom: 15px;
     display: flex;
@@ -377,8 +383,7 @@ nav ul li a:hover {
     color: #333;
 }
 
-/* Botões de ação */
-.btn-edit,
+/* ======= Botões de Ação ======= */
 .btn-delete,
 .btn-view {
     background: none;
@@ -389,15 +394,6 @@ nav ul li a:hover {
     font-size: 14px;
     transition: all 0.2s ease;
     margin: 0 2px;
-}
-
-.btn-edit {
-    color: #6c63ff;
-}
-
-.btn-edit:hover {
-    background: #6c63ff;
-    color: white;
 }
 
 .btn-delete {
@@ -443,7 +439,7 @@ nav ul li a:hover {
     font-size: 16px;
 }
 
-/* Estilos para detalhes do paciente */
+/* ======= Detalhes do Paciente ======= */
 .paciente-detalhe {
     background: #f8f9ff;
     border: 1px solid #e1e1ff;
@@ -531,7 +527,7 @@ nav ul li a:hover {
     transform: translateY(-1px);
 }
 
-/* Modal de confirmação */
+/* ======= Modal de Confirmação ======= */
 .modal {
     position: fixed;
     top: 0;
@@ -622,7 +618,7 @@ nav ul li a:hover {
     background: #e8e8f0;
 }
 
-/* Botão de evolução */
+/* ======= Botão de Evolução ======= */
 .btn-evolucao {
     background: #28a745;
     color: white;
@@ -664,6 +660,10 @@ nav ul li a:hover {
 .btn-evolucao-small:hover {
     background: #218838;
     transform: translateY(-1px);
+}
+
+.btn-evolucao-small i {
+    font-size: 12px;
 }
 
 /* Ajuste nos botões de ação para incluir o botão de evolução */
@@ -722,7 +722,8 @@ nav ul li a:hover {
 .btn-evolucao-small i {
     font-size: 12px;
 }
-/* Responsividade */
+
+/* ======= Responsividade ======= */
 @media (max-width: 768px) {
     .simple-box {
         margin: 20px;
@@ -746,8 +747,8 @@ nav ul li a:hover {
         grid-template-columns: 1fr;
         gap: 15px;
     }
-    
-    .btn-add {
+    .btn-add,
+    .btn-edit {
         max-width: 100%;
     }
 
@@ -797,8 +798,7 @@ nav ul li a:hover {
     }
 }
 
-
-/* Estilos específicos para evoluções */
+/* ======= Evoluções ======= */
 textarea {
     resize: vertical;
     min-height: 100px;
@@ -947,7 +947,7 @@ textarea:focus {
     }
 }
 
-/* Estilos para cards de formulários */
+/* ======= Cards de Formulários ======= */
 .formularios-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -1007,70 +1007,3 @@ textarea:focus {
     margin: 0 auto;
 }
 
-.info-section {
-    margin-top: 30px;
-    padding: 25px;
-    background: #f8f9ff;
-    border-radius: 12px;
-    border: 1px solid #e1e1ff;
-}
-
-.info-section h4 {
-    color: #574b90;
-    font-size: 20px;
-    margin-bottom: 15px;
-    text-align: center;
-}
-
-.info-section p {
-    color: #666;
-    font-size: 15px;
-    line-height: 1.6;
-    text-align: center;
-    margin-bottom: 20px;
-}
-
-.beneficios-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 15px;
-    margin-top: 20px;
-}
-
-.beneficio-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 12px;
-    background: white;
-    border-radius: 8px;
-    border: 1px solid #e1e1ff;
-    font-size: 14px;
-    color: #574b90;
-    font-weight: 500;
-}
-
-.beneficio-item i {
-    color: #6c63ff;
-    font-size: 16px;
-}
-
-/* Responsividade para cards */
-@media (max-width: 768px) {
-    .formularios-grid {
-        grid-template-columns: 1fr;
-        gap: 15px;
-    }
-    
-    .beneficios-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .info-section {
-        padding: 20px 15px;
-    }
-    
-    .info-section h4 {
-        font-size: 18px;
-    }
-}
