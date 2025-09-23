@@ -8,33 +8,33 @@ if (!isset($_SESSION['data_user'])) {
 }
 
 // Determina a ação
-$acao = isset($_GET['acao']) ? $_GET['acao'] : 'principal';
+$acao = isset($_GET['acao']) ? $_GET['acao'] : 'criar';
+
+// Inclui a classe principal
+include_once "classes/conteudo.forms.class.php";
 
 switch($acao) {
     case 'criar':
-        // Incluir classe de conteúdo para criação
-        include_once "classes/conteudo.forms.class.php";
+        // Página de criação de formulários
         $conteudo = new ConteudoFormsCriar();
         echo $conteudo->render();
         break;
         
     case 'gerenciar':
-        // Incluir classe de conteúdo para gerenciamento
-        include_once "classes/conteudo.forms.class.php";
+        // Página de gerenciamento de formulários
         $conteudo = new ConteudoFormsGerenciar();
         echo $conteudo->render();
         break;
         
     case 'aplicar':
-        // Incluir classe de conteúdo para aplicação
-        include_once "classes/conteudo.forms.class.php";
+        // Página de aplicação de formulários
         $conteudo = new ConteudoFormsAplicar();
         echo $conteudo->render();
         break;
         
     default:
-        // Página principal de formulários
-        include_once "classes/conteudo.forms.class.php";
-        $conteudo = new ConteudoFormsPrincipal();
-        echo $conteudo->render();
+        // Redireciona para criação de formulário por padrão
+        header('Location: ?acao=criar');
+        exit;
 }
+?>

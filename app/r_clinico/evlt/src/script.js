@@ -480,3 +480,41 @@ document.addEventListener('DOMContentLoaded', function() {
         buscarHistoricoPaciente(pacienteId);
     }
 });
+
+// Funções para navegação entre formulários
+
+function acessarFormularios() {
+    // Redireciona para a página de criação de formulários
+    window.location.href = './forms/';
+}
+
+function acessarGerenciamentoFormularios() {
+    // Redireciona para a página de gerenciamento de formulários
+    window.location.href = './forms/?acao=gerenciar';
+}
+
+function acessarAplicacaoFormulario() {
+    // Redireciona para a página de aplicação de formulários
+    window.location.href = './forms/?acao=aplicar';
+}
+
+// Função para mostrar conteúdo específico na aba de formulários
+function mostrarConteudoFormularios(acao) {
+    const conteudoDiv = document.getElementById('conteudo-formularios');
+    if (conteudoDiv) {
+        // Aqui você pode carregar conteúdo dinâmico conforme a ação
+        switch(acao) {
+            case 'criar':
+                conteudoDiv.innerHTML = '<p>Conteúdo para criação de formulários será carregado aqui...</p>';
+                break;
+            case 'gerenciar':
+                conteudoDiv.innerHTML = '<p>Conteúdo para gerenciamento de formulários será carregado aqui...</p>';
+                break;
+            case 'aplicar':
+                conteudoDiv.innerHTML = '<p>Conteúdo para aplicação de formulários será carregado aqui...</p>';
+                break;
+            default:
+                conteudoDiv.innerHTML = '<p>Selecione uma opção acima para começar...</p>';
+        }
+    }
+}

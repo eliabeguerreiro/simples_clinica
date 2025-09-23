@@ -171,7 +171,7 @@ private function getFormulariosEvolucoes($resultado = null)
                     <p>Crie formulários personalizados para diferentes áreas de atendimento</p>
                 </div>
                 <div class="card-footer">
-                    <button class="btn-add" onclick="acessarCriacaoFormulario()">
+                    <button class="btn-add" onclick="acessarFormularios()">
                         <i class="fas fa-plus"></i> Criar Formulário
                     </button>
                 </div>
@@ -192,6 +192,20 @@ private function getFormulariosEvolucoes($resultado = null)
                 </div>
             </div>
             
+            <div class="formulario-card">
+                <div class="card-header">
+                    <i class="fas fa-file-medical"></i>
+                    <h4>Aplicar Formulário</h4>
+                </div>
+                <div class="card-body">
+                    <p>Utilize formulários padronizados para registrar evoluções</p>
+                </div>
+                <div class="card-footer">
+                    <button class="btn-evolucao" onclick="acessarAplicacaoFormulario()">
+                        <i class="fas fa-play"></i> Aplicar
+                    </button>
+                </div>
+            </div>
         </div>
 
     </div>';
