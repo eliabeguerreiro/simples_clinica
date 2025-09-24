@@ -20,6 +20,7 @@ class Formulario
     public function criarTemplate($dados)
     {
         try {
+            // Valida os dados
             $erros = $this->validarTemplate($dados);
             
             if (!empty($erros)) {
@@ -30,36 +31,56 @@ class Formulario
                 ];
             }
             
+            // Verifica se já existe template com mesmo nome e área
+            if ($this->existeTemplate($dados['nome'], $dados['area_atendimento'])) {
+                return [
+                    'sucesso' => false,
+                    'erros' => ['Já existe um formulário com este nome nesta área de atendimento'],
+                    'dados' => $dados
+                ];
+            }
+            
+            // Prepara os dados para inserção
             $dadosLimpos = $this->limparDadosTemplate($dados);
             
+            // Inicia transação
+            $this->db->beginTransaction();
+            
+            // Insere o template
             $sql = "INSERT INTO formulario_template (
                 nome, descricao, area_atendimento, ativo
             ) VALUES (?, ?, ?, ?)";
             
             $stmt = $this->db->prepare($sql);
-            $resultado = $stmt->execute([
+            $stmt->execute([
                 $dadosLimpos['nome'],
                 $dadosLimpos['descricao'],
                 $dadosLimpos['area_atendimento'],
                 $dadosLimpos['ativo']
             ]);
             
-            if ($resultado) {
-                return [
-                    'sucesso' => true,
-                    'mensagem' => 'Template criado com sucesso!',
-                    'id' => $this->db->lastInsertId(),
-                    'dados' => []
-                ];
-            } else {
-                return [
-                    'sucesso' => false,
-                    'erros' => ['Erro ao criar template.'],
-                    'dados' => $dados
-                ];
+            $templateId = $this->db->lastInsertId();
+            
+            // Insere os campos se fornecidos
+            if (isset($dados['campos']) && is_array($dados['campos'])) {
+                foreach ($dados['campos'] as $campo) {
+                    $this->adicionarCampo($templateId, $campo);
+                }
             }
             
+            // Confirma transação
+            $this->db->commit();
+            
+            return [
+                'sucesso' => true,
+                'mensagem' => 'Formulário criado com sucesso!',
+                'id' => $templateId,
+                'dados' => []
+            ];
+            
         } catch (Exception $e) {
+            // Reverte transação em caso de erro
+            $this->db->rollback();
             return [
                 'sucesso' => false,
                 'erros' => ['Erro no sistema: ' . $e->getMessage()],
@@ -74,6 +95,7 @@ class Formulario
     public function adicionarCampo($formularioId, $dadosCampo)
     {
         try {
+            // Valida os dados do campo
             $erros = $this->validarCampo($dadosCampo);
             
             if (!empty($erros)) {
@@ -84,21 +106,26 @@ class Formulario
                 ];
             }
             
+            // Prepara os dados para inserção
             $dadosLimpos = $this->limparDadosCampo($dadosCampo);
             
+            // Insere o campo
             $sql = "INSERT INTO formulario_campo (
-                formulario_id, ordem, titulo, tipo_campo, opcoes, 
-                obrigatorio, tamanho_maximo, placeholder
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                formulario_id, ordem, nome_unico, titulo, descricao, tipo_input, 
+                opcoes, obrigatorio, multipla_escolha, tamanho_maximo, placeholder
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             
             $stmt = $this->db->prepare($sql);
             $resultado = $stmt->execute([
                 $formularioId,
                 $dadosLimpos['ordem'],
+                $dadosLimpos['nome_unico'],
                 $dadosLimpos['titulo'],
-                $dadosLimpos['tipo_campo'],
+                $dadosLimpos['descricao'],
+                $dadosLimpos['tipo_input'],
                 $dadosLimpos['opcoes'],
                 $dadosLimpos['obrigatorio'],
+                $dadosLimpos['multipla_escolha'],
                 $dadosLimpos['tamanho_maximo'],
                 $dadosLimpos['placeholder']
             ]);
@@ -176,60 +203,112 @@ class Formulario
     }
     
     /**
-     * Salva resposta de formulário
+     * Atualiza template
      */
-    public function salvarResposta($dados)
+    public function atualizarTemplate($id, $dados)
     {
         try {
-            $this->db->beginTransaction();
+            // Valida os dados
+            $erros = $this->validarTemplate($dados, $id);
             
-            // Insere resposta principal
-            $sql = "INSERT INTO formulario_resposta (
-                formulario_id, paciente_id, profissional_id
-            ) VALUES (?, ?, ?)";
-            
-            $stmt = $this->db->prepare($sql);
-            $stmt->execute([
-                $dados['formulario_id'],
-                $dados['paciente_id'],
-                $dados['profissional_id']
-            ]);
-            
-            $respostaId = $this->db->lastInsertId();
-            
-            // Insere respostas individuais dos campos
-            if (isset($dados['respostas_campos']) && is_array($dados['respostas_campos'])) {
-                $sql = "INSERT INTO formulario_resposta_campo (
-                    resposta_id, campo_id, valor_texto, valor_numerico, valor_data, valor_opcoes
-                ) VALUES (?, ?, ?, ?, ?, ?)";
-                
-                $stmt = $this->db->prepare($sql);
-                
-                foreach ($dados['respostas_campos'] as $respostaCampo) {
-                    $stmt->execute([
-                        $respostaId,
-                        $respostaCampo['campo_id'],
-                        $respostaCampo['valor_texto'] ?? null,
-                        $respostaCampo['valor_numerico'] ?? null,
-                        $respostaCampo['valor_data'] ?? null,
-                        $respostaCampo['valor_opcoes'] ?? null
-                    ]);
-                }
+            if (!empty($erros)) {
+                return [
+                    'sucesso' => false,
+                    'erros' => $erros,
+                    'dados' => $dados
+                ];
             }
             
-            $this->db->commit();
+            // Verifica se já existe template com mesmo nome e área (exceto o próprio)
+            if ($this->existeTemplate($dados['nome'], $dados['area_atendimento'], $id)) {
+                return [
+                    'sucesso' => false,
+                    'erros' => ['Já existe um formulário com este nome nesta área de atendimento'],
+                    'dados' => $dados
+                ];
+            }
             
-            return [
-                'sucesso' => true,
-                'mensagem' => 'Resposta salva com sucesso!',
-                'id' => $respostaId
-            ];
+            // Prepara os dados para atualização
+            $dadosLimpos = $this->limparDadosTemplate($dados);
+            
+            // Atualiza o template
+            $sql = "UPDATE formulario_template SET 
+                nome = ?, descricao = ?, area_atendimento = ?, ativo = ?
+                WHERE id = ?";
+            
+            $stmt = $this->db->prepare($sql);
+            $resultado = $stmt->execute([
+                $dadosLimpos['nome'],
+                $dadosLimpos['descricao'],
+                $dadosLimpos['area_atendimento'],
+                $dadosLimpos['ativo'],
+                $id
+            ]);
+            
+            if ($resultado) {
+                return [
+                    'sucesso' => true,
+                    'mensagem' => 'Formulário atualizado com sucesso!',
+                    'dados' => []
+                ];
+            } else {
+                return [
+                    'sucesso' => false,
+                    'erros' => ['Erro ao atualizar formulário.'],
+                    'dados' => $dados
+                ];
+            }
             
         } catch (Exception $e) {
-            $this->db->rollback();
             return [
                 'sucesso' => false,
-                'erros' => ['Erro ao salvar resposta: ' . $e->getMessage()]
+                'erros' => ['Erro no sistema: ' . $e->getMessage()],
+                'dados' => $dados
+            ];
+        }
+    }
+    
+    /**
+     * Exclui template
+     */
+    public function excluirTemplate($id)
+    {
+        try {
+            // Verifica se template tem respostas vinculadas
+            $stmt = $this->db->prepare("SELECT COUNT(*) FROM formulario_resposta WHERE formulario_id = ?");
+            $stmt->execute([$id]);
+            $temRespostas = $stmt->fetchColumn();
+            
+            if ($temRespostas > 0) {
+                return [
+                    'sucesso' => false,
+                    'erros' => ['Não é possível excluir formulário com respostas registradas.']
+                ];
+            }
+            
+            // Exclui campos primeiro (devido à foreign key)
+            $stmt = $this->db->prepare("DELETE FROM formulario_campo WHERE formulario_id = ?");
+            $stmt->execute([$id]);
+            
+            // Exclui template
+            $stmt = $this->db->prepare("DELETE FROM formulario_template WHERE id = ?");
+            $resultado = $stmt->execute([$id]);
+            
+            if ($resultado) {
+                return [
+                    'sucesso' => true,
+                    'mensagem' => 'Formulário excluído com sucesso!'
+                ];
+            } else {
+                return [
+                    'sucesso' => false,
+                    'erros' => ['Erro ao excluir formulário.']
+                ];
+            }
+        } catch (Exception $e) {
+            return [
+                'sucesso' => false,
+                'erros' => ['Erro no sistema: ' . $e->getMessage()]
             ];
         }
     }
@@ -237,17 +316,18 @@ class Formulario
     /**
      * Valida template
      */
-    private function validarTemplate($dados)
+    private function validarTemplate($dados, $idExcluir = null)
     {
         $erros = [];
         
+        // Validação de campos obrigatórios
         if (empty(trim($dados['nome']))) {
             $erros[] = "Nome do formulário é obrigatório";
         } elseif (strlen(trim($dados['nome'])) > 100) {
             $erros[] = "Nome deve ter no máximo 100 caracteres";
         }
         
-        if (empty(trim($dados['area_atendimento']))) {
+        if (empty($dados['area_atendimento'])) {
             $erros[] = "Área de atendimento é obrigatória";
         }
         
@@ -267,9 +347,19 @@ class Formulario
             $erros[] = "Título deve ter no máximo 200 caracteres";
         }
         
-        $tiposValidos = ['texto', 'textarea', 'radio', 'checkbox', 'select', 'numero', 'data'];
-        if (empty($dados['tipo_campo']) || !in_array($dados['tipo_campo'], $tiposValidos)) {
+        if (empty($dados['tipo_input'])) {
+            $erros[] = "Tipo de campo é obrigatório";
+        }
+        
+        $tiposValidos = ['texto', 'textarea', 'radio', 'checkbox', 'select', 'numero', 'data', 'hora', 'email', 'telefone'];
+        if (!in_array($dados['tipo_input'], $tiposValidos)) {
             $erros[] = "Tipo de campo inválido";
+        }
+        
+        if (empty(trim($dados['nome_unico']))) {
+            $erros[] = "Nome único do campo é obrigatório";
+        } elseif (strlen(trim($dados['nome_unico'])) > 100) {
+            $erros[] = "Nome único deve ter no máximo 100 caracteres";
         }
         
         return $erros;
@@ -293,15 +383,170 @@ class Formulario
      */
     private function limparDadosCampo($dados)
     {
+        $opcoesJson = null;
+        if (isset($dados['opcoes']) && is_array($dados['opcoes'])) {
+            $opcoesJson = json_encode($dados['opcoes']);
+        } elseif (isset($dados['opcoes']) && is_string($dados['opcoes'])) {
+            $opcoesArray = explode("\n", $dados['opcoes']);
+            $opcoesArray = array_map('trim', $opcoesArray);
+            $opcoesArray = array_filter($opcoesArray, function($op) { return !empty($op); });
+            $opcoesJson = json_encode(array_values($opcoesArray));
+        }
+        
         return [
+            'formulario_id' => (int)($dados['formulario_id'] ?? 0),
             'ordem' => (int)($dados['ordem'] ?? 0),
+            'nome_unico' => trim(htmlspecialchars($dados['nome_unico'])),
             'titulo' => trim(htmlspecialchars($dados['titulo'])),
-            'tipo_campo' => $dados['tipo_campo'],
-            'opcoes' => !empty($dados['opcoes']) ? json_encode($dados['opcoes']) : null,
+            'descricao' => !empty($dados['descricao']) ? trim(htmlspecialchars($dados['descricao'])) : null,
+            'tipo_input' => $dados['tipo_input'],
+            'opcoes' => $opcoesJson,
             'obrigatorio' => isset($dados['obrigatorio']) ? 1 : 0,
+            'multipla_escolha' => isset($dados['multipla_escolha']) ? 1 : 0,
             'tamanho_maximo' => !empty($dados['tamanho_maximo']) ? (int)$dados['tamanho_maximo'] : null,
             'placeholder' => !empty($dados['placeholder']) ? trim(htmlspecialchars($dados['placeholder'])) : null
         ];
+    }
+    
+    /**
+     * Verifica se template já existe
+     */
+    private function existeTemplate($nome, $areaAtendimento, $idExcluir = null)
+    {
+        $sql = "SELECT id FROM formulario_template WHERE nome = ? AND area_atendimento = ?";
+        $params = [$nome, $areaAtendimento];
+        
+        if ($idExcluir) {
+            $sql .= " AND id != ?";
+            $params[] = $idExcluir;
+        }
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->rowCount() > 0;
+    }
+    
+    /**
+     * Lista campos de um formulário
+     */
+    public function listarCampos($formularioId)
+    {
+        try {
+            $sql = "SELECT * FROM formulario_campo WHERE formulario_id = ? ORDER BY ordem";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([$formularioId]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            return [];
+        }
+    }
+    
+    /**
+     * Busca campo por ID
+     */
+    public function buscarCampo($id)
+    {
+        try {
+            $stmt = $this->db->prepare("SELECT * FROM formulario_campo WHERE id = ? LIMIT 1");
+            $stmt->execute([$id]);
+            return $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            return false;
+        }
+    }
+    
+    /**
+     * Atualiza campo
+     */
+    public function atualizarCampo($id, $dados)
+    {
+        try {
+            // Valida os dados
+            $erros = $this->validarCampo($dados);
+            
+            if (!empty($erros)) {
+                return [
+                    'sucesso' => false,
+                    'erros' => $erros,
+                    'dados' => $dados
+                ];
+            }
+            
+            // Prepara os dados para atualização
+            $dadosLimpos = $this->limparDadosCampo($dados);
+            
+            // Atualiza o campo
+            $sql = "UPDATE formulario_campo SET 
+                formulario_id = ?, ordem = ?, nome_unico = ?, titulo = ?, descricao = ?, 
+                tipo_input = ?, opcoes = ?, obrigatorio = ?, multipla_escolha = ?, 
+                tamanho_maximo = ?, placeholder = ?
+                WHERE id = ?";
+            
+            $stmt = $this->db->prepare($sql);
+            $resultado = $stmt->execute([
+                $dadosLimpos['formulario_id'],
+                $dadosLimpos['ordem'],
+                $dadosLimpos['nome_unico'],
+                $dadosLimpos['titulo'],
+                $dadosLimpos['descricao'],
+                $dadosLimpos['tipo_input'],
+                $dadosLimpos['opcoes'],
+                $dadosLimpos['obrigatorio'],
+                $dadosLimpos['multipla_escolha'],
+                $dadosLimpos['tamanho_maximo'],
+                $dadosLimpos['placeholder'],
+                $id
+            ]);
+            
+            if ($resultado) {
+                return [
+                    'sucesso' => true,
+                    'mensagem' => 'Campo atualizado com sucesso!',
+                    'dados' => []
+                ];
+            } else {
+                return [
+                    'sucesso' => false,
+                    'erros' => ['Erro ao atualizar campo.'],
+                    'dados' => $dados
+                ];
+            }
+            
+        } catch (Exception $e) {
+            return [
+                'sucesso' => false,
+                'erros' => ['Erro no sistema: ' . $e->getMessage()],
+                'dados' => $dados
+            ];
+        }
+    }
+    
+    /**
+     * Exclui campo
+     */
+    public function excluirCampo($id)
+    {
+        try {
+            $stmt = $this->db->prepare("DELETE FROM formulario_campo WHERE id = ?");
+            $resultado = $stmt->execute([$id]);
+            
+            if ($resultado) {
+                return [
+                    'sucesso' => true,
+                    'mensagem' => 'Campo excluído com sucesso!'
+                ];
+            } else {
+                return [
+                    'sucesso' => false,
+                    'erros' => ['Erro ao excluir campo.']
+                ];
+            }
+        } catch (Exception $e) {
+            return [
+                'sucesso' => false,
+                'erros' => ['Erro no sistema: ' . $e->getMessage()]
+            ];
+        }
     }
 }
 ?>

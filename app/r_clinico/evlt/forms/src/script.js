@@ -1,11 +1,11 @@
-function voltarParaEvolucoes() {
-    window.location.href = '../';
-}
-
 // Funções para o construtor de formulários
 
 let camposFormulario = [];
 let templateId = null;
+
+function voltarParaEvolucoes() {
+    window.location.href = '../';
+}
 
 // Mostrar opções de campo conforme tipo selecionado
 function mostrarOpcoesCampo() {
@@ -38,7 +38,7 @@ function adicionarCampo() {
         titulo: titulo,
         descricao: descricao,
         obrigatorio: obrigatorio,
-        multipla_escolha: multiplaEscolha,
+        multiplaEscolha: multiplaEscolha,
         ordem: camposFormulario.length + 1
     };
     
@@ -86,7 +86,7 @@ function renderizarCampos() {
         campoDiv.innerHTML = `
             <div class="campo-header">
                 <span class="campo-titulo">${campo.titulo}</span>
-                <span class="campo-tipo">${campo.tipo}</span>
+                <span class="campo-tipo">(${campo.tipo})</span>
                 ${campo.obrigatorio ? '<span class="campo-obrigatorio">Obrigatório</span>' : ''}
                 ${campo.multipla_escolha ? '<span class="campo-multipla">Múltipla</span>' : ''}
                 <button type="button" onclick="removerCampo(${index})" class="btn-delete-small">
