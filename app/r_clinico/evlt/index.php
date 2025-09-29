@@ -16,5 +16,6 @@ if (Index::validaLogin($_SESSION['data_user'], $_SESSION['login_time'])){}else{
 
 if(isset($_GET['sair'])){Index::logOut();}
 
-$conteudo = new ConteudoEvolucoesEVLT();
-echo $conteudo->render();
+
+$pagina = new ConteudoRClinicoEvlt();
+echo $pagina->render();
