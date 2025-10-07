@@ -20,7 +20,6 @@ try {
     die("Erro crítico: não foi possível conectar ao banco. " . $e->getMessage());
 }
 
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_GET['form_id'])) {
     $nome = trim($_POST['nome'] ?? '');
     $descricao = trim($_POST['descricao'] ?? '');
@@ -60,7 +59,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_GET['form_id'])) {
     }
 }
 
-
 $form_id = isset($_GET['form_id']) ? (int)$_GET['form_id'] : 0;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $form_id > 0 && isset($_POST['titulo'])) {
@@ -80,7 +78,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $form_id > 0 && isset($_POST['titul
     } else {
         try {
             if (empty($nome_unico)) {
-                // Gera nome único baseado no título
                 $nome_unico = preg_replace('/[^a-z0-9_]/', '_', strtolower($titulo));
                 $nome_unico = substr($nome_unico, 0, 50);
                 if (empty($nome_unico)) $nome_unico = 'campo_' . time();
@@ -105,7 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $form_id > 0 && isset($_POST['titul
                 $tamanho_maximo,
                 $placeholder,
                 $ordem,
-                1 // ativo
+                1
             ]);
 
             setMensagem('Pergunta adicionada com sucesso!');
@@ -118,9 +115,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $form_id > 0 && isset($_POST['titul
     exit;
 }
 
-// ==============================================
-// 3. BUSCA DADOS PARA EXIBIÇÃO
-// ==============================================
 $perguntas = [];
 $formulario = null;
 
@@ -146,22 +140,7 @@ if ($form_id > 0) {
 <head>
     <meta charset="UTF-8">
     <title>Construtor de Formulários</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
-        .container { max-width: 900px; margin: 0 auto; background: white; padding: 25px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .alert { padding: 12px; margin-bottom: 20px; border-radius: 6px; }
-        .alert-sucesso { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        .alert-erro { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-        .form-row { display: flex; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
-        .form-group { flex: 1; min-width: 200px; }
-        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
-        .form-group input, .form-group select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
-        .btn { background: #6c63ff; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        .btn:hover { opacity: 0.9; }
-        .btn-secundario { background: #6c757d; text-decoration: none; display: inline-block; padding: 8px 16px; }
-        .question-item { background: #f8f9fa; padding: 12px; margin: 10px 0; border-left: 4px solid #6c63ff; }
-        .question-item small { color: #666; }
-    </style>
+    <link rel="stylesheet" href="construtor_forms.css">
 </head>
 <body>
     <div class="container">
@@ -176,7 +155,6 @@ if ($form_id > 0) {
             <h2>Construtor: <?= htmlspecialchars($formulario['nome']) ?> (ID: <?= $form_id ?>)</h2>
             <p><a href="index.php" class="btn-secundario">Voltar</a></p>
 
-            <!-- Formulário para adicionar pergunta -->
             <form method="POST">
                 <div class="form-row">
                     <div class="form-group">
@@ -198,7 +176,6 @@ if ($form_id > 0) {
                     </div>
                 </div>
 
-                <!-- Opções (só para radio, checkbox, select) -->
                 <div class="form-row" id="opcoes-container" style="display:none;">
                     <div class="form-group">
                         <label for="opcoes">Opções (separadas por vírgula)</label>
@@ -206,7 +183,6 @@ if ($form_id > 0) {
                     </div>
                 </div>
 
-                <!-- Campos comuns -->
                 <div class="form-row">
                     <div class="form-group">
                         <label for="nome_unico">Nome Único (identificador interno)</label>
@@ -218,7 +194,6 @@ if ($form_id > 0) {
                     </div>
                 </div>
 
-                <!-- Placeholder e tamanho (só para texto, textarea, number) -->
                 <div class="form-row" id="texto-container" style="display:none;">
                     <div class="form-group">
                         <label for="placeholder">Placeholder</label>
@@ -230,7 +205,6 @@ if ($form_id > 0) {
                     </div>
                 </div>
 
-                <!-- Ordem e obrigatório (sempre visíveis) -->
                 <div class="form-row">
                     <div class="form-group">
                         <label for="ordem">Ordem de Exibição</label>
@@ -245,7 +219,6 @@ if ($form_id > 0) {
                     </div>
                 </div>
 
-                <!-- Múltipla escolha (só para checkbox) -->
                 <div class="form-row" id="multipla-container" style="display:none;">
                     <div class="form-group">
                         <label for="multipla_escolha">Múltipla Escolha?</label>
@@ -283,53 +256,10 @@ if ($form_id > 0) {
                 <p>Nenhuma pergunta cadastrada ainda.</p>
             <?php endif; ?>
 
-         
         <?php endif; ?>
 
     </div>
 
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const tipoSelect = document.getElementById('tipo_input');
-        const opcoesContainer = document.getElementById('opcoes-container');
-        const textoContainer = document.getElementById('texto-container');
-        const multiplaContainer = document.getElementById('multipla-container');
-
-        function atualizarCampos() {
-            const tipo = tipoSelect.value;
-
-            // Esconde todos
-            opcoesContainer.style.display = 'none';
-            textoContainer.style.display = 'none';
-            multiplaContainer.style.display = 'none';
-
-            // Limpa valores irrelevantes
-            if (!['radio', 'checkbox', 'select'].includes(tipo)) {
-                document.getElementById('opcoes').value = '';
-            }
-            if (tipo !== 'checkbox') {
-                document.getElementById('multipla_escolha').value = '0';
-            }
-
-            // Mostra conforme o tipo
-            if (tipo === 'radio' || tipo === 'checkbox' || tipo === 'select') { 
-                opcoesContainer.style.display = 'flex';
-            }
-
-            if (tipo === 'checkbox') {
-                multiplaContainer.style.display = 'flex';
-            }
-
-            if (tipo === 'texto' || tipo === 'textarea' || tipo === 'number') {
-                textoContainer.style.display = 'flex';
-            }
-        }
-
-        if (tipoSelect) {
-            tipoSelect.addEventListener('change', atualizarCampos);
-            atualizarCampos(); // Inicializa
-        }
-    });
-    </script>
+    <script src="construtor_forms.js"></script>
 </body>
 </html>
