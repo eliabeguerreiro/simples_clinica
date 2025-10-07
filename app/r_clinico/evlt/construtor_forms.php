@@ -20,9 +20,7 @@ try {
     die("Erro crítico: não foi possível conectar ao banco. " . $e->getMessage());
 }
 
-// ==============================================
-// 1. CRIAÇÃO DE NOVO FORMULÁRIO (via POST sem form_id)
-// ==============================================
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_GET['form_id'])) {
     $nome = trim($_POST['nome'] ?? '');
     $descricao = trim($_POST['descricao'] ?? '');
@@ -35,7 +33,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_GET['form_id'])) {
     }
 
     try {
-        // Insere o formulário
         $sql = "INSERT INTO formulario (nome, descricao, especialidade) VALUES (?, ?, ?)";
         $stmt = $db->prepare($sql);
         $stmt->execute([$nome, $descricao, $especialidade]);
@@ -47,13 +44,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_GET['form_id'])) {
         if (!is_dir($caminhoAnexo)) {
             mkdir($caminhoAnexo, 0755, true);
         }
-
         $novaPasta = $caminhoAnexo . '/' . $ultimoId;
         if (!is_dir($novaPasta)) {
             mkdir($novaPasta, 0755);
         }
 
-        setMensagem("Formulário '$nome' criado com sucesso! Pasta anexo/$ultimoId criada.");
+        setMensagem("Formulário '$nome' criado com sucesso!");
         header("Location: construtor_forms.php?form_id=$ultimoId");
         exit;
 
@@ -64,23 +60,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_GET['form_id'])) {
     }
 }
 
-// ==============================================
-// 2. ADIÇÃO DE PERGUNTA (POST com form_id na URL)
-// ==============================================
+
 $form_id = isset($_GET['form_id']) ? (int)$_GET['form_id'] : 0;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $form_id > 0 && isset($_POST['titulo'])) {
-    $titulo = trim($_POST['titulo']);
-    $tipo = $_POST['tipo'] ?? 'texto';
+    $titulo = trim($_POST['titulo'] ?? '');
+    $tipo_input = $_POST['tipo_input'] ?? 'texto';
     $opcoes = trim($_POST['opcoes'] ?? '');
+    $nome_unico = trim($_POST['nome_unico'] ?? '');
+    $descricao = trim($_POST['descricao'] ?? '');
+    $placeholder = trim($_POST['placeholder'] ?? '');
+    $tamanho_maximo = (int)($_POST['tamanho_maximo'] ?? 255);
+    $ordem = (int)($_POST['ordem'] ?? 1);
+    $obrigatorio = (int)($_POST['obrigatorio'] ?? 0);
+    $multipla_escolha = (int)($_POST['multipla_escolha'] ?? 0);
 
     if (empty($titulo)) {
         setMensagem('Título da pergunta é obrigatório.', 'erro');
     } else {
         try {
-            $sql = "INSERT INTO perguntas_forms (form_id, titulo, tipo, opcoes) VALUES (?, ?, ?, ?)";
+            if (empty($nome_unico)) {
+                // Gera nome único baseado no título
+                $nome_unico = preg_replace('/[^a-z0-9_]/', '_', strtolower($titulo));
+                $nome_unico = substr($nome_unico, 0, 50);
+                if (empty($nome_unico)) $nome_unico = 'campo_' . time();
+            }
+
+            $sql = "INSERT INTO formulario_perguntas (
+                        formulario_id, nome_unico, titulo, descricao, tipo_input, opcoes,
+                        obrigatorio, multipla_escolha, tamanho_maximo, placeholder, ordem,
+                        ativo, data_criacao, data_atualizacao
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())";
+
             $stmt = $db->prepare($sql);
-            $stmt->execute([$form_id, $titulo, $tipo, $opcoes]);
+            $stmt->execute([
+                $form_id,
+                $nome_unico,
+                $titulo,
+                $descricao,
+                $tipo_input,
+                $opcoes,
+                $obrigatorio,
+                $multipla_escolha,
+                $tamanho_maximo,
+                $placeholder,
+                $ordem,
+                1 // ativo
+            ]);
+
             setMensagem('Pergunta adicionada com sucesso!');
         } catch (Exception $e) {
             setMensagem('Erro ao salvar pergunta: ' . $e->getMessage(), 'erro');
@@ -98,7 +125,6 @@ $perguntas = [];
 $formulario = null;
 
 if ($form_id > 0) {
-    // Busca o formulário (opcional, para título)
     $stmt = $db->prepare("SELECT * FROM formulario WHERE id = ?");
     $stmt->execute([$form_id]);
     $formulario = $stmt->fetch();
@@ -109,8 +135,7 @@ if ($form_id > 0) {
         exit;
     }
 
-    // Busca perguntas
-    $stmt = $db->prepare("SELECT * FROM formulario_perguntas WHERE form_id = ? ORDER BY id");
+    $stmt = $db->prepare("SELECT * FROM formulario_perguntas WHERE formulario_id = ? ORDER BY ordem, id");
     $stmt->execute([$form_id]);
     $perguntas = $stmt->fetchAll();
 }
@@ -133,7 +158,7 @@ if ($form_id > 0) {
         .form-group input, .form-group select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
         .btn { background: #6c63ff; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
         .btn:hover { opacity: 0.9; }
-        .btn-secundario { background: #6c757d; }
+        .btn-secundario { background: #6c757d; text-decoration: none; display: inline-block; padding: 8px 16px; }
         .question-item { background: #f8f9fa; padding: 12px; margin: 10px 0; border-left: 4px solid #6c63ff; }
         .question-item small { color: #666; }
     </style>
@@ -148,30 +173,89 @@ if ($form_id > 0) {
         <?php endif; ?>
 
         <?php if ($form_id && $formulario): ?>
-            <!-- Construtor de Perguntas -->
             <h2>Construtor: <?= htmlspecialchars($formulario['nome']) ?> (ID: <?= $form_id ?>)</h2>
-            <p><a href="construtor_forms.php" class="btn btn-secundario" style="text-decoration: none; display: inline-block; margin-bottom: 20px;">+ Novo Formulário</a></p>
+            <p><a href="index.php" class="btn-secundario">Voltar</a></p>
 
+            <!-- Formulário para adicionar pergunta -->
             <form method="POST">
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="titulo">Pergunta *</label>
-                        <input type="text" id="titulo" name="titulo" required maxlength="100">
+                        <label for="titulo">Título da Pergunta *</label>
+                        <input type="text" id="titulo" name="titulo" required maxlength="255">
                     </div>
                     <div class="form-group">
-                        <label for="tipo">Tipo *</label>
-                        <select id="tipo" name="tipo" required>
-                            <option value="texto">Texto contínuo</option>
-                            <option value="radio">Escolha única (Radio)</option>
-                            <option value="select">Lista suspensa</option>
-                            <option value="anexo">Anexo de arquivo</option>
+                        <label for="tipo_input">Tipo de Campo *</label>
+                        <select id="tipo_input" name="tipo_input" required>
+                            <option value="texto">Texto Livre</option>
+                            <option value="textarea">Área de Texto</option>
+                            <option value="radio">Escolha Única (Radio)</option>
+                            <option value="checkbox">Múltipla Escolha (Checkbox)</option>
+                            <option value="select">Lista Suspensa</option>
+                            <option value="date">Data</option>
+                            <option value="number">Número</option>
+                            <option value="file">Anexo de Arquivo</option>
                         </select>
                     </div>
-                    <div class="form-group" id="opcoes-container" style="display:none;">
+                </div>
+
+                <!-- Opções (só para radio, checkbox, select) -->
+                <div class="form-row" id="opcoes-container" style="display:none;">
+                    <div class="form-group">
                         <label for="opcoes">Opções (separadas por vírgula)</label>
-                        <input type="text" id="opcoes" name="opcoes" maxlength="200" placeholder="Ex: Sim,Não,Talvez">
+                        <input type="text" id="opcoes" name="opcoes" maxlength="1000" placeholder="Ex: Sim,Não,Talvez">
                     </div>
                 </div>
+
+                <!-- Campos comuns -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="nome_unico">Nome Único (identificador interno)</label>
+                        <input type="text" id="nome_unico" name="nome_unico" maxlength="50" placeholder="Ex: sintomas_paciente">
+                    </div>
+                    <div class="form-group">
+                        <label for="descricao">Descrição / Ajuda</label>
+                        <input type="text" id="descricao" name="descricao" maxlength="255" placeholder="Ex: Descreva os sintomas observados">
+                    </div>
+                </div>
+
+                <!-- Placeholder e tamanho (só para texto, textarea, number) -->
+                <div class="form-row" id="texto-container" style="display:none;">
+                    <div class="form-group">
+                        <label for="placeholder">Placeholder</label>
+                        <input type="text" id="placeholder" name="placeholder" maxlength="100" placeholder="Ex: Digite aqui...">
+                    </div>
+                    <div class="form-group">
+                        <label for="tamanho_maximo">Tamanho Máximo (caract.)</label>
+                        <input type="number" id="tamanho_maximo" name="tamanho_maximo" min="1" max="10000" value="255">
+                    </div>
+                </div>
+
+                <!-- Ordem e obrigatório (sempre visíveis) -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="ordem">Ordem de Exibição</label>
+                        <input type="number" id="ordem" name="ordem" min="1" value="1">
+                    </div>
+                    <div class="form-group">
+                        <label for="obrigatorio">Obrigatório?</label>
+                        <select id="obrigatorio" name="obrigatorio">
+                            <option value="1">Sim</option>
+                            <option value="0">Não</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Múltipla escolha (só para checkbox) -->
+                <div class="form-row" id="multipla-container" style="display:none;">
+                    <div class="form-group">
+                        <label for="multipla_escolha">Múltipla Escolha?</label>
+                        <select id="multipla_escolha" name="multipla_escolha">
+                            <option value="0">Não</option>
+                            <option value="1">Sim</option>
+                        </select>
+                    </div>
+                </div>
+
                 <button type="submit" class="btn">Adicionar Pergunta</button>
             </form>
 
@@ -182,9 +266,16 @@ if ($form_id > 0) {
                 <?php foreach ($perguntas as $p): ?>
                     <div class="question-item">
                         <strong><?= htmlspecialchars($p['titulo']) ?></strong>
-                        <br><small>Tipo: <?= htmlspecialchars($p['tipo']) ?></small>
+                        <br><small>Tipo: <?= htmlspecialchars($p['tipo_input']) ?></small>
+                        <?php if (!empty($p['descricao'])): ?>
+                            <br><small>Descrição: <?= htmlspecialchars($p['descricao']) ?></small>
+                        <?php endif; ?>
                         <?php if (!empty($p['opcoes'])): ?>
                             <br><small>Opções: <?= htmlspecialchars($p['opcoes']) ?></small>
+                        <?php endif; ?>
+                        <br><small>Ordem: <?= (int)$p['ordem'] ?> | Obrigatório: <?= $p['obrigatorio'] ? 'Sim' : 'Não' ?></small>
+                        <?php if ($p['multipla_escolha']): ?>
+                            <br><small>Múltipla escolha: Sim</small>
                         <?php endif; ?>
                     </div>
                 <?php endforeach; ?>
@@ -192,40 +283,53 @@ if ($form_id > 0) {
                 <p>Nenhuma pergunta cadastrada ainda.</p>
             <?php endif; ?>
 
-        <?php else: ?>
-            <!-- Formulário para criar novo formulário -->
-            <h2>Novo Formulário Clínico</h2>
-            <form method="POST">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="nome">Nome do Formulário *</label>
-                        <input type="text" id="nome" name="nome" required maxlength="100">
-                    </div>
-                    <div class="form-group">
-                        <label for="especialidade">Especialidade *</label>
-                        <input type="text" id="especialidade" name="especialidade" required maxlength="100">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="descricao">Descrição</label>
-                    <input type="text" id="descricao" name="descricao" maxlength="255">
-                </div>
-                <button type="submit" class="btn">Criar Formulário</button>
-            </form>
+         
         <?php endif; ?>
 
     </div>
 
     <script>
-        document.getElementById('tipo')?.addEventListener('change', function() {
-            const container = document.getElementById('opcoes-container');
-            if (this.value === 'radio' || this.value === 'select') {
-                container.style.display = 'block';
-            } else {
-                container.style.display = 'none';
+    document.addEventListener('DOMContentLoaded', function() {
+        const tipoSelect = document.getElementById('tipo_input');
+        const opcoesContainer = document.getElementById('opcoes-container');
+        const textoContainer = document.getElementById('texto-container');
+        const multiplaContainer = document.getElementById('multipla-container');
+
+        function atualizarCampos() {
+            const tipo = tipoSelect.value;
+
+            // Esconde todos
+            opcoesContainer.style.display = 'none';
+            textoContainer.style.display = 'none';
+            multiplaContainer.style.display = 'none';
+
+            // Limpa valores irrelevantes
+            if (!['radio', 'checkbox', 'select'].includes(tipo)) {
                 document.getElementById('opcoes').value = '';
             }
-        });
+            if (tipo !== 'checkbox') {
+                document.getElementById('multipla_escolha').value = '0';
+            }
+
+            // Mostra conforme o tipo
+            if (tipo === 'radio' || tipo === 'checkbox' || tipo === 'select') { 
+                opcoesContainer.style.display = 'flex';
+            }
+
+            if (tipo === 'checkbox') {
+                multiplaContainer.style.display = 'flex';
+            }
+
+            if (tipo === 'texto' || tipo === 'textarea' || tipo === 'number') {
+                textoContainer.style.display = 'flex';
+            }
+        }
+
+        if (tipoSelect) {
+            tipoSelect.addEventListener('change', atualizarCampos);
+            atualizarCampos(); // Inicializa
+        }
+    });
     </script>
 </body>
 </html>
