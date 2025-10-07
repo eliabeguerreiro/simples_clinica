@@ -46,7 +46,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['titulo'])) {
     $descricao = trim($_POST['descricao'] ?? '');
     $placeholder = trim($_POST['placeholder'] ?? '');
     $tamanho_maximo = (int)($_POST['tamanho_maximo'] ?? 255);
-    $ordem = (int)($_POST['ordem'] ?? 1);
     $obrigatorio = (int)($_POST['obrigatorio'] ?? 0);
     $multipla_escolha = (int)($_POST['multipla_escolha'] ?? 0);
 
@@ -63,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['titulo'])) {
 
             // Processa opções SOMENTE para tipos que usam
             $tiposComOpcoes = ['radio', 'checkbox', 'select'];
-            $opcoes = null; // padrão: NULL
+            $opcoes = null;
 
             if (in_array($tipo_input, $tiposComOpcoes)) {
                 $opcoesRaw = trim($_POST['opcoes'] ?? '');
@@ -71,8 +70,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['titulo'])) {
                     $opcoesArray = array_map('trim', explode(',', $opcoesRaw));
                     $opcoes = json_encode($opcoesArray, JSON_UNESCAPED_UNICODE);
                 }
-                // Se vazio, mantém $opcoes = null
             }
+
+            // Calcula a nova ordem: MAX(ordem) + 1
+            $stmtMax = $db->prepare("SELECT COALESCE(MAX(ordem), 0) AS max_ordem FROM formulario_perguntas WHERE formulario_id = ?");
+            $stmtMax->execute([$form_id]);
+            $maxOrdem = $stmtMax->fetchColumn();
+            $novaOrdem = $maxOrdem + 1;
 
             $sql = "INSERT INTO formulario_perguntas (
                         formulario_id, nome_unico, titulo, descricao, tipo_input, opcoes,
@@ -87,12 +91,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['titulo'])) {
                 $titulo,
                 $descricao,
                 $tipo_input,
-                $opcoes, // pode ser string JSON ou NULL
+                $opcoes,
                 $obrigatorio,
                 $multipla_escolha,
                 $tamanho_maximo,
                 $placeholder,
-                $ordem,
+                $novaOrdem,
                 1 // ativo
             ]);
 
@@ -100,6 +104,89 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['titulo'])) {
         } catch (Exception $e) {
             setMensagem('Erro ao salvar pergunta: ' . $e->getMessage(), 'erro');
         }
+    }
+
+    header("Location: construtor_forms.php?form_id=$form_id");
+    exit;
+}
+
+
+// Processa reordenação (mover para cima ou para baixo)
+if (isset($_GET['mover']) && isset($_GET['id'])) {
+    $perguntaId = (int)$_GET['id'];
+    $direcao = $_GET['mover']; // 'cima' ou 'baixo'
+
+    try {
+        $stmt = $db->prepare("SELECT formulario_id, ordem FROM formulario_perguntas WHERE id = ?");
+        $stmt->execute([$perguntaId]);
+        $pergunta = $stmt->fetch();
+
+        if (!$pergunta) {
+            throw new Exception("Pergunta não encontrada.");
+        }
+
+        $formId = $pergunta['formulario_id'];
+        $ordemAtual = $pergunta['ordem'];
+
+        if ($direcao === 'cima') {
+            $stmtAlvo = $db->prepare("SELECT id, ordem FROM formulario_perguntas WHERE formulario_id = ? AND ordem < ? ORDER BY ordem DESC LIMIT 1");
+            $stmtAlvo->execute([$formId, $ordemAtual]);
+            $alvo = $stmtAlvo->fetch();
+
+            if ($alvo) {
+                $db->beginTransaction();
+                try {
+                    $stmtTroca = $db->prepare("
+                        UPDATE formulario_perguntas 
+                        SET ordem = CASE 
+                            WHEN id = ? THEN ?
+                            WHEN id = ? THEN ?
+                        END
+                        WHERE id IN (?, ?)
+                    ");
+                    $stmtTroca->execute([
+                        $perguntaId, $alvo['ordem'],
+                        $alvo['id'], $ordemAtual,
+                        $perguntaId, $alvo['id']
+                    ]);
+                    $db->commit();
+                } catch (Exception $e) {
+                    $db->rollback();
+                    throw $e;
+                }
+            }
+        } elseif ($direcao === 'baixo') {
+            $stmtAlvo = $db->prepare("SELECT id, ordem FROM formulario_perguntas WHERE formulario_id = ? AND ordem > ? ORDER BY ordem ASC LIMIT 1");
+            $stmtAlvo->execute([$formId, $ordemAtual]);
+            $alvo = $stmtAlvo->fetch();
+
+            if ($alvo) {
+                $db->beginTransaction();
+                try {
+                    $stmtTroca = $db->prepare("
+                        UPDATE formulario_perguntas 
+                        SET ordem = CASE 
+                            WHEN id = ? THEN ?
+                            WHEN id = ? THEN ?
+                        END
+                        WHERE id IN (?, ?)
+                    ");
+                    $stmtTroca->execute([
+                        $perguntaId, $alvo['ordem'],
+                        $alvo['id'], $ordemAtual,
+                        $perguntaId, $alvo['id']
+                    ]);
+                    $db->commit();
+                } catch (Exception $e) {
+                    $db->rollback();
+                    throw $e;
+                }
+            }
+        }
+
+        setMensagem('Ordem atualizada com sucesso!');
+    } catch (Exception $e) {
+        setMensagem('Erro ao reordenar: ' . $e->getMessage(), 'erro');
     }
 
     header("Location: construtor_forms.php?form_id=$form_id");
@@ -185,12 +272,8 @@ $perguntas = $stmt->fetchAll();
                 </div>
             </div>
 
-            <!-- Ordem e obrigatório (sempre visíveis) -->
+            <!-- Obrigatório (sempre visível) -->
             <div class="form-row">
-                <div class="form-group">
-                    <label for="ordem">Ordem de Exibição</label>
-                    <input type="number" id="ordem" name="ordem" min="1" value="1">
-                </div>
                 <div class="form-group">
                     <label for="obrigatorio">Obrigatório?</label>
                     <select id="obrigatorio" name="obrigatorio">
@@ -237,6 +320,22 @@ $perguntas = $stmt->fetchAll();
                     <?php if ($p['multipla_escolha']): ?>
                         <br><small>Múltipla escolha: Sim</small>
                     <?php endif; ?>
+
+                    <!-- Botões de reordenação -->
+
+                    <div style="display: flex; justify-content: flex-end; margin-top: 8px; gap: 4px; align-self: start;">
+                        <a href="?form_id=<?= $form_id ?>&mover=cima&id=<?= $p['id'] ?>" 
+                        class="btn-move btn-move-up" 
+                        title="Mover para cima">
+                            <i class="fas fa-arrow-up"></i>
+                        </a>
+                        <a href="?form_id=<?= $form_id ?>&mover=baixo&id=<?= $p['id'] ?>" 
+                        class="btn-move btn-move-down" 
+                        title="Mover para baixo">
+                            <i class="fas fa-arrow-down"></i>
+                        </a>
+                    </div>
+
                 </div>
             <?php endforeach; ?>
         <?php else: ?>
