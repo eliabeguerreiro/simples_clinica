@@ -195,9 +195,9 @@ class ConteudoRClinicoEvlt
                         <label for="especialidade">Especialidade*</label>
                         <select required id="especialidade" name="especialidade" required>
                             <option value="">Selecionar</option>
-                            <option value="01" ' . (isset($dadosForm['especialidade']) && $dadosForm['especialidade'] == '01' ? 'selected' : '') . '>Fisio</option>
-                            <option value="02" ' . (isset($dadosForm['especialidade']) && $dadosForm['especialidade'] == '02' ? 'selected' : '') . '>T. Ocupacional</option>
-                            <option value="03" ' . (isset($dadosForm['especialidade']) && $dadosForm['especialidade'] == '03' ? 'selected' : '') . '>Fono</option>
+                            <option value="FISIO" ' . (isset($dadosForm['especialidade']) && $dadosForm['especialidade'] == 'FISIO' ? 'selected' : '') . '>Fisio</option>
+                            <option value="FONO" ' . (isset($dadosForm['especialidade']) && $dadosForm['especialidade'] == 'FONO' ? 'selected' : '') . '>T. Ocupacional</option>
+                            <option value="TEOC" ' . (isset($dadosForm['especialidade']) && $dadosForm['especialidade'] == 'TEOC' ? 'selected' : '') . '>Fono</option>
                         </select>
                     </div>
 
@@ -209,6 +209,11 @@ class ConteudoRClinicoEvlt
                         </select>
                     </div>
 
+                    <div class="form-group">
+                        <label for="descricao">Descrição</label>
+                        <input required type="text" id="descricao" name="descricao" required maxlength="100" placeholder="Digite a descrição"
+                            value="' . (isset($dadosForm['descricao']) ? htmlspecialchars($dadosForm['descricao']) : '') . '">
+                    </div>
                 </div>
 
            
