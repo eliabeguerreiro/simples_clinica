@@ -183,44 +183,6 @@ h3 {
     color: #666;
     font-size: 13px;
 }
-/* Botões de mover (ícones pequenos, extremo direita) */
-.btn-move {
-    background: transparent;
-    color: #6c63ff;
-    border: 1px solid #e1e1ff;
-    border-radius: 4px;
-    padding: 4px 6px;
-    font-size: 12px;
-    text-decoration: none;
-    transition: all 0.2s ease;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 24px;
-    height: 24px;
-    cursor: pointer;
-}
-
-.btn-move:hover {
-    background: #6c63ff;
-    color: white;
-    border-color: #6c63ff;
-    transform: translateY(-1px);
-}
-
-.btn-move i {
-    font-size: 10px;
-}
-
-/* Ícone de cima com leve destaque */
-.btn-move-up:hover {
-    background: #574b90;
-}
-
-/* Ícone de baixo com leve destaque */
-.btn-move-down:hover {
-    background: #574b90;
-}
 
 /* Responsividade */
 @media (max-width: 768px) {
