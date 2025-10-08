@@ -173,7 +173,6 @@ $perguntas = $stmt->fetchAll();
                         <option value="radio">Escolha Única (Radio)</option>
                         <option value="checkbox">Múltipla Escolha (Checkbox)</option>
                         <option value="select">Lista Suspensa</option>
-                        <option value="date">Data</option>
                         <option value="number">Número</option>
                         <option value="file">Anexo de Arquivo</option>
                     </select>
