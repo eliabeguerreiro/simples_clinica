@@ -274,6 +274,9 @@ class ConteudoRClinicoEvlt
                             <a href="construtor_forms.php?form_id=' . (int)$form['id'] . '" class="btn-view" title="Gerenciar Perguntas">
                                 <i class="fas fa-edit"></i> Gerenciar
                             </a>
+                            <a href="render_forms.php?form_id=' . (int)$form['id'] . '" class="btn-view" title="Visualizar Formulário" style="margin-left:8px;">
+                                <i class="fas fa-eye"></i> Visualizar
+                            </a>
                         </td>
                     </tr>';
             }

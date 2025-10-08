@@ -151,6 +151,21 @@ try {
             content: " *";
             color: #ff6b6b;
         }
+        .btn-secundario {
+            display: inline-block;
+            background: #e1e1ff;
+            color: #333;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            text-align: center;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        .btn-secundario:hover {
+            background: #d4d4ff;
+            transform: translateY(-2px);
+        }
     </style>
 </head>
 <body>
@@ -161,6 +176,12 @@ try {
                 <p><?= htmlspecialchars($formulario['descricao']) ?></p>
             <?php endif; ?>
         </div>
+
+        <h2>Visualizador : <?= htmlspecialchars($formulario['nome']) ?> (ID: <?= $form_id ?>)</h2>
+        <p>
+            <a href="index.php" class="btn-secundario">Voltar</a>
+            
+        </p>
 
         <form method="POST" action="salvar_resposta.php" enctype="multipart/form-data">
             <input type="hidden" name="formulario_id" value="<?= $form_id ?>">

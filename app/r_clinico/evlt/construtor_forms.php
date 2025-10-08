@@ -155,8 +155,14 @@ $perguntas = $stmt->fetchAll();
             </div>
         <?php endif; ?>
 
+  
         <h2>Construtor: <?= htmlspecialchars($formulario['nome']) ?> (ID: <?= $form_id ?>)</h2>
-        <p><a href="index.php" class="btn-secundario">Voltar</a></p>
+        <p>
+            <a href="index.php" class="btn-secundario">Voltar</a>
+            <a href="render_forms.php?form_id=<?= $form_id ?>" class="btn-secundario" style="margin-left:12px;">
+                Visualizar Formulário
+            </a>
+        </p>
 
         <!-- Formulário para adicionar pergunta -->
         <form method="POST">
