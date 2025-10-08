@@ -184,6 +184,34 @@ h3 {
     font-size: 13px;
 }
 
+/* Botão de excluir pergunta */
+.btn-delete-small {
+    background: transparent;
+    color: #dc3545;
+    border: 1px solid #f8d7da;
+    border-radius: 4px;
+    padding: 4px 6px;
+    font-size: 12px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+}
+
+.btn-delete-small:hover {
+    background: #dc3545;
+    color: white;
+    border-color: #dc3545;
+    transform: translateY(-1px);
+}
+
+.btn-delete-small i {
+    font-size: 10px;
+}
 /* Responsividade */
 @media (max-width: 768px) {
     .container {

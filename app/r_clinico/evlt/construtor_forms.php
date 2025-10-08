@@ -27,6 +27,33 @@ if ($form_id <= 0) {
     exit;
 }
 
+// Processa exclusão de pergunta
+if (isset($_GET['excluir'])) {
+    $perguntaId = (int)$_GET['excluir'];
+
+    try {
+        // Verifica se a pergunta pertence ao formulário atual
+        $stmt = $db->prepare("SELECT id FROM formulario_perguntas WHERE id = ? AND formulario_id = ?");
+        $stmt->execute([$perguntaId, $form_id]);
+        $pergunta = $stmt->fetch();
+
+        if (!$pergunta) {
+            throw new Exception("Pergunta não encontrada ou não pertence a este formulário.");
+        }
+
+        // Exclui
+        $stmt = $db->prepare("DELETE FROM formulario_perguntas WHERE id = ?");
+        $stmt->execute([$perguntaId]);
+
+        setMensagem('Pergunta excluída com sucesso!');
+    } catch (Exception $e) {
+        setMensagem('Erro ao excluir pergunta: ' . $e->getMessage(), 'erro');
+    }
+
+    header("Location: construtor_forms.php?form_id=$form_id");
+    exit;
+}
+
 // Busca formulário
 $stmt = $db->prepare("SELECT * FROM formulario WHERE id = ?");
 $stmt->execute([$form_id]);
@@ -46,7 +73,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['titulo'])) {
     $descricao = trim($_POST['descricao'] ?? '');
     $placeholder = trim($_POST['placeholder'] ?? '');
     $tamanho_maximo = (int)($_POST['tamanho_maximo'] ?? 255);
-    $ordem = (int)($_POST['ordem'] ?? 1);
     $obrigatorio = (int)($_POST['obrigatorio'] ?? 0);
     $multipla_escolha = (int)($_POST['multipla_escolha'] ?? 0);
 
@@ -63,7 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['titulo'])) {
 
             // Processa opções SOMENTE para tipos que usam
             $tiposComOpcoes = ['radio', 'checkbox', 'select'];
-            $opcoes = null; // padrão: NULL
+            $opcoes = null;
 
             if (in_array($tipo_input, $tiposComOpcoes)) {
                 $opcoesRaw = trim($_POST['opcoes'] ?? '');
@@ -71,14 +97,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['titulo'])) {
                     $opcoesArray = array_map('trim', explode(',', $opcoesRaw));
                     $opcoes = json_encode($opcoesArray, JSON_UNESCAPED_UNICODE);
                 }
-                // Se vazio, mantém $opcoes = null
             }
 
+            // Insere SEM coluna ordem
             $sql = "INSERT INTO formulario_perguntas (
                         formulario_id, nome_unico, titulo, descricao, tipo_input, opcoes,
-                        obrigatorio, multipla_escolha, tamanho_maximo, placeholder, ordem,
+                        obrigatorio, multipla_escolha, tamanho_maximo, placeholder,
                         ativo, data_criacao, data_atualizacao
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())";
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())";
 
             $stmt = $db->prepare($sql);
             $stmt->execute([
@@ -87,12 +113,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['titulo'])) {
                 $titulo,
                 $descricao,
                 $tipo_input,
-                $opcoes, // pode ser string JSON ou NULL
+                $opcoes,
                 $obrigatorio,
                 $multipla_escolha,
                 $tamanho_maximo,
                 $placeholder,
-                $ordem,
                 1 // ativo
             ]);
 
@@ -106,8 +131,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['titulo'])) {
     exit;
 }
 
-// Busca perguntas cadastradas
-$stmt = $db->prepare("SELECT * FROM formulario_perguntas WHERE formulario_id = ? ORDER BY ordem, id");
+
+
+// Busca perguntas cadastradas — ordenadas por ID (ordem de inserção)
+$stmt = $db->prepare("SELECT * FROM formulario_perguntas WHERE formulario_id = ? ORDER BY id");
 $stmt->execute([$form_id]);
 $perguntas = $stmt->fetchAll();
 ?>
@@ -185,12 +212,8 @@ $perguntas = $stmt->fetchAll();
                 </div>
             </div>
 
-            <!-- Ordem e obrigatório (sempre visíveis) -->
+            <!-- Obrigatório (sempre visível) -->
             <div class="form-row">
-                <div class="form-group">
-                    <label for="ordem">Ordem de Exibição</label>
-                    <input type="number" id="ordem" name="ordem" min="1" value="1">
-                </div>
                 <div class="form-group">
                     <label for="obrigatorio">Obrigatório?</label>
                     <select id="obrigatorio" name="obrigatorio">
@@ -233,14 +256,22 @@ $perguntas = $stmt->fetchAll();
                             <br><small>Opções: <?= htmlspecialchars(implode(', ', $opcoesArray)) ?></small>
                         <?php endif; ?>
                     <?php endif; ?>
-                    <br><small>Ordem: <?= (int)$p['ordem'] ?> | Obrigatório: <?= $p['obrigatorio'] ? 'Sim' : 'Não' ?></small>
+                    <br><small>Obrigatório: <?= $p['obrigatorio'] ? 'Sim' : 'Não' ?></small>
                     <?php if ($p['multipla_escolha']): ?>
                         <br><small>Múltipla escolha: Sim</small>
                     <?php endif; ?>
+
+                    <!-- Botão de excluir -->
+                    <div style="display: flex; justify-content: flex-end; margin-top: 8px; gap: 4px;">
+                        <a href="?form_id=<?= $form_id ?>&excluir=<?= $p['id'] ?>" 
+                        class="btn-delete-small" 
+                        title="Excluir pergunta"
+                        onclick="return confirm('Tem certeza que deseja excluir esta pergunta? Esta ação não pode ser desfeita.')">
+                            <i class="fas fa-trash"></i>
+                        </a>
+                    </div>
                 </div>
             <?php endforeach; ?>
-        <?php else: ?>
-            <p>Nenhuma pergunta cadastrada ainda.</p>
         <?php endif; ?>
 
     </div>
