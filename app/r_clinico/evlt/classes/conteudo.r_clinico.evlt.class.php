@@ -182,14 +182,26 @@ class ConteudoRClinicoEvlt
         </div>';
     }
 
-    private function getListagemFormularios()
+    private function getListagemFormularios($resultado = null)
     {
+        $mensagens = '';
+        if ($resultado && isset($resultado['sucesso'])) {
+            if ($resultado['sucesso']) {
+                $mensagens = '<div class="form-message success">' . htmlspecialchars($resultado['mensagem']) . '</div>';
+            } else {
+                $mensagens = '<div class="form-message error">';
+                foreach ($resultado['erros'] ?? [] as $erro) {
+                    $mensagens .= '<p>' . htmlspecialchars($erro) . '</p>';
+                }
+                $mensagens .= '</div>';
+            }
+        }
+
         try {
             $formularios = $this->evolucao->listarFormularios();
         } catch (Exception $e) {
             $formularios = [];
             $mensagens = '<div class="form-message error">Erro ao carregar formulários: ' . htmlspecialchars($e->getMessage()) . '</div>';
-            return $mensagens . '<div class="no-data">Nenhum formulário disponível.</div>';
         }
 
         $total = count($formularios);
@@ -211,10 +223,6 @@ class ConteudoRClinicoEvlt
             foreach ($formularios as $form) {
                 $ativo = $form['ativo'] == 1 ? 'Ativo' : 'Inativo';
                 $descricao = !empty($form['descricao']) ? htmlspecialchars($form['descricao']) : '-';
-                $linkRender = "render_forms.php?form_id=" . (int)$form['id'];
-                if ($this->paciente_id) {
-                    $linkRender .= "&paciente_id=" . (int)$this->paciente_id;
-                }
                 $tabelaFormularios .= '
                     <tr>
                         <td>' . (int)$form['id'] . '</td>
@@ -226,8 +234,8 @@ class ConteudoRClinicoEvlt
                             <a href="construtor_forms.php?form_id=' . (int)$form['id'] . '" class="btn-view" title="Gerenciar Perguntas">
                                 <i class="fas fa-edit"></i> Gerenciar
                             </a>
-                            <a href="' . $linkRender . '" class="btn-view" title="Preencher Evolução" style="margin-left:8px;">
-                                <i class="fas fa-file-medical"></i> Preencher
+                            <a href="render_forms.php?form_id=' . (int)$form['id'] . '" class="btn-view" title="Visualizar Formulário" style="margin-left:8px;">
+                                <i class="fas fa-eye"></i> Visualizar
                             </a>
                         </td>
                     </tr>';
@@ -242,12 +250,13 @@ class ConteudoRClinicoEvlt
 
         return '
         <div class="listagem-container">
+            ' . $mensagens . '
             <div class="table-header">
                 <h3>Listagem de Formulários (' . $total . ' cadastrado' . ($total != 1 ? 's' : '') . ')</h3>
-                ' . ($this->paciente_id ? '<p><strong>Paciente vinculado:</strong> ID ' . (int)$this->paciente_id . '</p>' : '') . '
             </div>
             ' . $tabelaFormularios . '
         </div>';
     }
 }
+
 ?>
