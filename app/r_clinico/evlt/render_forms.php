@@ -1,15 +1,11 @@
 <?php
-// render_formulario.php
-// Página autocontida para renderizar formulários dinâmicos
-
 session_start();
 
-// Configuração do banco (ajuste conforme seu projeto)
-function getDbConnection() {
+function getDbConnection()
+{
     static $db = null;
     if ($db === null) {
         try {
-            // Substitua pelo seu método de conexão
             include_once "classes/db.class.php";
             $db = DB::connect();
         } catch (Exception $e) {
@@ -20,9 +16,13 @@ function getDbConnection() {
 }
 
 $form_id = isset($_GET['form_id']) ? (int)$_GET['form_id'] : 0;
+$paciente_id = isset($_GET['paciente_id']) ? (int)$_GET['paciente_id'] : 0;
 
 if ($form_id <= 0) {
     die("<h2>Erro</h2><p>ID do formulário não especificado.</p>");
+}
+if ($paciente_id <= 0) {
+    die("<h2>Erro</h2><p>ID do paciente não especificado.</p>");
 }
 
 try {
@@ -37,7 +37,7 @@ try {
         die("<h2>Formulário não encontrado</h2>");
     }
 
-    // Busca perguntas ativas, ordenadas por ID
+    // Busca perguntas ativas
     $stmt = $db->prepare("SELECT * FROM formulario_perguntas WHERE formulario_id = ? AND ativo = 1 ORDER BY id");
     $stmt->execute([$form_id]);
     $perguntas = $stmt->fetchAll();
@@ -177,14 +177,14 @@ try {
             <?php endif; ?>
         </div>
 
-        <h2>Visualizador : <?= htmlspecialchars($formulario['nome']) ?> (ID: <?= $form_id ?>)</h2>
+        <h2>Formulário de Evolução para Paciente ID: <?= $paciente_id ?></h2>
         <p>
-            <a href="index.php" class="btn-secundario">Voltar</a>
-            
+            <a href="index.php?paciente_id=<?= $paciente_id ?>" class="btn-secundario">Voltar</a>
         </p>
 
         <form method="POST" action="salvar_resposta.php" enctype="multipart/form-data">
             <input type="hidden" name="formulario_id" value="<?= $form_id ?>">
+            <input type="hidden" name="paciente_id" value="<?= $paciente_id ?>">
 
             <?php foreach ($perguntas as $p): ?>
                 <div class="form-group">
@@ -259,6 +259,11 @@ try {
                     <?php endif; ?>
                 </div>
             <?php endforeach; ?>
+
+            <div class="form-group">
+                <label for="observacoes">Observações (opcional)</label>
+                <textarea name="observacoes" class="form-control" rows="3" placeholder="Adicione observações clínicas..."></textarea>
+            </div>
 
             <button type="submit" class="btn-submit">Salvar Evolução</button>
         </form>

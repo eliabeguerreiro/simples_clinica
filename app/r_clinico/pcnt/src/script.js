@@ -135,14 +135,7 @@ document.addEventListener('keydown', function(e) {
 
 // Função para abrir evolução do paciente
 function abrirEvolucao(pacienteId) {
-    // Aqui você pode redirecionar para a página de evolução ou abrir um modal
-    alert('Função de evolução ainda será implementada. ID do paciente: ' + pacienteId);
-    
-    // Exemplo de redirecionamento:
-    // window.location.href = '../evolucoes/?paciente=' + pacienteId;
-    
-    // Ou exemplo de abertura de modal:
-    // abrirModalEvolucao(pacienteId);
+    window.location.href = '../evlt/escolher_forms.php?paciente_id=' + pacienteId;
 }
 
 // Função para redirecionar para o módulo de evoluções

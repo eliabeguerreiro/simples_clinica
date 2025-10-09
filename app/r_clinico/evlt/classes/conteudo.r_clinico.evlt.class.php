@@ -1,14 +1,16 @@
 <?php
 include_once "../../../classes/db.class.php";
-include_once "evolucao.class.php"; // Nome do arquivo em minúsculas, como está no sistema
+include_once "evolucao.class.php";
 
 class ConteudoRClinicoEvlt
 {
     private $evolucao;
+    private $paciente_id;
 
-    public function __construct()
+    public function __construct($paciente_id = null)
     {
         $this->evolucao = new Evolucao();
+        $this->paciente_id = $paciente_id;
     }
 
     public function render()
@@ -40,12 +42,11 @@ class ConteudoRClinicoEvlt
     {
         $nome = htmlspecialchars($_SESSION['data_user']['nm_usuario'] ?? 'Usuário');
 
-        // Processa formulário de criação de formulário (redireciona para construtor_forms.php)
+        // Processa formulário de criação de formulário
         $resultado = null;
         if ($_POST && isset($_POST['acao']) && $_POST['acao'] === 'cadastrar') {
             $resultado = $this->evolucao->criarFormulario($_POST);
             if ($resultado['sucesso']) {
-                // Redireciona para o construtor após criação
                 header("Location: construtor_forms.php?form_id=" . $resultado['id']);
                 exit;
             }
@@ -67,20 +68,20 @@ class ConteudoRClinicoEvlt
                 </header>
                 <section class="simple-box">
                     <h2>Registro Clínico - Evolução</h2>
-                    <!-- Abas principais de navegação entre módulos -->
+                    <!-- Abas principais -->
                     <div class="tabs" id="main-tabs">
                         <button class="tab-btn" onclick="redirectToTab('pacientes')">Pacientes</button>
                         <button class="tab-btn" onclick="redirectToTab('atendimentos')">Atendimentos</button>
                         <button class="tab-btn active" onclick="redirectToTab('evolucoes')">Evoluções</button>
                     </div>
-                    <!-- Sub-abas do módulo atual -->
+                    <!-- Sub-abas -->
                     <div id="sub-tabs">
                         <div class="sub-tabs" id="sub-pacientes">
                             <button class="tab-btn active" data-main="pacientes" data-sub="cadastro" onclick="showSubTab('pacientes', 'cadastro', this)">Cadastro de Formulário</button>
                             <button class="tab-btn" data-main="pacientes" data-sub="documentos" onclick="showSubTab('pacientes', 'documentos', this)">Listagem de Formulários</button>
                         </div>
                     </div>
-                    <!-- Conteúdo das abas -->
+                    <!-- Conteúdo -->
                     <div id="tab-content">
                         <div id="pacientes-cadastro" class="tab-content active">
                             {$this->getFormularioCadastro($resultado)}
@@ -90,7 +91,7 @@ class ConteudoRClinicoEvlt
                         </div>
                     </div>
                 </section>
-                <!-- Modal de confirmação de exclusão -->
+                <!-- Modal de exclusão -->
                 <div id="modal-exclusao" class="modal" style="display:none;">
                     <div class="modal-content">
                         <div class="modal-header">
@@ -107,9 +108,6 @@ class ConteudoRClinicoEvlt
                         </div>
                     </div>
                 </div>
-                <script src="./src/script.js"></script>
-                <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-                <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
             </body>
         HTML;
         return $html;
@@ -120,15 +118,15 @@ class ConteudoRClinicoEvlt
         $dadosForm = [];
         if ($resultado && isset($resultado['dados'])) {
             $dadosForm = $resultado['dados'];
-        } elseif (isset($_POST) && (!isset($_POST['acao']) || $_POST['acao'] == 'cadastrar')) {
+        } elseif (isset($_POST) && $_POST['acao'] == 'cadastrar') {
             $dadosForm = $_POST;
         }
 
         $mensagens = '';
-        if ($resultado && (!isset($_POST['acao']) || $_POST['acao'] == 'cadastrar')) {
-            if (isset($resultado['sucesso']) && $resultado['sucesso']) {
+        if ($resultado && $_POST['acao'] == 'cadastrar') {
+            if ($resultado['sucesso']) {
                 $mensagens = '<div class="form-message success">' . htmlspecialchars($resultado['mensagem']) . '</div>';
-            } elseif (isset($resultado['erros'])) {
+            } else {
                 $mensagens = '<div class="form-message error">';
                 foreach ($resultado['erros'] as $erro) {
                     $mensagens .= '<p>' . htmlspecialchars($erro) . '</p>';
@@ -225,6 +223,10 @@ class ConteudoRClinicoEvlt
             foreach ($formularios as $form) {
                 $ativo = $form['ativo'] == 1 ? 'Ativo' : 'Inativo';
                 $descricao = !empty($form['descricao']) ? htmlspecialchars($form['descricao']) : '-';
+                $linkRender = "render_forms.php?form_id=" . (int)$form['id'];
+                if ($this->paciente_id) {
+                    $linkRender .= "&paciente_id=" . (int)$this->paciente_id;
+                }
                 $tabelaFormularios .= '
                     <tr>
                         <td>' . (int)$form['id'] . '</td>
@@ -236,8 +238,8 @@ class ConteudoRClinicoEvlt
                             <a href="construtor_forms.php?form_id=' . (int)$form['id'] . '" class="btn-view" title="Gerenciar Perguntas">
                                 <i class="fas fa-edit"></i> Gerenciar
                             </a>
-                            <a href="render_forms.php?form_id=' . (int)$form['id'] . '" class="btn-view" title="Visualizar Formulário" style="margin-left:8px;">
-                                <i class="fas fa-eye"></i> Visualizar
+                            <a href="' . $linkRender . '" class="btn-view" title="Preencher Evolução" style="margin-left:8px;">
+                                <i class="fas fa-file-medical"></i> Preencher
                             </a>
                         </td>
                     </tr>';
@@ -255,6 +257,7 @@ class ConteudoRClinicoEvlt
             ' . $mensagens . '
             <div class="table-header">
                 <h3>Listagem de Formulários (' . $total . ' cadastrado' . ($total != 1 ? 's' : '') . ')</h3>
+                ' . ($this->paciente_id ? '<p><strong>Paciente vinculado:</strong> ID ' . (int)$this->paciente_id . '</p>' : '') . '
             </div>
             ' . $tabelaFormularios . '
         </div>';
