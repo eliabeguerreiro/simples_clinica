@@ -1,16 +1,16 @@
 <?php
 include_once "../../../classes/db.class.php";
-include_once "Evolucao.class.php";
+include_once "evolucao.class.php"; // Nome do arquivo em minúsculas, como está no sistema
 
 class ConteudoRClinicoEvlt
 {
-    private $paciente;
-    
+    private $evolucao;
+
     public function __construct()
     {
-        $this->paciente = new Paciente();
+        $this->evolucao = new Evolucao();
     }
-    
+
     public function render()
     {
         $html = <<<HTML
@@ -24,12 +24,8 @@ class ConteudoRClinicoEvlt
                 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
             </head>
         HTML;
-
-        // Renderiza o corpo da página
         $body = $this->renderBody();
-
         $html .= $body;
-
         $html .= <<<HTML
             <script src="./src/script.js"></script>
             <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
@@ -37,39 +33,21 @@ class ConteudoRClinicoEvlt
         </body>
         </html>
         HTML;
-
         return $html;
     }
-    
+
     private function renderBody()
     {
-        $nome = htmlspecialchars($_SESSION['data_user']['nm_usuario']);
+        $nome = htmlspecialchars($_SESSION['data_user']['nm_usuario'] ?? 'Usuário');
 
-        $modules = [
-            [
-                'title' => 'Ver Ficha de Evolução',
-                'description' => 'Visualize os formulários já criados',
-                'icon' => '🏥',
-                'link' => 'forms/'
-            ],
-            [
-                'title' => 'Acessa o histórico de evoluções de um paciente',
-                'description' => 'Visualize o histórico de evoluções de um paciente específico',
-                'icon' => '📜',
-                'link' => 'historico/'
-            ]
-        ];
-        
-        // Processa formulário se foi enviado
+        // Processa formulário de criação de formulário (redireciona para construtor_forms.php)
         $resultado = null;
-        if ($_POST && isset($_POST['acao'])) {
-            switch ($_POST['acao']) {
-                case 'FormEditar':
-                    $resultado = $this->paciente->editarForms($_POST);
-                    break;
-                case 'abrirEvolucao':
-                    $resultado = $this->paciente->abrirEvolucao($_POST['id'], $_POST);
-                    break;
+        if ($_POST && isset($_POST['acao']) && $_POST['acao'] === 'cadastrar') {
+            $resultado = $this->evolucao->criarFormulario($_POST);
+            if ($resultado['sucesso']) {
+                // Redireciona para o construtor após criação
+                header("Location: construtor_forms.php?form_id=" . $resultado['id']);
+                exit;
             }
         }
 
@@ -87,17 +65,14 @@ class ConteudoRClinicoEvlt
                         </ul>
                     </nav>
                 </header>
-
                 <section class="simple-box">
                     <h2>Registro Clínico - Evolução</h2>
-                    
                     <!-- Abas principais de navegação entre módulos -->
                     <div class="tabs" id="main-tabs">
                         <button class="tab-btn" onclick="redirectToTab('pacientes')">Pacientes</button>
                         <button class="tab-btn" onclick="redirectToTab('atendimentos')">Atendimentos</button>
                         <button class="tab-btn active" onclick="redirectToTab('evolucoes')">Evoluções</button>
                     </div>
-                    
                     <!-- Sub-abas do módulo atual -->
                     <div id="sub-tabs">
                         <div class="sub-tabs" id="sub-pacientes">
@@ -105,7 +80,6 @@ class ConteudoRClinicoEvlt
                             <button class="tab-btn" data-main="pacientes" data-sub="documentos" onclick="showSubTab('pacientes', 'documentos', this)">Listagem de Formulários</button>
                         </div>
                     </div>
-                    
                     <!-- Conteúdo das abas -->
                     <div id="tab-content">
                         <div id="pacientes-cadastro" class="tab-content active">
@@ -116,7 +90,6 @@ class ConteudoRClinicoEvlt
                         </div>
                     </div>
                 </section>
-
                 <!-- Modal de confirmação de exclusão -->
                 <div id="modal-exclusao" class="modal" style="display:none;">
                     <div class="modal-content">
@@ -134,16 +107,14 @@ class ConteudoRClinicoEvlt
                         </div>
                     </div>
                 </div>
-
                 <script src="./src/script.js"></script>
                 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
                 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
             </body>
         HTML;
-
         return $html;
     }
-    
+
     private function getFormularioCadastro($resultado = null)
     {
         $dadosForm = [];
@@ -152,7 +123,7 @@ class ConteudoRClinicoEvlt
         } elseif (isset($_POST) && (!isset($_POST['acao']) || $_POST['acao'] == 'cadastrar')) {
             $dadosForm = $_POST;
         }
-        
+
         $mensagens = '';
         if ($resultado && (!isset($_POST['acao']) || $_POST['acao'] == 'cadastrar')) {
             if (isset($resultado['sucesso']) && $resultado['sucesso']) {
@@ -169,11 +140,11 @@ class ConteudoRClinicoEvlt
         return '
         <div class="form-container">
             ' . $mensagens . '
-            <form action="construtor_forms.php" method="POST">
+            <form method="POST">
                 <input type="hidden" name="acao" value="cadastrar">
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="nome">Nome do Formulário padrão de evolução</label>
+                        <label for="nome">Nome do Formulário padrão de evolução*</label>
                         <input required type="text" id="nome" name="nome" maxlength="100" placeholder="Ex: Evolução Diária"
                                value="' . (isset($dadosForm['nome']) ? htmlspecialchars($dadosForm['nome']) : '') . '">
                     </div>
@@ -184,7 +155,6 @@ class ConteudoRClinicoEvlt
                             <option value="S" ' . (isset($dadosForm['s_n_anexo']) && $dadosForm['s_n_anexo'] == 'S' ? 'selected' : '') . '>Sim</option>
                         </select>
                     </div>
-                   
                     <div class="form-group">
                         <label for="especialidade">Especialidade*</label>
                         <select required id="especialidade" name="especialidade">
@@ -194,29 +164,26 @@ class ConteudoRClinicoEvlt
                             <option value="TEOC" ' . (isset($dadosForm['especialidade']) && $dadosForm['especialidade'] == 'TEOC' ? 'selected' : '') . '>Fono</option>
                         </select>
                     </div>
-
                     <div class="form-group">
-                        <label for="ativo">ativo*</label>
+                        <label for="ativo">Ativo*</label>
                         <select required id="ativo" name="ativo">
                             <option value="1" ' . (isset($dadosForm['ativo']) && $dadosForm['ativo'] == '1' ? 'selected' : '') . '>Ativo</option>
                             <option value="0" ' . (isset($dadosForm['ativo']) && $dadosForm['ativo'] == '0' ? 'selected' : '') . '>Inativo</option>
                         </select>
                     </div>
-
                     <div class="form-group">
                         <label for="descricao">Descrição</label>
                         <input type="text" id="descricao" name="descricao" maxlength="255" placeholder="Ex: Formulário para evolução diária de fisioterapia"
                             value="' . (isset($dadosForm['descricao']) ? htmlspecialchars($dadosForm['descricao']) : '') . '">
                     </div>
                 </div>
-
                 <button type="submit" class="btn-add">
                     <i class="fas fa-edit"></i> Iniciar Construção
                 </button>
             </form>
         </div>';
     }
-    
+
     private function getListagemFormularios($resultado = null)
     {
         $mensagens = '';
@@ -233,17 +200,13 @@ class ConteudoRClinicoEvlt
         }
 
         try {
-            $db = DB::connect();
-            $stmt = $db->prepare("SELECT id, nome, especialidade, descricao, ativo FROM formulario ORDER BY nome ASC");
-            $stmt->execute();
-            $formularios = $stmt->fetchAll();
+            $formularios = $this->evolucao->listarFormularios();
         } catch (Exception $e) {
             $formularios = [];
             $mensagens = '<div class="form-message error">Erro ao carregar formulários: ' . htmlspecialchars($e->getMessage()) . '</div>';
         }
 
         $total = count($formularios);
-
         if (!empty($formularios)) {
             $tabelaFormularios = '
             <div class="table-container">
@@ -259,7 +222,6 @@ class ConteudoRClinicoEvlt
                         </tr>
                     </thead>
                     <tbody>';
-
             foreach ($formularios as $form) {
                 $ativo = $form['ativo'] == 1 ? 'Ativo' : 'Inativo';
                 $descricao = !empty($form['descricao']) ? htmlspecialchars($form['descricao']) : '-';
@@ -280,7 +242,6 @@ class ConteudoRClinicoEvlt
                         </td>
                     </tr>';
             }
-
             $tabelaFormularios .= '
                     </tbody>
                 </table>
