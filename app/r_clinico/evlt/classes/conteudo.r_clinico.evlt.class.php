@@ -1,6 +1,6 @@
 <?php
-include_once "../../../classes/db.class.php";
-include_once "evolucao.class.php";
+
+include_once "evolucao.class.php"; // nome do arquivo em minúsculas
 
 class ConteudoRClinicoEvlt
 {
@@ -42,9 +42,9 @@ class ConteudoRClinicoEvlt
     {
         $nome = htmlspecialchars($_SESSION['data_user']['nm_usuario'] ?? 'Usuário');
 
-        // Processa formulário de criação de formulário
+        // Processa formulário de criação (se submetido)
         $resultado = null;
-        if ($_POST && isset($_POST['acao']) && $_POST['acao'] === 'cadastrar') {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao']) && $_POST['acao'] === 'cadastrar') {
             $resultado = $this->evolucao->criarFormulario($_POST);
             if ($resultado['sucesso']) {
                 header("Location: construtor_forms.php?form_id=" . $resultado['id']);
@@ -77,17 +77,17 @@ class ConteudoRClinicoEvlt
                     <!-- Sub-abas -->
                     <div id="sub-tabs">
                         <div class="sub-tabs" id="sub-pacientes">
-                            <button class="tab-btn active" data-main="pacientes" data-sub="cadastro" onclick="showSubTab('pacientes', 'cadastro', this)">Cadastro de Formulário</button>
-                            <button class="tab-btn" data-main="pacientes" data-sub="documentos" onclick="showSubTab('pacientes', 'documentos', this)">Listagem de Formulários</button>
+                            <button class="tab-btn" data-main="pacientes" data-sub="cadastro" onclick="showSubTab('pacientes', 'cadastro', this)">Cadastro de Formulário</button>
+                            <button class="tab-btn active" data-main="pacientes" data-sub="documentos" onclick="showSubTab('pacientes', 'documentos', this)">Listagem de Formulários</button>
                         </div>
                     </div>
                     <!-- Conteúdo -->
                     <div id="tab-content">
-                        <div id="pacientes-cadastro" class="tab-content active">
+                        <div id="pacientes-cadastro" class="tab-content" style="display:none;">
                             {$this->getFormularioCadastro($resultado)}
                         </div>
-                        <div id="pacientes-documentos" class="tab-content" style="display:none;">
-                            {$this->getListagemFormularios($resultado)}
+                        <div id="pacientes-documentos" class="tab-content active">
+                            {$this->getListagemFormularios()}
                         </div>
                     </div>
                 </section>
@@ -118,12 +118,12 @@ class ConteudoRClinicoEvlt
         $dadosForm = [];
         if ($resultado && isset($resultado['dados'])) {
             $dadosForm = $resultado['dados'];
-        } elseif (isset($_POST) && $_POST['acao'] == 'cadastrar') {
+        } elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao']) && $_POST['acao'] == 'cadastrar') {
             $dadosForm = $_POST;
         }
 
         $mensagens = '';
-        if ($resultado && $_POST['acao'] == 'cadastrar') {
+        if ($resultado && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao']) && $_POST['acao'] == 'cadastrar') {
             if ($resultado['sucesso']) {
                 $mensagens = '<div class="form-message success">' . htmlspecialchars($resultado['mensagem']) . '</div>';
             } else {
@@ -182,26 +182,14 @@ class ConteudoRClinicoEvlt
         </div>';
     }
 
-    private function getListagemFormularios($resultado = null)
+    private function getListagemFormularios()
     {
-        $mensagens = '';
-        if ($resultado && isset($resultado['sucesso'])) {
-            if ($resultado['sucesso']) {
-                $mensagens = '<div class="form-message success">' . htmlspecialchars($resultado['mensagem']) . '</div>';
-            } else {
-                $mensagens = '<div class="form-message error">';
-                foreach ($resultado['erros'] ?? [] as $erro) {
-                    $mensagens .= '<p>' . htmlspecialchars($erro) . '</p>';
-                }
-                $mensagens .= '</div>';
-            }
-        }
-
         try {
             $formularios = $this->evolucao->listarFormularios();
         } catch (Exception $e) {
             $formularios = [];
             $mensagens = '<div class="form-message error">Erro ao carregar formulários: ' . htmlspecialchars($e->getMessage()) . '</div>';
+            return $mensagens . '<div class="no-data">Nenhum formulário disponível.</div>';
         }
 
         $total = count($formularios);
@@ -254,7 +242,6 @@ class ConteudoRClinicoEvlt
 
         return '
         <div class="listagem-container">
-            ' . $mensagens . '
             <div class="table-header">
                 <h3>Listagem de Formulários (' . $total . ' cadastrado' . ($total != 1 ? 's' : '') . ')</h3>
                 ' . ($this->paciente_id ? '<p><strong>Paciente vinculado:</strong> ID ' . (int)$this->paciente_id . '</p>' : '') . '
