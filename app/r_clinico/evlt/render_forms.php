@@ -27,8 +27,6 @@ if ($paciente_id <= 0) {
 
 try {
     $db = getDbConnection();
-
-    // Busca o formulário
     $stmt = $db->prepare("SELECT nome, descricao, especialidade FROM formulario WHERE id = ?");
     $stmt->execute([$form_id]);
     $formulario = $stmt->fetch();
@@ -37,13 +35,12 @@ try {
         die("<h2>Formulário não encontrado</h2>");
     }
 
-    // Busca perguntas ativas
     $stmt = $db->prepare("SELECT * FROM formulario_perguntas WHERE formulario_id = ? AND ativo = 1 ORDER BY id");
     $stmt->execute([$form_id]);
     $perguntas = $stmt->fetchAll();
 
     if (!$perguntas) {
-        die("<h2>" . htmlspecialchars($formulario['nome']) . "</h2><p>Nenhuma pergunta configurada para este formulário.</p>");
+        die("<h2>" . htmlspecialchars($formulario['nome']) . "</h2><p>Nenhuma pergunta configurada.</p>");
     }
 
 } catch (Exception $e) {
@@ -65,7 +62,7 @@ try {
             padding: 20px;
         }
         .form-container {
-            max-width: 800px;
+            max-width: 1000px;
             margin: 0 auto;
             background: white;
             border-radius: 16px;
@@ -166,6 +163,20 @@ try {
             background: #d4d4ff;
             transform: translateY(-2px);
         }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        table th, table td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+        }
+        table th {
+            background-color: #f5f5f7;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
@@ -179,7 +190,7 @@ try {
 
         <h2>Formulário de Evolução para Paciente ID: <?= $paciente_id ?></h2>
         <p>
-            <a href="index.php?paciente_id=<?= $paciente_id ?>" class="btn-secundario">Voltar</a>
+            <a href="escolher_formulario.php?paciente_id=<?= $paciente_id ?>" class="btn-secundario">Voltar</a>
         </p>
 
         <form method="POST" action="salvar_resposta.php" enctype="multipart/form-data">
@@ -252,6 +263,41 @@ try {
                                     </div>
                                 <?php endforeach; ?>
                             </div>
+                        <?php endif; ?>
+
+                    <?php elseif ($p['tipo_input'] === 'tabela'):
+                        $config = json_decode($p['opcoes'], true);
+                        $linhas = $config['linhas'] ?? [];
+                        $colunas = $config['colunas'] ?? [];
+                        if (!empty($linhas) && !empty($colunas)):
+                        ?>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <?php foreach ($colunas as $col): ?>
+                                        <th><?= htmlspecialchars($col) ?></th>
+                                    <?php endforeach; ?>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($linhas as $linha): ?>
+                                    <tr>
+                                        <td style="text-align: left; font-weight: bold;"><?= htmlspecialchars($linha) ?></td>
+                                        <?php foreach ($colunas as $col): ?>
+                                            <td>
+                                                <input type="radio" name="<?= $nomeCampo ?>[<?= urlencode($linha) ?>]" 
+                                                       value="<?= htmlspecialchars($col) ?>" 
+                                                       id="<?= $nomeCampo ?>_<?= md5($linha . $col) ?>"<?= $obrigatorio ?>>
+                                                <label for="<?= $nomeCampo ?>_<?= md5($linha . $col) ?>"></label>
+                                            </td>
+                                        <?php endforeach; ?>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                        <?php else: ?>
+                            <p style="color: #c62828;">Configuração inválida para tabela.</p>
                         <?php endif; ?>
 
                     <?php else: ?>

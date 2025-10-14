@@ -2,12 +2,10 @@
 session_start();
 include "classes/db.class.php";
 
-// Função auxiliar para mensagens
 function setMensagem($texto, $tipo = 'sucesso') {
     $_SESSION['mensagem'] = ['texto' => $texto, 'tipo' => $tipo];
 }
 
-// Limpa mensagem antiga (exibe só uma vez)
 $mensagem = null;
 if (isset($_SESSION['mensagem'])) {
     $mensagem = $_SESSION['mensagem'];
@@ -20,36 +18,27 @@ try {
     die("Erro crítico: não foi possível conectar ao banco. " . $e->getMessage());
 }
 
-// Redireciona se não houver form_id
 $form_id = isset($_GET['form_id']) ? (int)$_GET['form_id'] : 0;
 if ($form_id <= 0) {
     header("Location: index.php");
     exit;
 }
 
-// Processa exclusão de pergunta
+// Exclusão de pergunta
 if (isset($_GET['excluir'])) {
     $perguntaId = (int)$_GET['excluir'];
-
     try {
-        // Verifica se a pergunta pertence ao formulário atual
         $stmt = $db->prepare("SELECT id FROM formulario_perguntas WHERE id = ? AND formulario_id = ?");
         $stmt->execute([$perguntaId, $form_id]);
-        $pergunta = $stmt->fetch();
-
-        if (!$pergunta) {
-            throw new Exception("Pergunta não encontrada ou não pertence a este formulário.");
+        if (!$stmt->fetch()) {
+            throw new Exception("Pergunta não pertence a este formulário.");
         }
-
-        // Exclui
         $stmt = $db->prepare("DELETE FROM formulario_perguntas WHERE id = ?");
         $stmt->execute([$perguntaId]);
-
         setMensagem('Pergunta excluída com sucesso!');
     } catch (Exception $e) {
         setMensagem('Erro ao excluir pergunta: ' . $e->getMessage(), 'erro');
     }
-
     header("Location: construtor_forms.php?form_id=$form_id");
     exit;
 }
@@ -58,14 +47,13 @@ if (isset($_GET['excluir'])) {
 $stmt = $db->prepare("SELECT * FROM formulario WHERE id = ?");
 $stmt->execute([$form_id]);
 $formulario = $stmt->fetch();
-
 if (!$formulario) {
     setMensagem('Formulário não encontrado.', 'erro');
     header("Location: index.php");
     exit;
 }
 
-// Processa adição de pergunta
+// Adição de pergunta
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['titulo'])) {
     $titulo = trim($_POST['titulo'] ?? '');
     $tipo_input = $_POST['tipo_input'] ?? 'texto';
@@ -75,36 +63,48 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['titulo'])) {
     $tamanho_maximo = (int)($_POST['tamanho_maximo'] ?? 255);
     $obrigatorio = (int)($_POST['obrigatorio'] ?? 0);
     $multipla_escolha = (int)($_POST['multipla_escolha'] ?? 0);
+    $opcoes = null;
 
     if (empty($titulo)) {
         setMensagem('Título da pergunta é obrigatório.', 'erro');
     } else {
         try {
-            // Gera nome único se não fornecido
             if (empty($nome_unico)) {
                 $nome_unico = preg_replace('/[^a-z0-9_]/', '_', strtolower($titulo));
                 $nome_unico = substr($nome_unico, 0, 50);
                 if (empty($nome_unico)) $nome_unico = 'campo_' . time();
             }
 
-            // Processa opções SOMENTE para tipos que usam
-            $tiposComOpcoes = ['radio', 'checkbox', 'select'];
-            $opcoes = null;
-
-            if (in_array($tipo_input, $tiposComOpcoes)) {
+            // Tratamento especial para tipo "tabela"
+            if ($tipo_input === 'tabela') {
+                $linhas = explode(',', trim($_POST['linhas_tabela'] ?? ''));
+                $colunas = explode(',', trim($_POST['colunas_tabela'] ?? ''));
+                $linhas = array_filter(array_map('trim', $linhas));
+                $colunas = array_filter(array_map('trim', $colunas));
+                if (empty($linhas) || empty($colunas)) {
+                    setMensagem('Linhas e colunas da tabela são obrigatórias.', 'erro');
+                    header("Location: construtor_forms.php?form_id=$form_id");
+                    exit;
+                }
+                $opcoes = json_encode([
+                    'linhas' => $linhas,
+                    'colunas' => $colunas
+                ], JSON_UNESCAPED_UNICODE);
+            }
+            // Tratamento para tipos com opções (radio, checkbox, select)
+            elseif (in_array($tipo_input, ['radio', 'checkbox', 'select'])) {
                 $opcoesRaw = trim($_POST['opcoes'] ?? '');
                 if (!empty($opcoesRaw)) {
-                    $opcoesArray = array_map('trim', explode(',', $opcoesRaw));
+                    $opcoesArray = array_filter(array_map('trim', explode(',', $opcoesRaw)));
                     $opcoes = json_encode($opcoesArray, JSON_UNESCAPED_UNICODE);
                 }
             }
 
-            // Insere SEM coluna ordem
             $sql = "INSERT INTO formulario_perguntas (
-                        formulario_id, nome_unico, titulo, descricao, tipo_input, opcoes,
-                        obrigatorio, multipla_escolha, tamanho_maximo, placeholder,
-                        ativo, data_criacao, data_atualizacao
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())";
+                formulario_id, nome_unico, titulo, descricao, tipo_input, opcoes,
+                obrigatorio, multipla_escolha, tamanho_maximo, placeholder,
+                ativo, data_criacao, data_atualizacao
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())";
 
             $stmt = $db->prepare($sql);
             $stmt->execute([
@@ -118,22 +118,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['titulo'])) {
                 $multipla_escolha,
                 $tamanho_maximo,
                 $placeholder,
-                1 // ativo
+                1
             ]);
-
             setMensagem('Pergunta adicionada com sucesso!');
         } catch (Exception $e) {
             setMensagem('Erro ao salvar pergunta: ' . $e->getMessage(), 'erro');
         }
     }
-
     header("Location: construtor_forms.php?form_id=$form_id");
     exit;
 }
 
-
-
-// Busca perguntas cadastradas — ordenadas por ID (ordem de inserção)
 $stmt = $db->prepare("SELECT * FROM formulario_perguntas WHERE formulario_id = ? ORDER BY id");
 $stmt->execute([$form_id]);
 $perguntas = $stmt->fetchAll();
@@ -148,14 +143,11 @@ $perguntas = $stmt->fetchAll();
 </head>
 <body>
     <div class="container">
-
         <?php if ($mensagem): ?>
             <div class="alert alert-<?= $mensagem['tipo'] === 'erro' ? 'erro' : 'sucesso' ?>">
                 <?= htmlspecialchars($mensagem['texto']) ?>
             </div>
         <?php endif; ?>
-
-  
         <h2>Construtor: <?= htmlspecialchars($formulario['nome']) ?> (ID: <?= $form_id ?>)</h2>
         <p>
             <a href="index.php" class="btn-secundario">Voltar</a>
@@ -164,7 +156,6 @@ $perguntas = $stmt->fetchAll();
             </a>
         </p>
 
-        <!-- Formulário para adicionar pergunta -->
         <form method="POST">
             <div class="form-row">
                 <div class="form-group">
@@ -181,11 +172,12 @@ $perguntas = $stmt->fetchAll();
                         <option value="select">Lista Suspensa</option>
                         <option value="number">Número</option>
                         <option value="file">Anexo de Arquivo</option>
+                        <option value="tabela">Tabela de Opções (Grupos)</option>
                     </select>
                 </div>
             </div>
 
-            <!-- Opções (só para radio, checkbox, select) -->
+            <!-- Opções para radio/checkbox/select -->
             <div class="form-row" id="opcoes-container" style="display:none;">
                 <div class="form-group">
                     <label for="opcoes">Opções (separadas por vírgula)</label>
@@ -193,15 +185,27 @@ $perguntas = $stmt->fetchAll();
                 </div>
             </div>
 
+            <!-- Linhas e Colunas para Tabela -->
+            <div class="form-row" id="tabela-container" style="display:none;">
+                <div class="form-group">
+                    <label for="linhas_tabela">Itens (uma por linha, separados por vírgula)</label>
+                    <input type="text" id="linhas_tabela" name="linhas_tabela" maxlength="1000" placeholder="MORO,SUÇÃO,GAG,PLANTAR">
+                </div>
+                <div class="form-group">
+                    <label for="colunas_tabela">Opções (separadas por vírgula)</label>
+                    <input type="text" id="colunas_tabela" name="colunas_tabela" maxlength="500" placeholder="SIM,NÃO">
+                </div>
+            </div>
+
             <!-- Campos comuns -->
             <div class="form-row">
                 <div class="form-group">
                     <label for="nome_unico">Nome Único (identificador interno)</label>
-                    <input type="text" id="nome_unico" name="nome_unico" maxlength="50" placeholder="Ex: sintomas_paciente">
+                    <input type="text" id="nome_unico" name="nome_unico" maxlength="50" placeholder="Ex: reflexos_neonatais">
                 </div>
                 <div class="form-group">
                     <label for="descricao">Descrição / Ajuda</label>
-                    <input type="text" id="descricao" name="descricao" maxlength="255" placeholder="Ex: Descreva os sintomas observados">
+                    <input type="text" id="descricao" name="descricao" maxlength="255" placeholder="Ex: Avalie os reflexos primitivos">
                 </div>
             </div>
 
@@ -209,7 +213,7 @@ $perguntas = $stmt->fetchAll();
             <div class="form-row" id="texto-container" style="display:none;">
                 <div class="form-group">
                     <label for="placeholder">Placeholder</label>
-                    <input type="text" id="placeholder" name="placeholder" maxlength="100" placeholder="Ex: Digite aqui...">
+                    <input type="text" id="placeholder" name="placeholder" maxlength="100" placeholder="Digite aqui...">
                 </div>
                 <div class="form-group">
                     <label for="tamanho_maximo">Tamanho Máximo (caract.)</label>
@@ -217,7 +221,7 @@ $perguntas = $stmt->fetchAll();
                 </div>
             </div>
 
-            <!-- Obrigatório (sempre visível) -->
+            <!-- Obrigatório -->
             <div class="form-row">
                 <div class="form-group">
                     <label for="obrigatorio">Obrigatório?</label>
@@ -243,7 +247,6 @@ $perguntas = $stmt->fetchAll();
         </form>
 
         <hr>
-
         <h3>Perguntas Cadastradas (<?= count($perguntas) ?>)</h3>
         <?php if ($perguntas): ?>
             <?php foreach ($perguntas as $p): ?>
@@ -253,10 +256,18 @@ $perguntas = $stmt->fetchAll();
                     <?php if (!empty($p['descricao'])): ?>
                         <br><small>Descrição: <?= htmlspecialchars($p['descricao']) ?></small>
                     <?php endif; ?>
-                    <?php if (!is_null($p['opcoes']) && $p['opcoes'] !== 'null'): ?>
+                    <?php if ($p['tipo_input'] === 'tabela' && !is_null($p['opcoes']) && $p['opcoes'] !== 'null'): ?>
+                        <?php
+                        $dados = json_decode($p['opcoes'], true);
+                        if (is_array($dados)):
+                        ?>
+                            <br><small>Itens: <?= htmlspecialchars(implode(', ', $dados['linhas'] ?? [])) ?></small>
+                            <br><small>Opções: <?= htmlspecialchars(implode(', ', $dados['colunas'] ?? [])) ?></small>
+                        <?php endif; ?>
+                    <?php elseif (!is_null($p['opcoes']) && $p['opcoes'] !== 'null'): ?>
                         <?php
                         $opcoesArray = json_decode($p['opcoes'], true);
-                        if (is_array($opcoesArray) && !empty($opcoesArray)):
+                        if (is_array($opcoesArray)):
                         ?>
                             <br><small>Opções: <?= htmlspecialchars(implode(', ', $opcoesArray)) ?></small>
                         <?php endif; ?>
@@ -265,22 +276,18 @@ $perguntas = $stmt->fetchAll();
                     <?php if ($p['multipla_escolha']): ?>
                         <br><small>Múltipla escolha: Sim</small>
                     <?php endif; ?>
-
-                    <!-- Botão de excluir -->
                     <div style="display: flex; justify-content: flex-end; margin-top: 8px; gap: 4px;">
                         <a href="?form_id=<?= $form_id ?>&excluir=<?= $p['id'] ?>" 
-                        class="btn-delete-small" 
-                        title="Excluir pergunta"
-                        onclick="return confirm('Tem certeza que deseja excluir esta pergunta? Esta ação não pode ser desfeita.')">
+                           class="btn-delete-small" 
+                           title="Excluir pergunta"
+                           onclick="return confirm('Tem certeza? Esta ação não pode ser desfeita.')">
                             <i class="fas fa-trash"></i>
                         </a>
                     </div>
                 </div>
             <?php endforeach; ?>
         <?php endif; ?>
-
     </div>
-
     <script src="construtor_forms.js"></script>
 </body>
 </html>
