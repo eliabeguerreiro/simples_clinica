@@ -16,13 +16,10 @@ function getDbConnection()
 }
 
 $form_id = isset($_GET['form_id']) ? (int)$_GET['form_id'] : 0;
-$paciente_id = isset($_GET['paciente_id']) ? (int)$_GET['paciente_id'] : 0;
+$paciente_id = isset($_GET['paciente_id']) ? (int)$_GET['paciente_id'] : null;
 
 if ($form_id <= 0) {
     die("<h2>Erro</h2><p>ID do formulário não especificado.</p>");
-}
-if ($paciente_id <= 0) {
-    die("<h2>Erro</h2><p>ID do paciente não especificado.</p>");
 }
 
 try {
@@ -163,6 +160,15 @@ try {
             background: #d4d4ff;
             transform: translateY(-2px);
         }
+        .preview-mode {
+            background: #fff8e1;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #5d4037;
+            font-weight: 500;
+        }
         table {
             width: 100%;
             border-collapse: collapse;
@@ -188,18 +194,31 @@ try {
             <?php endif; ?>
         </div>
 
-        <h2>Formulário de Evolução para Paciente ID: <?= $paciente_id ?></h2>
-        <p>
-            <a href="escolher_formulario.php?paciente_id=<?= $paciente_id ?>" class="btn-secundario">Voltar</a>
-        </p>
+        <?php if ($paciente_id === null): ?>
+            <div class="preview-mode">
+                <i class="fas fa-eye"></i> Modo de Visualização (somente leitura)
+            </div>
+            <p>
+                <a href="index.php" class="btn-secundario">Voltar</a>
+            </p>
+        <?php else: ?>
+            <h2>Formulário de Evolução para Paciente ID: <?= $paciente_id ?></h2>
+            <p>
+                <a href="escolher_formulario.php?paciente_id=<?= $paciente_id ?>" class="btn-secundario">Voltar</a>
+            </p>
+        <?php endif; ?>
 
-        <form method="POST" action="salvar_resposta.php" enctype="multipart/form-data">
-            <input type="hidden" name="formulario_id" value="<?= $form_id ?>">
-            <input type="hidden" name="paciente_id" value="<?= $paciente_id ?>">
+        <form method="POST" action="salvar_resposta.php" enctype="multipart/form-data"
+              <?= $paciente_id === null ? 'onsubmit="alert(\'Este é apenas um modo de visualização. Não é possível salvar.\'); return false;"' : '' ?>>
+            
+            <?php if ($paciente_id !== null): ?>
+                <input type="hidden" name="formulario_id" value="<?= $form_id ?>">
+                <input type="hidden" name="paciente_id" value="<?= $paciente_id ?>">
+            <?php endif; ?>
 
             <?php foreach ($perguntas as $p): ?>
                 <div class="form-group">
-                    <label class="required"><?= htmlspecialchars($p['titulo']) ?></label>
+                    <label class="<?= $p['obrigatorio'] ? 'required' : '' ?>"><?= htmlspecialchars($p['titulo']) ?></label>
                     <?php if (!empty($p['descricao'])): ?>
                         <small><?= htmlspecialchars($p['descricao']) ?></small>
                     <?php endif; ?>
@@ -306,12 +325,13 @@ try {
                 </div>
             <?php endforeach; ?>
 
-            <div class="form-group">
-                <label for="observacoes">Observações (opcional)</label>
-                <textarea name="observacoes" class="form-control" rows="3" placeholder="Adicione observações clínicas..."></textarea>
-            </div>
-
-            <button type="submit" class="btn-submit">Salvar Evolução</button>
+            <?php if ($paciente_id !== null): ?>
+                <div class="form-group">
+                    <label for="observacoes">Observações (opcional)</label>
+                    <textarea name="observacoes" class="form-control" rows="3" placeholder="Adicione observações clínicas..."></textarea>
+                </div>
+                <button type="submit" class="btn-submit">Salvar Evolução</button>
+            <?php endif; ?>
         </form>
     </div>
 </body>

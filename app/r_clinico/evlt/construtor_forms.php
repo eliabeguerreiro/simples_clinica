@@ -122,9 +122,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['titulo'])) {
             ]);
             setMensagem('Pergunta adicionada com sucesso!');
         } catch (Exception $e) {
-            setMensagem('Erro ao salvar pergunta: ' . $e->getMessage(), 'erro');
+            $mensagemErro = $e->getMessage();
+            
+            // Detecta erro de nome único duplicado (MySQL error 1062)
+            if (strpos($mensagemErro, 'Duplicate entry') !== false && 
+                strpos($mensagemErro, 'unique_nome_unico_formulario') !== false) {
+                setMensagem('Já existe uma pergunta com este nome único neste formulário. Por favor, escolha um nome diferente ou edite a pergunta existente.', 'erro');
+            } else {
+                setMensagem('Erro ao salvar pergunta: ' . htmlspecialchars($mensagemErro), 'erro');
+            }
         }
-    }
     header("Location: construtor_forms.php?form_id=$form_id");
     exit;
 }
