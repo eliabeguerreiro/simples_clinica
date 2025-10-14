@@ -152,6 +152,29 @@ try {
                             </div>
                         <?php endif; ?>
 
+                    <?php elseif ($p['tipo_input'] === 'sim_nao_justificativa'):
+                        $config = json_decode($p['opcoes'], true);
+                        $condicao = $config['condicao'] ?? 'nao';
+                        $placeholderJust = $config['placeholder'] ?? 'Justifique';
+                        $justNome = $nomeCampo . '_justificativa';
+                        ?>
+                        <div class="radio-group">
+                            <div class="radio-item">
+                                <input type="radio" name="<?= $nomeCampo ?>" value="sim" id="<?= $nomeCampo ?>_sim" <?= $obrigatorio ?>
+                                       onchange="toggleJustificativa(this, '<?= $justNome ?>', '<?= $condicao ?>')">
+                                <label for="<?= $nomeCampo ?>_sim">Sim</label>
+                            </div>
+                            <div class="radio-item">
+                                <input type="radio" name="<?= $nomeCampo ?>" value="nao" id="<?= $nomeCampo ?>_nao" <?= $obrigatorio ?>
+                                       onchange="toggleJustificativa(this, '<?= $justNome ?>', '<?= $condicao ?>')">
+                                <label for="<?= $nomeCampo ?>_nao">Não</label>
+                            </div>
+                        </div>
+                        <div id="<?= $justNome ?>_container" style="display:none; margin-top:12px;">
+                            <textarea name="<?= $justNome ?>" class="form-control" rows="3" 
+                                      placeholder="<?= htmlspecialchars($placeholderJust) ?>"></textarea>
+                        </div>
+
                     <?php elseif ($p['tipo_input'] === 'tabela'):
                         $config = json_decode($p['opcoes'], true);
                         $linhas = $config['linhas'] ?? [];
@@ -202,5 +225,15 @@ try {
             <?php endif; ?>
         </form>
     </div>
+
+    <script>
+    function toggleJustificativa(radio, justificativaId, condicaoEsperada) {
+        const container = document.getElementById(justificativaId + '_container');
+        const valor = radio.value;
+        const deveMostrar = (valor === 'sim' && condicaoEsperada === 'sim') ||
+                            (valor === 'nao' && condicaoEsperada === 'nao');
+        container.style.display = deveMostrar ? 'block' : 'none';
+    }
+    </script>
 </body>
 </html>

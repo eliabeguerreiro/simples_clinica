@@ -43,7 +43,6 @@ if (isset($_GET['excluir'])) {
     exit;
 }
 
-// Busca formulário
 $stmt = $db->prepare("SELECT * FROM formulario WHERE id = ?");
 $stmt->execute([$form_id]);
 $formulario = $stmt->fetch();
@@ -75,20 +74,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['titulo'])) {
                 if (empty($nome_unico)) $nome_unico = 'campo_' . time();
             }
 
-            // Tratamento especial para tipo "tabela"
-            if ($tipo_input === 'tabela') {
-                $linhas = explode(',', trim($_POST['linhas_tabela'] ?? ''));
-                $colunas = explode(',', trim($_POST['colunas_tabela'] ?? ''));
-                $linhas = array_filter(array_map('trim', $linhas));
-                $colunas = array_filter(array_map('trim', $colunas));
-                if (empty($linhas) || empty($colunas)) {
-                    setMensagem('Linhas e colunas da tabela são obrigatórias.', 'erro');
-                    header("Location: construtor_forms.php?form_id=$form_id");
-                    exit;
-                }
+            // Tratamento para tipo "sim_nao_justificativa"
+            if ($tipo_input === 'sim_nao_justificativa') {
+                $justificativaCondicao = $_POST['justificativa_condicao'] ?? 'nao';
+                $placeholderJustificativa = trim($_POST['placeholder_justificativa'] ?? 'Justifique');
                 $opcoes = json_encode([
-                    'linhas' => $linhas,
-                    'colunas' => $colunas
+                    'condicao' => $justificativaCondicao,
+                    'placeholder' => $placeholderJustificativa
                 ], JSON_UNESCAPED_UNICODE);
             }
             // Tratamento para tipos com opções (radio, checkbox, select)
@@ -122,16 +114,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['titulo'])) {
             ]);
             setMensagem('Pergunta adicionada com sucesso!');
         } catch (Exception $e) {
-            $mensagemErro = $e->getMessage();
-            
-            // Detecta erro de nome único duplicado (MySQL error 1062)
-            if (strpos($mensagemErro, 'Duplicate entry') !== false && 
-                strpos($mensagemErro, 'unique_nome_unico_formulario') !== false) {
-                setMensagem('Já existe uma pergunta com este nome único neste formulário. Por favor, escolha um nome diferente ou edite a pergunta existente.', 'erro');
+            $msgErro = $e->getMessage();
+            if (strpos($msgErro, 'Duplicate entry') !== false && strpos($msgErro, 'unique_nome_unico_formulario') !== false) {
+                setMensagem('Já existe uma pergunta com este nome único neste formulário. Escolha outro nome.', 'erro');
             } else {
-                setMensagem('Erro ao salvar pergunta: ' . htmlspecialchars($mensagemErro), 'erro');
+                setMensagem('Erro ao salvar pergunta: ' . htmlspecialchars($msgErro), 'erro');
             }
         }
+    }
     header("Location: construtor_forms.php?form_id=$form_id");
     exit;
 }
@@ -179,7 +169,7 @@ $perguntas = $stmt->fetchAll();
                         <option value="select">Lista Suspensa</option>
                         <option value="number">Número</option>
                         <option value="file">Anexo de Arquivo</option>
-                        <option value="tabela">Tabela de Opções (Grupos)</option>
+                        <option value="sim_nao_justificativa">Sim/Não com Justificativa Condicionada</option>
                     </select>
                 </div>
             </div>
@@ -192,15 +182,19 @@ $perguntas = $stmt->fetchAll();
                 </div>
             </div>
 
-            <!-- Linhas e Colunas para Tabela -->
-            <div class="form-row" id="tabela-container" style="display:none;">
+            <!-- Configuração da justificativa -->
+            <div class="form-row" id="justificativa-container" style="display:none;">
                 <div class="form-group">
-                    <label for="linhas_tabela">Itens (uma por linha, separados por vírgula)</label>
-                    <input type="text" id="linhas_tabela" name="linhas_tabela" maxlength="1000" placeholder="MORO,SUÇÃO,GAG,PLANTAR">
+                    <label for="justificativa_condicao">Exibir justificativa quando a resposta for:</label>
+                    <select id="justificativa_condicao" name="justificativa_condicao">
+                        <option value="sim">Sim</option>
+                        <option value="nao">Não</option>
+                    </select>
                 </div>
                 <div class="form-group">
-                    <label for="colunas_tabela">Opções (separadas por vírgula)</label>
-                    <input type="text" id="colunas_tabela" name="colunas_tabela" maxlength="500" placeholder="SIM,NÃO">
+                    <label for="placeholder_justificativa">Placeholder da justificativa</label>
+                    <input type="text" id="placeholder_justificativa" name="placeholder_justificativa"
+                           placeholder="Ex: Justifique por que não foi realizado..." maxlength="100">
                 </div>
             </div>
 
@@ -208,11 +202,11 @@ $perguntas = $stmt->fetchAll();
             <div class="form-row">
                 <div class="form-group">
                     <label for="nome_unico">Nome Único (identificador interno)</label>
-                    <input type="text" id="nome_unico" name="nome_unico" maxlength="50" placeholder="Ex: reflexos_neonatais">
+                    <input type="text" id="nome_unico" name="nome_unico" maxlength="50" placeholder="Ex: risco_queda">
                 </div>
                 <div class="form-group">
                     <label for="descricao">Descrição / Ajuda</label>
-                    <input type="text" id="descricao" name="descricao" maxlength="255" placeholder="Ex: Avalie os reflexos primitivos">
+                    <input type="text" id="descricao" name="descricao" maxlength="255" placeholder="Ex: Avalie o risco de queda">
                 </div>
             </div>
 
@@ -263,13 +257,13 @@ $perguntas = $stmt->fetchAll();
                     <?php if (!empty($p['descricao'])): ?>
                         <br><small>Descrição: <?= htmlspecialchars($p['descricao']) ?></small>
                     <?php endif; ?>
-                    <?php if ($p['tipo_input'] === 'tabela' && !is_null($p['opcoes']) && $p['opcoes'] !== 'null'): ?>
+                    <?php if ($p['tipo_input'] === 'sim_nao_justificativa' && !is_null($p['opcoes']) && $p['opcoes'] !== 'null'): ?>
                         <?php
                         $dados = json_decode($p['opcoes'], true);
                         if (is_array($dados)):
                         ?>
-                            <br><small>Itens: <?= htmlspecialchars(implode(', ', $dados['linhas'] ?? [])) ?></small>
-                            <br><small>Opções: <?= htmlspecialchars(implode(', ', $dados['colunas'] ?? [])) ?></small>
+                            <br><small>Justificativa em: <?= $dados['condicao'] === 'sim' ? 'Sim' : 'Não' ?></small>
+                            <br><small>Placeholder: <?= htmlspecialchars($dados['placeholder']) ?></small>
                         <?php endif; ?>
                     <?php elseif (!is_null($p['opcoes']) && $p['opcoes'] !== 'null'): ?>
                         <?php
