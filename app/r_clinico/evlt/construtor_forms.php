@@ -74,8 +74,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['titulo'])) {
                 if (empty($nome_unico)) $nome_unico = 'campo_' . time();
             }
 
+            // Tratamento para tipo "tabela"
+            if ($tipo_input === 'tabela') {
+                $linhas = explode(',', trim($_POST['linhas_tabela'] ?? ''));
+                $colunas = explode(',', trim($_POST['colunas_tabela'] ?? ''));
+                $linhas = array_filter(array_map('trim', $linhas));
+                $colunas = array_filter(array_map('trim', $colunas));
+                if (empty($linhas) || empty($colunas)) {
+                    setMensagem('Linhas e colunas da tabela são obrigatórias.', 'erro');
+                    header("Location: construtor_forms.php?form_id=$form_id");
+                    exit;
+                }
+                $opcoes = json_encode([
+                    'linhas' => $linhas,
+                    'colunas' => $colunas
+                ], JSON_UNESCAPED_UNICODE);
+            }
             // Tratamento para tipo "sim_nao_justificativa"
-            if ($tipo_input === 'sim_nao_justificativa') {
+            elseif ($tipo_input === 'sim_nao_justificativa') {
                 $justificativaCondicao = $_POST['justificativa_condicao'] ?? 'nao';
                 $placeholderJustificativa = trim($_POST['placeholder_justificativa'] ?? 'Justifique');
                 $opcoes = json_encode([
@@ -169,6 +185,7 @@ $perguntas = $stmt->fetchAll();
                         <option value="select">Lista Suspensa</option>
                         <option value="number">Número</option>
                         <option value="file">Anexo de Arquivo</option>
+                        <option value="tabela">Tabela de Opções (Grupos)</option>
                         <option value="sim_nao_justificativa">Sim/Não com Justificativa Condicionada</option>
                     </select>
                 </div>
@@ -195,6 +212,18 @@ $perguntas = $stmt->fetchAll();
                     <label for="placeholder_justificativa">Placeholder da justificativa</label>
                     <input type="text" id="placeholder_justificativa" name="placeholder_justificativa"
                            placeholder="Ex: Justifique por que não foi realizado..." maxlength="100">
+                </div>
+            </div>
+
+            <!-- Linhas e Colunas para Tabela -->
+            <div class="form-row" id="tabela-container" style="display:none;">
+                <div class="form-group">
+                    <label for="linhas_tabela">Itens (uma por linha, separados por vírgula)</label>
+                    <input type="text" id="linhas_tabela" name="linhas_tabela" maxlength="1000" placeholder="MORO,SUÇÃO,GAG,PLANTAR">
+                </div>
+                <div class="form-group">
+                    <label for="colunas_tabela">Opções (separadas por vírgula)</label>
+                    <input type="text" id="colunas_tabela" name="colunas_tabela" maxlength="500" placeholder="SIM,NÃO">
                 </div>
             </div>
 
@@ -264,6 +293,14 @@ $perguntas = $stmt->fetchAll();
                         ?>
                             <br><small>Justificativa em: <?= $dados['condicao'] === 'sim' ? 'Sim' : 'Não' ?></small>
                             <br><small>Placeholder: <?= htmlspecialchars($dados['placeholder']) ?></small>
+                        <?php endif; ?>
+                    <?php elseif ($p['tipo_input'] === 'tabela' && !is_null($p['opcoes']) && $p['opcoes'] !== 'null'): ?>
+                        <?php
+                        $dados = json_decode($p['opcoes'], true);
+                        if (is_array($dados)):
+                        ?>
+                            <br><small>Itens: <?= htmlspecialchars(implode(', ', $dados['linhas'] ?? [])) ?></small>
+                            <br><small>Opções: <?= htmlspecialchars(implode(', ', $dados['colunas'] ?? [])) ?></small>
                         <?php endif; ?>
                     <?php elseif (!is_null($p['opcoes']) && $p['opcoes'] !== 'null'): ?>
                         <?php

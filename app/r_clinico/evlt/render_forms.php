@@ -72,7 +72,7 @@ try {
         <?php else: ?>
             <h2>Formulário de Evolução para Paciente ID: <?= $paciente_id ?></h2>
             <p>
-                <a href="escolher_formulario.php?paciente_id=<?= $paciente_id ?>" class="btn-secundario">Voltar</a>
+                <a href="escolher_forms.php?paciente_id=<?= $paciente_id ?>" class="btn-secundario">Voltar</a>
             </p>
         <?php endif; ?>
 

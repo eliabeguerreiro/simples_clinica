@@ -77,7 +77,7 @@ class ConteudoRClinicoPCNT
                 </header>
 
                 <section class="simple-box">
-                    <h2>Registro Clínico ARROGANCIA</h2>
+                    <h2>Registro Clínico</h2>
                     
                     <!-- Abas principais de navegação entre módulos -->
                     <div class="tabs" id="main-tabs">

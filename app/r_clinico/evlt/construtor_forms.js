@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const textoContainer = document.getElementById('texto-container');
     const multiplaContainer = document.getElementById('multipla-container');
     const justificativaContainer = document.getElementById('justificativa-container');
+    const tabelaContainer = document.getElementById('tabela-container');
 
     function atualizarCampos() {
         const tipo = tipoSelect.value;
@@ -12,6 +13,7 @@ document.addEventListener('DOMContentLoaded', function() {
         textoContainer.style.display = 'none';
         multiplaContainer.style.display = 'none';
         justificativaContainer.style.display = 'none';
+        tabelaContainer.style.display = 'none';
 
         if (!['radio', 'checkbox', 'select'].includes(tipo)) {
             document.getElementById('opcoes').value = '';
@@ -31,6 +33,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         if (tipo === 'sim_nao_justificativa') {
             justificativaContainer.style.display = 'flex';
+        }
+        if (tipo === 'tabela') {
+            tabelaContainer.style.display = 'flex';
         }
     }
 

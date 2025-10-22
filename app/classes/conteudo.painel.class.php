@@ -38,7 +38,7 @@ class ContentPainelInicial
                 'title' => 'BPA',
                 'description' => 'Boletim de Produção Ambulatorial',
                 'icon' => '📊',
-                'link' => 'bpa/'
+                'link' => 'r_clinico/'
             ]
         ];
 
