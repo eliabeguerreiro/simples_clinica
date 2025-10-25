@@ -66,8 +66,13 @@ document.addEventListener('change', function(e) {
 
 // Editar paciente (implementação básica)
 function editarPaciente(id) {
-    alert('Função de edição ainda será implementada. ID do paciente: ' + id);
-    // Aqui você pode redirecionar para uma página de edição ou abrir um modal
+    // Mostra a aba de edição
+    showSubTab('pacientes', 'edicao', document.querySelector(`[data-main="pacientes"][data-sub="edicao"]`));
+    
+    // Atualiza a URL para manter o estado (opcional, mas útil)
+    const url = new URL(window.location.href);
+    url.searchParams.set('id', id);
+    window.history.pushState({}, '', url);
 }
 
 // Confirmar exclusão individual
