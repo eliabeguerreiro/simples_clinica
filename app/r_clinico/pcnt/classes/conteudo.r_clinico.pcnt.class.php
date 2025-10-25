@@ -68,8 +68,8 @@ class ConteudoRClinicoPCNT
                         ];
                     }
                 break;
-    }
-}
+            }
+        }
 
         $html = <<<HTML
             <body>
@@ -114,7 +114,7 @@ class ConteudoRClinicoPCNT
                             {$this->getListagemPacientes($resultado)}
                         </div>
                         <div id="pacientes-historico" class="tab-content" style="display:none;">
-                            <p>Conteúdo Histórico de Pacientes.</p>
+                            {$this->getHistoricoEvolucoesPorPaciente(isset($_GET['id']) ? (int)$_GET['id'] : null)}
                         </div>
                         <div id="pacientes-edicao" class="tab-content" style="display:none;">
                             {$this->getFormularioEdicao($resultado)}
@@ -147,8 +147,6 @@ class ConteudoRClinicoPCNT
         HTML;
 
         return $html;
-
-
     }
     
     private function getFormularioCadastro($resultado = null)
@@ -355,7 +353,7 @@ class ConteudoRClinicoPCNT
                     </div>
                     <div class="paciente-actions">
                         <button class="btn-edit" onclick="editarPaciente(' . $pacienteBuscado['id'] . ')" title="Editar">
-                            <i class="fas fa-edit"></i>
+                            <i class="fas fa-edit"></i> Editar
                         </button>
                         <button class="btn-delete" onclick="confirmarExclusao(' . $pacienteBuscado['id'] . ')">
                             <i class="fas fa-trash"></i> Excluir
@@ -363,6 +361,9 @@ class ConteudoRClinicoPCNT
                         <button class="btn-evolucao" onclick="abrirEvolucao(' . $pacienteBuscado['id'] . ')">
                             <i class="fas fa-file-medical"></i> Evolução
                         </button>
+                        <a href="?id=' . $pacienteBuscado['id'] . '&sub=historico" class="btn-historico">
+                            <i class="fas fa-history"></i> Histórico
+                        </a>
                         <a href="?sub=documentos" class="btn-clear">
                             <i class="fas fa-arrow-left"></i> Voltar
                         </a>
@@ -670,4 +671,150 @@ class ConteudoRClinicoPCNT
             </form>
         </div>';
     }
+
+    // =============== NOVOS MÉTODOS PARA HISTÓRICO DE EVOLUÇÕES ===============
+
+    private function getHistoricoEvolucoesPorPaciente($pacienteId)
+    {
+        if (!$pacienteId || $pacienteId <= 0) {
+            return '<div class="form-message error">Paciente não especificado para exibir histórico.</div>';
+        }
+
+        if (isset($_GET['evolucao_id'])) {
+            return $this->exibirDetalheEvolucao((int)$_GET['evolucao_id'], $pacienteId);
+        }
+
+        $evolucoes = $this->paciente->listarEvolucoes($pacienteId);
+
+        if (empty($evolucoes)) {
+            return '<div class="no-data">Nenhuma evolução registrada para este paciente.</div>';
+        }
+
+        $html = '<div class="table-container">
+            <table class="pacientes-table">
+                <thead>
+                    <tr>
+                        <th>Data/Hora</th>
+                        <th>Formulário</th>
+                        <th>Especialidade</th>
+                        <th>Registrado por</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>';
+
+        foreach ($evolucoes as $ev) {
+            $dataFormatada = date('d/m/Y H:i', strtotime($ev['data_hora']));
+            $html .= '
+            <tr>
+                <td>' . htmlspecialchars($dataFormatada) . '</td>
+                <td>' . htmlspecialchars($ev['nome_formulario']) . '</td>
+                <td>' . htmlspecialchars($ev['especialidade']) . '</td>
+                <td>' . (!empty($ev['criado_por']) ? htmlspecialchars($ev['criado_por']) : '-') . '</td>
+                <td>
+                    <a href="?id=' . $pacienteId . '&sub=historico&evolucao_id=' . $ev['id'] . '" class="btn-view" title="Visualizar">
+                        <i class="fas fa-eye"></i> Ver
+                    </a>
+                </td>
+            </tr>';
+        }
+
+        $html .= '</tbody></table></div>';
+
+        $html .= '
+        <div style="margin-top: 15px;">
+            <a href="?id=' . $pacienteId . '&sub=documentos" class="btn-clear">
+                <i class="fas fa-arrow-left"></i> Voltar aos Dados do Paciente
+            </a>
+        </div>';
+
+        return $html;
+    }
+
+    private function exibirDetalheEvolucao($evolucaoId, $pacienteId)
+    {
+        $evolucao = $this->paciente->buscarEvolucaoPorId($evolucaoId, $pacienteId);
+
+        if (!$evolucao) {
+            return '<div class="form-message error">Evolução não encontrada.</div>';
+        }
+
+        $dados = json_decode($evolucao['dados'], true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            $dados = [];
+        }
+
+        $html = '
+        <div class="paciente-detalhe">
+            <h3>Detalhes da Evolução Clínica</h3>
+            <div class="paciente-info">
+                <p><strong>Formulário:</strong> ' . htmlspecialchars($evolucao['nome_formulario']) . '</p>
+                <p><strong>Especialidade:</strong> ' . htmlspecialchars($evolucao['especialidade']) . '</p>
+                <p><strong>Data/Hora:</strong> ' . date('d/m/Y H:i', strtotime($evolucao['data_hora'])) . '</p>
+                <p><strong>Registrado por:</strong> ' . htmlspecialchars($evolucao['criado_por'] ?? '-') . '</p>
+            </div>
+
+            <h4 style="margin-top:20px;">Respostas do Formulário</h4>
+            <div class="table-container">
+                <table class="pacientes-table">
+                    <thead><tr><th>Pergunta</th><th>Resposta</th></tr></thead>
+                    <tbody>';
+
+        if (!empty($dados)) {
+            foreach ($dados as $chave => $valor) {
+                $pergunta = urldecode(str_replace('_', ' ', $chave));
+                $pergunta = preg_replace('/_{2,}/', ' ', $pergunta);
+                $pergunta = ucwords($pergunta);
+
+                if (is_array($valor)) {
+                    if (isset($valor['linhas']) && isset($valor['respostas'])) {
+                        $html .= '<tr><td colspan="2"><strong>' . htmlspecialchars($pergunta) . '</strong></td></tr>';
+                        foreach ($valor['respostas'] as $linha => $resps) {
+                            $html .= '<tr><td style="padding-left:20px;">' . htmlspecialchars($linha) . '</td><td>';
+                            foreach ($resps as $col => $sim) {
+                                if ($sim) {
+                                    $html .= '<span style="display:block;">' . htmlspecialchars($col) . ': <strong>Sim</strong></span>';
+                                }
+                            }
+                            $html .= '</td></tr>';
+                        }
+                    } else {
+                        $valor = json_encode($valor, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+                        $html .= '<tr><td>' . htmlspecialchars($pergunta) . '</td><td><pre>' . htmlspecialchars($valor) . '</pre></td></tr>';
+                    }
+                } else {
+                    $html .= '<tr>
+                        <td>' . htmlspecialchars($pergunta) . '</td>
+                        <td>' . (empty($valor) ? '<em>Não respondido</em>' : htmlspecialchars($valor)) . '</td>
+                    </tr>';
+                }
+            }
+        } else {
+            $html .= '<tr><td colspan="2">Nenhum dado registrado.</td></tr>';
+        }
+
+        $html .= '</tbody></table></div>';
+
+        if (!empty($evolucao['observacoes'])) {
+            $html .= '
+            <div style="margin-top:20px;">
+                <h4>Observações</h4>
+                <p>' . nl2br(htmlspecialchars($evolucao['observacoes'])) . '</p>
+            </div>';
+        }
+
+        $html .= '
+            <div class="paciente-actions" style="margin-top:20px; gap:10px;">
+                <a href="?id=' . $pacienteId . '&sub=historico" class="btn-clear">
+                    <i class="fas fa-arrow-left"></i> Voltar ao Histórico
+                </a>
+                <a href="?id=' . $pacienteId . '&sub=documentos" class="btn-clear">
+                    <i class="fas fa-user"></i> Voltar ao Paciente
+                </a>
+            </div>
+        </div>';
+
+        return $html;
+    }
 }
+?>

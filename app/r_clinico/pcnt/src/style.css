@@ -722,6 +722,26 @@ nav ul li a:hover {
 .btn-evolucao-small i {
     font-size: 12px;
 }
+
+.btn-historico {
+    background: #574b90;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 15px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: background 0.2s;
+}
+
+.btn-historico:hover {
+    background: #4a3f7a;
+}
 /* Responsividade */
 @media (max-width: 768px) {
     .simple-box {

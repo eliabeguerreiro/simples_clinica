@@ -416,7 +416,56 @@ class Paciente
     }
     
     /**
-     * Busca total de pacientes
+     * Lista todas as evoluções clínicas de um paciente
      */
+    public function listarEvolucoes($pacienteId)
+    {
+        try {
+            $sql = "
+                SELECT 
+                    ec.id,
+                    ec.data_hora,
+                    ec.criado_por,
+                    f.nome AS nome_formulario,
+                    f.especialidade
+                FROM evolucao_clinica ec
+                INNER JOIN formulario f ON ec.formulario_id = f.id
+                WHERE ec.paciente_id = ?
+                ORDER BY ec.data_hora DESC
+            ";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([$pacienteId]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            return [];
+        }
+    }
+
+    /**
+     * Busca uma evolução clínica específica por ID e paciente
+     */
+    public function buscarEvolucaoPorId($evolucaoId, $pacienteId)
+    {
+        try {
+            $sql = "
+                SELECT 
+                    ec.dados,
+                    ec.observacoes,
+                    ec.data_hora,
+                    ec.criado_por,
+                    f.nome AS nome_formulario,
+                    f.especialidade
+                FROM evolucao_clinica ec
+                INNER JOIN formulario f ON ec.formulario_id = f.id
+                WHERE ec.id = ? AND ec.paciente_id = ?
+                LIMIT 1
+            ";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([$evolucaoId, $pacienteId]);
+            return $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            return false;
+        }
+    }
 
 }
