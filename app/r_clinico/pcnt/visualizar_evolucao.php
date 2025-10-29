@@ -214,9 +214,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao']) && $_POST['ac
             </div>
 
             <!-- Botões -->
-            <div class="botoes">
+           <div class="botoes">
                 <button type="button" onclick="toggleEdicao()" class="btn-editar">Editar Respostas</button>
                 <button type="submit" class="btn-salvar" style="display:none;">Salvar Alterações</button>
+                
+                <a href="exportar_evolucao.php?formato=pdf&id=<?= $evolucao_id ?>" target="_blank" class="btn-exportar">
+                    <i class="fas fa-file-pdf"></i> PDF
+                </a>
+                <a href="exportar_evolucao.php?formato=excel&id=<?= $evolucao_id ?>" class="btn-exportar">
+                    <i class="fas fa-file-csv"></i> CSV
+                </a>
+                <a href="exportar_evolucao.php?formato=xlsx&id=<?= $evolucao_id ?>" class="btn-exportar">
+                    <i class="fas fa-file-excel"></i> XLSX
+                </a>
+                
                 <a href="javascript:history.back()" class="btn-voltar">Voltar</a>
             </div>
         </form>

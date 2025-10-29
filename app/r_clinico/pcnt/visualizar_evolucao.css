@@ -130,6 +130,20 @@ body {
 .btn-salvar:hover { background: #218838; }
 .btn-voltar:hover { background: #e8e8f0; }
 
+.btn-exportar {
+    background: #e3f2fd;
+    color: #1976d2;
+    border: 1px solid #90caf9;
+    padding: 10px 15px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 500;
+    margin: 0 4px;
+}
+.btn-exportar:hover {
+    background: #bbdefb;
+}
+
 /* Estilo para impressão / exportação */
 @media print {
     body { background: white; padding: 0; }
