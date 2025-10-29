@@ -1,180 +1,71 @@
-# 🏥 Sistema Multi-Clínicas – Ambiente VPS (Apache + PHP + MySQL)
+# 🏥 Sistema Multi-Clínicas – Guia de deploy em VPS (Apache + PHP + MySQL)
 
-Este repositório contém a documentação e scripts para implantar um sistema web **multi-clínicas** em um VPS Ubuntu, com:
+Este documento descreve como implantar rapidamente o sistema em uma VPS Ubuntu e um script auxiliar para criar ambientes isolados por cliente (subdomínios).
 
-- **Subdomínios isolados** por cliente (ex: `clinicax.solucoesmedicas.online`)  
-- **Banco de dados dedicado** para cada clínica  
-- **Ambiente de testes** (`teste.solucoesmedicas.online`)  
-- **Scripts de automação** para criação rápida de novos clientes  
+Principais pontos
+- Cada cliente recebe um diretório / VirtualHost e um banco de dados dedicado.
+- Script automático para criar pasta, vhost e banco.
+- Recomendações de segurança, backup e SSL.
 
-> ✅ Ideal para sistemas de gestão médica, odontológica ou qualquer aplicação multi-tenant com isolamento de dados.
+Pré-requisitos
+- VPS Ubuntu 20.04+ (ou similar)
+- Acesso SSH com sudo/root
+- Apache2, PHP (versão compatível) e MySQL/MariaDB
+- Domínio principal configurado para aceitar subdomínios
+- Porta 80/443 abertas no firewall
 
----
-
-## 🛠️ Pré-requisitos
-
-- VPS com **Ubuntu 20.04+**
-- Apache2, PHP e MySQL instalados
-- Domínio principal configurado (ex: `solucoesmedicas.online`)
-- Acesso SSH como `root` ou usuário com `sudo`
-- Porta 80 aberta no firewall
-
----
-
-## 📁 Estrutura de Pastas
-
-Cada cliente terá seu próprio ambiente isolado:
-
-/var/www/
-├── clinicavivenciar.solucoesmedicas.online/
-│   └── public_html/       ← arquivos PHP da clínica
-├── outraclinica.solucoesmedicas.online/
-│   └── public_html/
-└── teste.solucoesmedicas.online/          ← ambiente de testes
-    └── public_html/
-
-
----
-
-## 🧪 Ambiente de Testes
-
-Antes de entregar para o cliente, use o subdomínio de testes:
-
-- **URL**: `http://teste.solucoesmedicas.online`
-- **Banco**: `ambiente_teste_db`
-- **Usuário**: `teste_user`
-
-Configure manualmente uma vez (veja [Configuração Inicial](#configuração-inicial)).
-
----
-
-## 🚀 Script: Criar Novo Cliente
-
-Use o script abaixo para **criar um novo cliente em segundos**.
-
-### Passo 1: Crie o script no VPS
-
+Instalação básica do servidor (exemplo)
 ```bash
-sudo nano /root/criar_cliente.sh
-#!/bin/bash
+sudo apt update && sudo apt upgrade -y
+sudo apt install apache2 mysql-server php php-mysql php-mbstring php-zip php-gd php-json php-curl -y
+sudo systemctl enable apache2
+sudo systemctl enable mysql
+```
 
-# -------------------------------------------------
-# Script: Criar Novo Cliente (Clínica)
-# Uso: sudo /root/criar_cliente.sh nome_do_cliente
-# Ex:  sudo /root/criar_cliente.sh clinicavivenciar
-# -------------------------------------------------
+Script para criar novo cliente (resumo)
+- Cria database + usuário
+- Cria pasta /var/www/<cliente>/public_html
+- Cria VirtualHost Apache e ativa o site
+- Gera uma página index simples e registra credenciais em /root/clients_created.log
 
-if [ $# -eq 0 ]; then
-    echo "❌ Uso: $0 <nome_do_cliente>"
-    echo "   Ex: $0 clinicavivenciar"
-    exit 1
-fi
+Uso do script
+1. Transfira o script para a VPS em `/root/criar_cliente.sh`
+2. Torne executável:
+   sudo chmod +x /root/criar_cliente.sh
+3. Execute:
+   sudo /root/criar_cliente.sh clinicavivenciar
 
-CLIENTE=$1
-DOMINIO="${CLIENTE}.solucoesmedicas.online"
-DB_NAME="${CLIENTE}_db"
-DB_USER="${CLIENTE}_user"
-DB_PASS=$(openssl rand -base64 16 | tr -d "=+/" | cut -c1-14)
-ROOT_MYSQL_PASS="SUA_SENHA_ROOT_AQUI"  # 🔐 ALTERE ISSO!
+Observações importantes
+- O script pede a senha root do MySQL se não estiver definida via variável de ambiente `MYSQL_ROOT_PW`.
+- Após criar o site, adicione um registro DNS A apontando `clinicavivenciar.seudominio.com` para o IP da VPS.
+- Para habilitar HTTPS use Certbot:
+  sudo apt install certbot python3-certbot-apache
+  sudo certbot --apache -d clinicavivenciar.seudominio.com
 
-echo "🚀 Criando ambiente para: $DOMINIO"
+Segurança recomendada
+- Não use root no PHP; crie usuários específicos para a aplicação.
+- Não exponha MySQL para a internet (porta 3306).
+- Ative UFW e permita apenas SSH/HTTP/HTTPS:
+  sudo ufw allow OpenSSH
+  sudo ufw allow 80/tcp
+  sudo ufw allow 443/tcp
+  sudo ufw enable
+- Configurar backups automáticos do banco (cron + mysqldump) e das pastas /var/www
 
-# 1. Criar banco de dados
-mysql -u root -p"$ROOT_MYSQL_PASS" <<EOF
-CREATE DATABASE IF NOT EXISTS \`$DB_NAME\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE USER IF NOT EXISTS '$DB_USER'@'localhost' IDENTIFIED BY '$DB_PASS';
-GRANT ALL PRIVILEGES ON \`$DB_NAME\`.* TO '$DB_USER'@'localhost';
-FLUSH PRIVILEGES;
-EOF
+Backup rápido de banco
+```bash
+mysqldump -u root -p nome_do_banco > /root/backups/nome_do_banco_$(date +%F).sql
+```
 
-if [ $? -ne 0 ]; then
-    echo "❌ Erro ao criar o banco. Verifique a senha do root do MySQL."
-    exit 1
-fi
+Registro de clientes criados
+- As credenciais são armazenadas em `/root/clients_created.log`. Proteja esse arquivo.
 
-# 2. Pasta do site
-mkdir -p /var/www/$DOMINIO/public_html
-chown -R www-www-data /var/www/$DOMINIO
-chmod -R 755 /var/www/$DOMINIO
+Suporte e troubleshooting
+- Logs do Apache: /var/log/apache2/error.log
+- Logs do MySQL: /var/log/mysql/error.log
+- Permissões: chown -R www-data:www-data /var/www/<domínio>/public_html
 
-# 3. Virtual Host
-cat > /etc/apache2/sites-available/$DOMINIO.conf <<EOF
-<VirtualHost *:80>
-    ServerName $DOMINIO
-    ServerAlias www.$DOMINIO
-    DocumentRoot /var/www/$DOMINIO/public_html
-
-    <Directory /var/www/$DOMINIO/public_html>
-        Options Indexes FollowSymLinks
-        AllowOverride All
-        Require all granted
-    </Directory>
-
-    ErrorLog \${APACHE_LOG_DIR}/${CLIENTE}_error.log
-    CustomLog \${APACHE_LOG_DIR}/${CLIENTE}_access.log combined
-</VirtualHost>
-EOF
-
-# 4. Habilitar e recarregar
-a2ensite $DOMINIO.conf > /dev/null
-systemctl reload apache2
-
-# 5. Página de boas-vindas
-echo "<?php echo '<h1>✅ Bem-vindo à $DOMINIO!</h1>' . '<p>Banco: $DB_NAME | Usuário: $DB_USER</p>'; ?>" > /var/www/$DOMINIO/public_html/index.php
-chown www-www-data /var/www/$DOMINIO/public_html/index.php
-
-# 6. Resumo
-echo ""
-echo "✅ Cliente criado com sucesso!"
-echo "--------------------------------------------------"
-echo "Subdomínio: http://$DOMINIO"
-echo "Pasta:      /var/www/$DOMINIO/public_html"
-echo "Banco:      $DB_NAME"
-echo "Usuário DB: $DB_USER"
-echo "Senha DB:   $DB_PASS"
-echo "--------------------------------------------------"
-echo "⚠️  Anote a senha do banco! Ela não será mostrada novamente."
-echo "➡️  Agora, adicione o registro DNS:"
-echo "    Tipo: A | Nome: $CLIENTE | IP: 191.252.210.60"
-
-Passo 2: Torne executável e configure
-sudo chmod +x /root/criar_cliente.sh
-
-Passo 3: Use o script
-sudo /root/criar_cliente.sh clinicavivenciar
-
-Saída:
-
-✅ Cliente criado com sucesso!
-Subdomínio: http://clinicavivenciar.solucoesmedicas.online
-Banco:      clinicavivenciar_db
-Usuário DB: clinicavivenciar_user
-Senha DB:   k8Lm2nPq9RsT4v
+---
+Pequenas melhorias e customizações podem ser feitas conforme seu fluxo de deploy. Se quiser, adapto o script para criar também um banco de testes, importar um dump inicial ou provisionar via Ansible.
 
 
-
-🌐 Configuração DNS (obrigatória) 
-
-Após rodar o script, adicione um registro DNS no seu provedor (ex: KingHost): 
-
-Tipo: A
-Nome(Host): clinicax
-IP: 191.252.210.60
-⏳ A propagação pode levar até 1 hora.
-
-
-🔒 Boas Práticas 
-
-    Nunca use root no PHP — sempre crie usuários dedicados.
-    Nunca exponha a porta 3306 — use SSH Tunnel para acesso remoto.
-    Use o ambiente de testes antes de entregar para o cliente.
-    Anote credenciais em gerenciador seguro (ex: Bitwarden).
-    Faça backups regulares dos bancos de dados.
-
-🧰 Ferramentas Recomendadas 
-
-    WinSCP: Upload de arquivos via SFTP  
-    MySQL Workbench: Acesso ao banco via SSH Tunnel  
-    PuTTY: Terminal SSH com atalho para sudo su -
-     
-     
