@@ -114,7 +114,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao']) && $_POST['ac
             <p>
                 <strong>Paciente:</strong> <?= htmlspecialchars($paciente['nome'] ?? 'Não informado') ?> (ID: <?= $evolucao['paciente_id'] ?>)<br>
                 <strong>Formulário:</strong> <?= htmlspecialchars($evolucao['nome_formulario']) ?><br>
-                <strong>Data:</strong> <?= date('d/m/Y H:i', strtotime($evolucao['created_at'])) ?>
+                <strong>Data:</strong> <?= date('d/m/Y H:i', strtotime($evolucao['data_hora'])) ?>
             </p>
         </div>
 
