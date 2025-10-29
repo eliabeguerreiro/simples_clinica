@@ -6,7 +6,7 @@ include "../../../classes/index.class.php";
 
 if (!Index::validaLogin($_SESSION['data_user'], $_SESSION['login_time'])) {
     $_SESSION['msg'] = '<p>Realize o login para acessar o painel</p>';
-    header('Location:../');
+    header('Location:../../');
     exit;
 }
 if (isset($_GET['sair'])) {
