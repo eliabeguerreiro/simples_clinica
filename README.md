@@ -65,7 +65,4 @@ Suporte e troubleshooting
 - Logs do MySQL: /var/log/mysql/error.log
 - Permissões: chown -R www-data:www-data /var/www/<domínio>/public_html
 
----
-Pequenas melhorias e customizações podem ser feitas conforme seu fluxo de deploy. Se quiser, adapto o script para criar também um banco de testes, importar um dump inicial ou provisionar via Ansible.
-
 
