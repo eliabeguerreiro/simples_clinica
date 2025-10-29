@@ -468,4 +468,34 @@ class Paciente
         }
     }
 
+        public function listarEvolucoesDetalhadas($pacienteId)
+    {
+        try {
+            $sql = "
+                SELECT 
+                    ec.id,
+                    ec.formulario_id,
+                    ec.paciente_id,
+                    ec.atendimento_id,
+                    ec.data_referencia,
+                    ec.data_hora AS created_at,
+                    ec.dados,
+                    ec.observacoes,
+                    ec.criado_por,
+                    f.nome AS nome_formulario,
+                    f.especialidade
+                FROM evolucao_clinica ec
+                LEFT JOIN formulario f ON ec.formulario_id = f.id
+                WHERE ec.paciente_id = ?
+                ORDER BY ec.data_hora DESC
+            ";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([$pacienteId]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            // opcional: registrar log de erro
+            return [];
+        }
+    }
+
 }

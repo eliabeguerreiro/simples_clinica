@@ -652,32 +652,8 @@ class ConteudoRClinicoPCNT
             return '<div class="form-message error">Paciente não especificado para exibir histórico.</div>';
         }
 
-        // Busca evoluções diretamente do banco
-        try {
-            $db = DB::connect();
-            $stmt = $db->prepare("
-                SELECT 
-                    ec.id,
-                    ec.formulario_id,
-                    ec.paciente_id,
-                    ec.atendimento_id,
-                    ec.data_referencia,
-                    ec.data_hora AS created_at,
-                    ec.dados,
-                    ec.observacoes,
-                    ec.criado_por,
-                    f.nome AS nome_formulario,
-                    f.especialidade
-                FROM evolucao_clinica ec
-                LEFT JOIN formulario f ON ec.formulario_id = f.id
-                WHERE ec.paciente_id = ?
-                ORDER BY ec.data_hora DESC
-            ");
-            $stmt->execute([$pacienteId]);
-            $evolucoes = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        } catch (Exception $e) {
-            return '<div class="form-message error">Erro ao carregar histórico: ' . htmlspecialchars($e->getMessage()) . '</div>';
-        }
+        // Busca evoluções via modelo Paciente
+        $evolucoes = $this->paciente->listarEvolucoesDetalhadas($pacienteId);
 
         if (empty($evolucoes)) {
             return '<div class="no-data">Nenhuma evolução registrada para este paciente.</div>';
