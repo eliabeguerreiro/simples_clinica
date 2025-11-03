@@ -185,9 +185,9 @@ class ContentRClinicoAtdnm
                     </div>
                     <nav>
                         <ul>
-                            <li><a href="./">INICIO</a></li>
-                            <li><a href="/atendimentos.php">SUPORTE</a></li>
-                            <li><a href="/paciente">SAIR</a></li>
+                            <li><a href="../../">INICIO</a></li>
+                            <li><a href="#">SUPORTE</a></li>
+                            <li><a href="?sair">SAIR</a></li>
                         </ul>
                     </nav>
                 </header>
