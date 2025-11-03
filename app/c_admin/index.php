@@ -2,14 +2,19 @@
 session_start();
 ob_start();
 
-// Validar login
-if (!isset($_SESSION['data_user']) || !isset($_SESSION['login_time'])) {
+include "../../classes/index.class.php";
+include "classes/conteudo.painel-user.class.php";
+
+
+if (!Index::validaLogin($_SESSION['data_user'] ?? [], $_SESSION['login_time'] ?? 0)) {
     $_SESSION['msg'] = '<p>Realize o login para acessar o painel</p>';
-    header('Location: ../');
+    header('Location:../');
     exit;
 }
 
-include "classes/conteudo.painel-user.class.php";
+if (isset($_GET['sair'])) {
+    Index::logOut();
+}
 
 $pagina = new ConteudoPainelUser();
 echo $pagina->render();
