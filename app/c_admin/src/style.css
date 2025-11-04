@@ -551,6 +551,29 @@ nav ul li a:hover {
     color: white;
 }
 
+
+.tab-btn.disabled {
+    pointer-events: none;
+    position: relative;
+}
+
+.tab-btn.disabled:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+
+
 /* Responsividade */
 @media (max-width: 768px) {
     .simple-box {

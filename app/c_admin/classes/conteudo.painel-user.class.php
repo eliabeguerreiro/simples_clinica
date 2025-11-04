@@ -90,7 +90,7 @@ class ConteudoPainelUser
                     <!-- Abas principais -->
                     <div class="tabs" id="main-tabs">
                         <button class="tab-btn active" onclick="redirectToTab('usuarios')">Usuários</button>
-                        <button class="tab-btn" onclick="redirectToTab('perfis')">Perfis</button>
+                        <button class="tab-btn disabled" title="Módulo em desenvolvimento" style="cursor:not-allowed; opacity:0.6;" onclick="event.preventDefault();">Perfis</button>
                     </div>
 
                     <!-- Sub-abas -->
@@ -98,7 +98,7 @@ class ConteudoPainelUser
                         <div class="sub-tabs" id="sub-usuarios">
                             <button class="tab-btn" data-main="usuarios" data-sub="cadastro" onclick="showSubTab('usuarios', 'cadastro', this)">Cadastro</button>
                             <button class="tab-btn active" data-main="usuarios" data-sub="documentos" onclick="showSubTab('usuarios', 'documentos', this)">Listagem</button>
-                            <button class="tab-btn" data-main="usuarios" data-sub="edicao" onclick="showSubTab('usuarios', 'edicao', this)">Edição</button>
+                            
                         </div>
                     </div>
 
