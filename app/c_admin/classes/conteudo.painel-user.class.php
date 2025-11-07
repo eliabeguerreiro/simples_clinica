@@ -13,7 +13,7 @@ class ConteudoPainelUser
 
     public function render()
     {
-        $html = <<<HTML
+$html = <<<HTML
             <!DOCTYPE html>
             <html lang="pt-BR">
             <head>
@@ -23,20 +23,20 @@ class ConteudoPainelUser
                 <link rel="stylesheet" href="src/style.css">
                 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
             </head>
-        HTML;
+HTML;
 
         // Renderiza o corpo da página
         $body = $this->renderBody();
 
         $html .= $body;
 
-        $html .= <<<HTML
+$html .= <<<HTML
             <script src="src/script.js"></script>
             <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
             <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
         </body>
         </html>
-        HTML;
+HTML;
 
         return $html;
     }
@@ -69,7 +69,7 @@ class ConteudoPainelUser
             }
         }
 
-        $html = <<<HTML
+$html = <<<HTML
             <body>
                 <header>
                     <div class="logo">
@@ -138,7 +138,7 @@ class ConteudoPainelUser
                 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
                 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
             </body>
-        HTML;
+HTML;
 
         return $html;
     }
@@ -372,4 +372,3 @@ class ConteudoPainelUser
         </div>';
     }
 }
-?>

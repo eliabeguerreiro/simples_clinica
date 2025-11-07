@@ -3,7 +3,7 @@ class ContentPainelInicial
 {
     public function renderHeader()
     {
-        $html = <<<HTML
+$html = <<<HTML
             <!DOCTYPE html>
             <html lang="pt-BR">
             <head>
@@ -12,7 +12,7 @@ class ContentPainelInicial
                 <title>Clínica - Home</title>
                 <link rel="stylesheet" href="./src/style.css">
             </head>
-        HTML;
+HTML;
         return $html;
     }
 
@@ -53,7 +53,7 @@ class ContentPainelInicial
 HTML;
         }
 
-        $html = <<<HTML
+$html = <<<HTML
             <body>
                 <header>
                     <div class="logo">
@@ -83,4 +83,3 @@ HTML;
         return $html;
     }
 }
-?>

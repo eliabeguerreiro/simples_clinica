@@ -16,7 +16,7 @@ class ConteudoRClinicoPCNT
 
     public function render()
     {
-        $html = <<<HTML
+$html = <<<HTML
             <!DOCTYPE html>
             <html lang="pt-BR">
             <head>
@@ -26,7 +26,7 @@ class ConteudoRClinicoPCNT
                 <link rel="stylesheet" href="./src/style.css">
                 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
             </head>
-        HTML;
+HTML;
         $body = $this->renderBody();
         $html .= $body;
         $html .= <<<HTML
@@ -35,7 +35,7 @@ class ConteudoRClinicoPCNT
             <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
         </body>
         </html>
-        HTML;
+HTML;
         return $html;
     }
 
@@ -75,7 +75,7 @@ class ConteudoRClinicoPCNT
             $pacienteBuscado = $this->paciente->buscarPorId($buscaId);
         }
 
-        $html = <<<HTML
+$html = <<<HTML
             <body>
                 <header>
                     <div class="logo">
@@ -102,14 +102,14 @@ class ConteudoRClinicoPCNT
                         <div class="sub-tabs" id="sub-pacientes">
                             <button class="tab-btn" data-main="pacientes" data-sub="cadastro" onclick="showSubTab('pacientes', 'cadastro', this)">Cadastro</button>
                             <button class="tab-btn active" data-main="pacientes" data-sub="documentos" onclick="showSubTab('pacientes', 'documentos', this)">Listagem</button>
-            HTML;
+HTML;
 
             // Só mostra a aba "Histórico" se houver paciente_id
             if ($this->paciente_id) {
                 $html .= '<button class="tab-btn" data-main="pacientes" data-sub="historico" onclick="showSubTab(\'pacientes\', \'historico\', this)">Histórico</button>';
             }
 
-            $html .= <<<HTML
+$html .= <<<HTML
                             </div>
                         </div>
                         <!-- Conteúdo das abas -->
@@ -121,7 +121,7 @@ class ConteudoRClinicoPCNT
                                 {$this->getListagemPacientes($resultado, $pacienteBuscado)}
                             </div>
                             <div id="pacientes-historico" class="tab-content" style="display:none;">
-            HTML;
+HTML;
 
             if ($this->paciente_id) {
                 $html .= $this->getHistoricoEvolucoesPorPaciente($this->paciente_id);
@@ -129,7 +129,7 @@ class ConteudoRClinicoPCNT
                 $html .= '<div class="form-message error">Paciente não especificado para exibir histórico.</div>';
             }
 
-        $html .= <<<HTML
+$html .= <<<HTML
                         </div>
                         <div id="pacientes-edicao" class="tab-content" style="display:none;">
                             {$this->getFormularioEdicao($resultado)}
@@ -157,7 +157,7 @@ class ConteudoRClinicoPCNT
                 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
                 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
             </body>
-        HTML;
+HTML;
         return $html;
     }
 
