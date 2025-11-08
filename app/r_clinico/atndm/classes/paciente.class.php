@@ -1,8 +1,6 @@
 <?php
 /* Classe de controle dos dados cadastrais dos pacientes*/
 
-include_once "db.class.php";
-
 Class Paciente_class
 {
      private $db;

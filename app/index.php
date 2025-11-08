@@ -3,6 +3,8 @@ session_start();
 ob_start();
 //var_dump($_SESSION);
 
+// Painel Inicial de navegação onde pode ser escolhido os módulos disponíveis
+
 include"../classes/index.class.php";
 include"classes/conteudo.painel.class.php";
 
