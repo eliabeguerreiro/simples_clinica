@@ -6,7 +6,7 @@ if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
 $evolucao_id = (int)$_GET['id'];
 
 // Busca evolução
-include_once "classes/db.class.php";
+include "../../../classes/db.class.php";
 $db = DB::connect();
 $stmt = $db->prepare("SELECT * FROM evolucao_clinica WHERE id = ?");
 $stmt->execute([$evolucao_id]);

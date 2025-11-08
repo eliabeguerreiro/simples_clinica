@@ -31,7 +31,7 @@ if (file_exists(__DIR__ . '/vendor/autoload.php')) {
 }
 
 // Conexão
-include_once "classes/db.class.php";
+include "../../../classes/db.class.php";
 $db = DB::connect();
 
 // Busca evolução
