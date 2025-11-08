@@ -1,5 +1,4 @@
 <?php
-include_once "../../../classes/db.class.php";
 
 class Evolucao
 {

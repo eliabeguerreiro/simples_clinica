@@ -1,6 +1,6 @@
 <?php
 session_start();
-include_once "classes/db.class.php";
+include "../../../classes/db.class.php";
 
 if (!isset($_GET['paciente_id']) || !is_numeric($_GET['paciente_id'])) {
     die("<h2>Erro</h2><p>Paciente não especificado.</p>");

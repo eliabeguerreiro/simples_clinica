@@ -6,7 +6,7 @@ function getDbConnection()
     static $db = null;
     if ($db === null) {
         try {
-            include_once "classes/db.class.php";
+            include "../../../classes/db.class.php";
             $db = DB::connect();
         } catch (Exception $e) {
             die("<h2>Erro de conexão</h2><p>" . htmlspecialchars($e->getMessage()) . "</p>");

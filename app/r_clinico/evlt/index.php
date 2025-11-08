@@ -7,6 +7,7 @@ ini_set('display_startup_errors', 1);
 session_start();
 ob_start();
 
+include "../../../classes/db.class.php";
 include "../../../classes/index.class.php";
 include "classes/conteudo.r_clinico.evlt.class.php";
 
