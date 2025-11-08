@@ -1,5 +1,5 @@
 <?php
-include_once "db.class.php";
+
 include_once "gest-user.class.php";
 
 class ConteudoPainelUser

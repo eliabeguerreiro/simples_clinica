@@ -8,6 +8,7 @@ session_start();
 ob_start();
 
 include "../../classes/index.class.php";
+include "../../classes/db.class.php";
 include "classes/conteudo.painel-user.class.php";
 
 

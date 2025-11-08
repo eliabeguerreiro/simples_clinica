@@ -13,4 +13,4 @@ include "classes/conteudo.painel-user.class.php";
 
 $pagina = new ConteudoPainelUser();
 echo $pagina->render();
-?>
+?> 

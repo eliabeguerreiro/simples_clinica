@@ -1,6 +1,8 @@
 <?php
 include_once "classes/index.class.php";
 include_once "classes/db.class.php";
+
+
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 session_start();
