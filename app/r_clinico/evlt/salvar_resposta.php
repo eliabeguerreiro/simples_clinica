@@ -58,8 +58,42 @@ try {
         $criado_por
     ]);
 
-    echo "<h2>Evolução salva com sucesso!</h2>";
-    echo "<a href='render_formulario.php?form_id=$form_id'>Voltar ao formulário</a>";
+        // ✅ Mensagem de sucesso estilizada
+$html = <<<HTML
+        <!DOCTYPE html>
+        <html lang="pt-BR">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Evolução Salva</title>
+            <link rel="stylesheet" href="../../src/style.css">
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+        </head>
+        <body>
+            <div class="simple-box" style="max-width: 500px; margin: 100px auto; text-align: center;">
+                <h2 style="color: #28a745; font-size: 24px; margin-bottom: 20px;">
+                    <i class="fas fa-check-circle" style="margin-right: 10px;"></i>
+                    Evolução salva com sucesso!
+                </h2>
+
+                <p style="color: #666; margin-bottom: 30px; font-size: 16px;">
+                    Os dados foram gravados no banco de forma segura.
+                </p>
+
+                <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                    
+                    <a href="../pcnt/index.php?id={$paciente_id}&sub=historico" class="btn-clear" style="padding: 12px 20px; font-size: 14px; display: inline-block; text-decoration: none;">
+                        <i class="fas fa-history"></i> Voltar para o paciente
+                    </a>
+                </div>
+            </div>
+
+            <script src="../../src/script.js"></script>
+        </body>
+        </html>
+HTML;
+
+    echo $html;
 
 } catch (Exception $e) {
     die("<h2>Erro ao salvar evolução</h2><p>" . htmlspecialchars($e->getMessage()) . "</p>");
