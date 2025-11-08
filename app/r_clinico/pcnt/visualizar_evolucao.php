@@ -1,5 +1,5 @@
 <?php
-session_start();
+
 
 // Valida ID da evolução
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {

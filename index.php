@@ -5,7 +5,6 @@ include_once "classes/db.class.php";
 
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
-session_start();
 
 /* Se já estiver logado, redireciona para o app
 if (isset($_SESSION['data_user']) && Index::validaLogin($_SESSION['data_user'], $_SESSION['login_time'])) {
