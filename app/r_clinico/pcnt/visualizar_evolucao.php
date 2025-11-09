@@ -54,6 +54,10 @@ try {
     $stmt->execute([$evolucao['paciente_id']]);
     $paciente = $stmt->fetch(PDO::FETCH_ASSOC);
 
+    // Busca anexos relacionados à evolução
+    $stmt = $db->prepare("SELECT * FROM evolucao_arquivos WHERE evolucao_id = ? ORDER BY id");
+    $stmt->execute([$evolucao_id]);
+    $arquivos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (Exception $e) {
     die("<h2>Erro ao carregar evolução</h2><p>" . htmlspecialchars($e->getMessage()) . "</p>");
 }
@@ -212,6 +216,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao']) && $_POST['ac
                     <?= !empty($evolucao['observacoes']) ? nl2br(htmlspecialchars($evolucao['observacoes'])) : '<em>Sem observações</em>' ?>
                 </div>
             </div>
+
+            <!-- Anexos -->
+            <?php if (!empty($arquivos)): ?>
+                <div class="form-group">
+                    <label>Anexos</label>
+                    <ul class="anexos-list" style="list-style:none;padding:0;">
+                        <?php foreach ($arquivos as $a): 
+                            $mime = $a['mime'] ?? '';
+                            // tipos que costumam abrir inline no navegador
+                            $canInline = preg_match('#^(image/|application/pdf|text/)#', $mime);
+                            $urlBase = '../evlt/serve_anexo.php?id=' . (int)$a['id'];
+                            $urlOpen = $urlBase . '&download=0';
+                            $urlDownload = $urlBase . '&download=1';
+                        ?>
+                            <li style="margin-bottom:8px;">
+                                <strong><?= htmlspecialchars($a['nome_original'] ?? $a['nome_salvo']) ?></strong>
+                                <small style="color:#666;">(<?= htmlspecialchars($mime) ?>)</small>
+                                <?php if ($canInline): ?>
+                                    <a href="<?= $urlOpen ?>" target="_blank" rel="noopener" class="btn-view" style="margin-left:8px;">Abrir</a>
+                                    <a href="<?= $urlDownload ?>" class="btn-download" style="margin-left:6px;">Baixar</a>
+                                <?php else: ?>
+                                    <a href="<?= $urlDownload ?>" target="_blank" rel="noopener" class="btn-download" style="margin-left:8px;">Baixar</a>
+                                <?php endif; ?>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                </div>
+            <?php endif; ?>
 
             <!-- Botões -->
            <div class="botoes">
