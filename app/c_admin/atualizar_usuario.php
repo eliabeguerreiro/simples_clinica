@@ -8,6 +8,13 @@ if (!isset($_SESSION['data_user'])) {
     exit;
 }
 
+if (isset($_GET['sair'])) {
+    Index::logOut();
+}
+
+
+include "../../classes/db.class.php";
+
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
 if ($id <= 0) {
@@ -51,9 +58,8 @@ if (!$usuarioAtual) {
         <nav>
             <ul>
                 <li><a href="./">INICIO</a></li>
-                <li><a href="/paciente">PACIENTES</a></li>
-                <li><a href="/atendimentos.php">SUPORTE</a></li>
-                <li><a href="/usuarios">SAIR</a></li>
+                <li><a href="#">SUPORTE</a></li>
+                <li><a href="?sair">SAIR</a></li>
             </ul>
         </nav>
     </header>
