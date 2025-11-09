@@ -165,6 +165,44 @@ class Paciente
         }
     }
     
+
+    public function buscarPorTermoPaginado($termo = '', $pagina = 1, $porPagina = 10)
+{
+    $offset = ($pagina - 1) * $porPagina;
+
+    try {
+        if (empty(trim($termo))) {
+            $stmt = $this->db->prepare("
+                SELECT * FROM paciente 
+                ORDER BY nome 
+                LIMIT :limit OFFSET :offset
+            ");
+            $stmt->bindValue(':limit', $porPagina, PDO::PARAM_INT);
+            $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        }
+
+        $termoLike = '%' . trim($termo) . '%';
+        $stmt = $this->db->prepare("
+            SELECT * FROM paciente 
+            WHERE nome LIKE :nome OR cns LIKE :cns
+            ORDER BY nome 
+            LIMIT :limit OFFSET :offset
+        ");
+        $stmt->bindValue(':nome', $termoLike, PDO::PARAM_STR);
+        $stmt->bindValue(':cns', $termoLike, PDO::PARAM_STR);
+        $stmt->bindValue(':limit', $porPagina, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (Exception $e) {
+        return [];
+    }
+}
+
+
+
     /**
      * Atualiza paciente
      */

@@ -1,4 +1,3 @@
-
 <?php
 
 include_once "paciente.class.php";
@@ -24,15 +23,15 @@ $html = <<<HTML
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <title>Registro Clínico - Pacientes</title>
                 <link rel="stylesheet" href="./src/style.css">
-                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css  ">
             </head>
 HTML;
         $body = $this->renderBody();
         $html .= $body;
         $html .= <<<HTML
             <script src="./src/script.js"></script>
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js  "></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js  "></script>
         </body>
         </html>
 HTML;
@@ -69,8 +68,6 @@ HTML;
         }
 
         // Verifica se há um paciente sendo visualizado
-
-        // Detecta se estamos vendo um paciente específico (por ID)
         $pacienteBuscado = null;
         if (isset($_GET['id']) && is_numeric($_GET['id']) && (int)$_GET['id'] > 0) {
             $pacienteBuscado = $this->paciente->buscarPorId((int)$_GET['id']);
@@ -105,7 +102,6 @@ $html = <<<HTML
                             <button class="tab-btn active" data-main="pacientes" data-sub="documentos" onclick="showSubTab('pacientes', 'documentos', this)">Listagem</button>
 HTML;
 
-            // Só mostra a aba "Histórico" se houver paciente_id
             if ($this->paciente_id) {
                 $html .= '<button class="tab-btn" data-main="pacientes" data-sub="historico" onclick="showSubTab(\'pacientes\', \'historico\', this)">Histórico</button>';
             }
@@ -155,8 +151,8 @@ $html .= <<<HTML
                     </div>
                 </div>
                 <script src="./src/script.js"></script>
-                <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-                <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js  "></script>
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js  "></script>
             </body>
 HTML;
         return $html;
@@ -317,25 +313,14 @@ HTML;
                 $mensagens .= '</div>';
             }
         }
-        
-
-        // Buscar todos os pacientes (só se não estiver visualizando um)
-        $pacientes = [];
 
         $termoBusca = $_GET['busca'] ?? '';
-
-        if ($pacienteBuscado) {
-            // Já estamos vendo um paciente específico → não lista outros
-            $pacientes = [];
-        } else {
-            // Busca por nome ou CNS
-            $pacientes = $this->paciente->buscarPorTermo($termoBusca);
-        }
- 
-        $total = count($pacientes);
+        $formularioBusca = '';
         $tabelaPacientes = '';
+        $controls = '';
 
         if ($pacienteBuscado) {
+            // Exibe detalhes do paciente
             $dataNasc = date('d/m/Y', strtotime($pacienteBuscado['data_nascimento']));
             $tabelaPacientes = '
             <div class="table-container">
@@ -375,7 +360,17 @@ HTML;
                     </div>
                 </div>
             </div>';
+
         } else {
+            // LISTAGEM COM PAGINAÇÃO
+            $pagina = isset($_GET['pagina']) && is_numeric($_GET['pagina']) ? (int)$_GET['pagina'] : 1;
+            if ($pagina < 1) $pagina = 1;
+            $porPagina = 10;
+
+            $pacientes = $this->paciente->buscarPorTermoPaginado($termoBusca, $pagina, $porPagina);
+            $totalPacientes = $this->paciente->getTotalPacientes($termoBusca);
+            $totalPaginas = ceil($totalPacientes / $porPagina);
+
             $formularioBusca = '
             <div class="search-bar">
                 <form method="GET" class="search-form">
@@ -427,19 +422,48 @@ HTML;
                         <i class="fas fa-trash"></i> Excluir Selecionados
                     </button>
                 </div>';
+
+                // CONTROLES DE PAGINAÇÃO
+                if ($totalPaginas > 1) {
+                    $controls = '<div class="pagination-controls">';
+
+                    if ($pagina > 1) {
+                        $prev = $pagina - 1;
+                        $controls .= '<a href="?sub=documentos' . (!empty($termoBusca) ? '&busca=' . urlencode($termoBusca) : '') . '&pagina=' . $prev . '" class="btn-pagination">&laquo; Anterior</a>';
+                    }
+
+                    for ($i = max(1, $pagina - 2); $i <= min($totalPaginas, $pagina + 2); $i++) {
+                        if ($i == $pagina) {
+                            $controls .= '<span class="pagination-current">' . $i . '</span>';
+                        } else {
+                            $controls .= '<a href="?sub=documentos' . (!empty($termoBusca) ? '&busca=' . urlencode($termoBusca) : '') . '&pagina=' . $i . '" class="btn-pagination">' . $i . '</a>';
+                        }
+                    }
+
+                    if ($pagina < $totalPaginas) {
+                        $next = $pagina + 1;
+                        $controls .= '<a href="?sub=documentos' . (!empty($termoBusca) ? '&busca=' . urlencode($termoBusca) : '') . '&pagina=' . $next . '" class="btn-pagination">Próximo &raquo;</a>';
+                    }
+
+                    $controls .= '</div>';
+                }
+
             } else {
                 $tabelaPacientes = '<div class="no-data">Nenhum paciente encontrado.</div>';
             }
         }
 
+        $total = $pacienteBuscado ? 1 : $totalPacientes ?? 0;
+
         return '
         <div class="listagem-container">
             ' . $mensagens . '
-            ' . (isset($formularioBusca) ? $formularioBusca : '') . '
+            ' . $formularioBusca . '
             <div class="table-header">
                 <h3>' . ($pacienteBuscado ? 'Detalhes do Paciente' : 'Listagem de Pacientes (' . $total . ' cadastrado' . ($total != 1 ? 's' : '') . ')') . '</h3>
             </div>
             ' . $tabelaPacientes . '
+            ' . $controls . '
         </div>';
     }
 
@@ -651,14 +675,12 @@ HTML;
         </div>';
     }
 
-    // =============== HISTÓRICO DE EVOLUÇÕES ===============
     private function getHistoricoEvolucoesPorPaciente($pacienteId)
     {
         if (!$pacienteId || $pacienteId <= 0) {
             return '<div class="form-message error">Paciente não especificado para exibir histórico.</div>';
         }
 
-        // Busca evoluções via modelo Paciente
         $evolucoes = $this->paciente->listarEvolucoesDetalhadas($pacienteId);
 
         if (empty($evolucoes)) {

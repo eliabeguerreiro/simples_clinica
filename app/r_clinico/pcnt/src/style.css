@@ -742,6 +742,36 @@ nav ul li a:hover {
 .btn-historico:hover {
     background: #4a3f7a;
 }
+
+.pagination-controls {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+}
+.btn-pagination {
+    padding: 8px 12px;
+    background: #f5f5f7;
+    color: #574b90;
+    text-decoration: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+.btn-pagination:hover {
+    background: #6c63ff;
+    color: white;
+    transform: translateY(-1px);
+}
+.pagination-current {
+    padding: 8px 12px;
+    background: #6c63ff;
+    color: white;
+    border-radius: 6px;
+    font-weight: 600;
+}
 /* Responsividade */
 @media (max-width: 768px) {
     .simple-box {
