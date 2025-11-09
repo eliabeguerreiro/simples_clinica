@@ -138,6 +138,32 @@ class Paciente
             return false;
         }
     }
+
+    /**
+     * Busca pacientes por nome ou CNS
+     */
+    public function buscarPorTermo($termo = '')
+    {
+        try {
+            if (empty(trim($termo))) {
+                // Sem termo → retorna todos
+                $stmt = $this->db->prepare("SELECT * FROM paciente ORDER BY nome");
+                $stmt->execute();
+                return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            }
+
+            $termo = '%' . trim($termo) . '%';
+            $stmt = $this->db->prepare("
+                SELECT * FROM paciente 
+                WHERE nome LIKE ? OR cns LIKE ?
+                ORDER BY nome
+            ");
+            $stmt->execute([$termo, $termo]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            return [];
+        }
+    }
     
     /**
      * Atualiza paciente

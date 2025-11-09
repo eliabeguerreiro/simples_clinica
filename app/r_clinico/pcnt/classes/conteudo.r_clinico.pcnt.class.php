@@ -69,10 +69,11 @@ HTML;
         }
 
         // Verifica se há um paciente sendo visualizado
+
+        // Detecta se estamos vendo um paciente específico (por ID)
         $pacienteBuscado = null;
-        $buscaId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
-        if ($buscaId > 0) {
-            $pacienteBuscado = $this->paciente->buscarPorId($buscaId);
+        if (isset($_GET['id']) && is_numeric($_GET['id']) && (int)$_GET['id'] > 0) {
+            $pacienteBuscado = $this->paciente->buscarPorId((int)$_GET['id']);
         }
 
 $html = <<<HTML
@@ -316,13 +317,21 @@ HTML;
                 $mensagens .= '</div>';
             }
         }
+        
 
         // Buscar todos os pacientes (só se não estiver visualizando um)
         $pacientes = [];
-        if (!$pacienteBuscado) {
-            $pacientes = $this->paciente->listar();
-        }
 
+        $termoBusca = $_GET['busca'] ?? '';
+
+        if ($pacienteBuscado) {
+            // Já estamos vendo um paciente específico → não lista outros
+            $pacientes = [];
+        } else {
+            // Busca por nome ou CNS
+            $pacientes = $this->paciente->buscarPorTermo($termoBusca);
+        }
+ 
         $total = count($pacientes);
         $tabelaPacientes = '';
 
@@ -371,9 +380,10 @@ HTML;
             <div class="search-bar">
                 <form method="GET" class="search-form">
                     <input type="hidden" name="sub" value="documentos">
-                    <input type="number" name="id" placeholder="Digite o ID do paciente" min="1" required>
+                    <input type="text" name="busca" placeholder="Buscar por nome ou CNS" 
+                        value="' . htmlspecialchars($termoBusca) . '" maxlength="100">
                     <button type="submit" class="btn-search">
-                        <i class="fas fa-search"></i> Buscar Paciente
+                        <i class="fas fa-search"></i> Buscar
                     </button>
                     <a href="?sub=documentos" class="btn-clear">Limpar Busca</a>
                 </form>
@@ -385,8 +395,6 @@ HTML;
                     <table class="pacientes-table">
                         <thead>
                             <tr>
-                                <th><input type="checkbox" id="select-all" onclick="selecionarTodos(this)"></th>
-                                <th>ID</th>
                                 <th>Nome</th>
                                 <th>CNS</th>                            
                                 <th>Telefone</th>
@@ -397,8 +405,6 @@ HTML;
                 foreach ($pacientes as $paciente) {
                     $tabelaPacientes .= '
                         <tr>
-                            <td><input type="checkbox" name="paciente_ids[]" value="' . $paciente['id'] . '" class="checkbox-paciente"></td>
-                            <td>' . htmlspecialchars($paciente['id']) . '</td>
                             <td>' . htmlspecialchars($paciente['nome']) . '</td>
                             <td>' . (!empty($paciente['cns']) ? htmlspecialchars($paciente['cns']) : '-') . '</td>   
                             <td>' . (!empty($paciente['telefone']) ? htmlspecialchars($paciente['telefone']) : '-') . '</td>

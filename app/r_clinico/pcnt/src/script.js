@@ -37,32 +37,7 @@ $(document).ready(function(){
     $('#cns').mask('000 0000 0000 0000');
 });
 
-// Funções para listagem de pacientes
 
-// Selecionar todos os checkboxes
-function selecionarTodos(checkbox) {
-    const checkboxes = document.querySelectorAll('.checkbox-paciente');
-    checkboxes.forEach(cb => cb.checked = checkbox.checked);
-    atualizarBotaoExcluirSelecionados();
-}
-
-// Atualizar visibilidade do botão de exclusão múltipla
-function atualizarBotaoExcluirSelecionados() {
-    const selecionados = document.querySelectorAll('.checkbox-paciente:checked');
-    const btn = document.getElementById('btn-excluir-selecionados');
-    if (selecionados.length > 0) {
-        btn.style.display = 'inline-block';
-    } else {
-        btn.style.display = 'none';
-    }
-}
-
-// Adicionar listener para checkboxes individuais
-document.addEventListener('change', function(e) {
-    if (e.target.classList.contains('checkbox-paciente')) {
-        atualizarBotaoExcluirSelecionados();
-    }
-});
 
 // Editar paciente (implementação básica)
 function editarPaciente(id) {
@@ -75,53 +50,6 @@ function editarPaciente(id) {
     window.history.pushState({}, '', url);
 }
 
-// Confirmar exclusão individual
-let pacienteParaExcluir = null;
-
-function confirmarExclusao(id) {
-    pacienteParaExcluir = id;
-    document.getElementById('modal-exclusao').style.display = 'flex';
-}
-
-function fecharModal() {
-    document.getElementById('modal-exclusao').style.display = 'none';
-    pacienteParaExcluir = null;
-}
-
-// Confirmar exclusão no modal
-document.getElementById('confirmar-exclusao').addEventListener('click', function() {
-    if (pacienteParaExcluir) {
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.innerHTML = `
-            <input type="hidden" name="acao" value="excluir">
-            <input type="hidden" name="id" value="${pacienteParaExcluir}">
-        `;
-        document.body.appendChild(form);
-        form.submit();
-    }
-});
-
-// Excluir selecionados
-function excluirSelecionados() {
-    const selecionados = document.querySelectorAll('.checkbox-paciente:checked');
-    if (selecionados.length === 0) {
-        alert('Nenhum paciente selecionado.');
-        return;
-    }
-    
-    if (confirm(`Tem certeza que deseja excluir ${selecionados.length} paciente(s)?`)) {
-        const ids = Array.from(selecionados).map(cb => cb.value);
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.innerHTML = `
-            <input type="hidden" name="acao" value="excluir_multiplos">
-            ${ids.map(id => `<input type="hidden" name="ids[]" value="${id}">`).join('')}
-        `;
-        document.body.appendChild(form);
-        form.submit();
-    }
-}
 
 // Fechar modal ao clicar fora
 document.addEventListener('click', function(e) {
