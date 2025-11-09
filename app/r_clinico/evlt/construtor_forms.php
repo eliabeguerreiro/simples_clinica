@@ -128,6 +128,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['titulo'])) {
                 $placeholder,
                 1
             ]);
+
+            if ($tipo_input === 'file') {
+                // Corrige caminho: a pasta `anexo` fica no mesmo diretório deste arquivo
+                $pastaAnexos = __DIR__ . '/anexo/' . $form_id;
+                if (!is_dir($pastaAnexos)) {
+                    // Verifica retorno do mkdir; em caso de falha, lançar exceção para o catch externo
+                    if (!mkdir($pastaAnexos, 0755, true)) {
+                        throw new Exception("Não foi possível criar a pasta de anexos: $pastaAnexos");
+                    }
+                }
+            }
+
             setMensagem('Pergunta adicionada com sucesso!');
         } catch (Exception $e) {
             $msgErro = $e->getMessage();
@@ -184,7 +196,9 @@ $perguntas = $stmt->fetchAll();
                         <option value="checkbox">Múltipla Escolha (Checkbox)</option>
                         <option value="select">Lista Suspensa</option>
                         <option value="number">Número</option>
-                        <option value="file">Anexo de Arquivo</option>
+                        <?php if ($formulario['s_n_anexo'] === 'S'): ?>
+                            <option value="file">Anexo de Arquivo</option>
+                        <?php endif; ?>
                         <option value="tabela">Tabela de Opções (Grupos)</option>
                         <option value="sim_nao_justificativa">Sim/Não com Justificativa Condicionada</option>
                     </select>

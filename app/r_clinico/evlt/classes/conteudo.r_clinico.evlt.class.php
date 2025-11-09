@@ -215,13 +215,12 @@ HTML;
                             <th>Nome do Formulário</th>
                             <th>Especialidade</th>
                             <th>Descrição</th>
-                            <th>Ativo</th>
                             <th>Ações</th>
                         </tr>
                     </thead>
                     <tbody>';
             foreach ($formularios as $form) {
-                $ativo = $form['ativo'] == 1 ? 'Ativo' : 'Inativo';
+               
                 $descricao = !empty($form['descricao']) ? htmlspecialchars($form['descricao']) : '-';
                 $tabelaFormularios .= '
                     <tr>
@@ -229,7 +228,7 @@ HTML;
                         <td>' . htmlspecialchars($form['nome']) . '</td>
                         <td>' . htmlspecialchars($form['especialidade']) . '</td>
                         <td>' . $descricao . '</td>
-                        <td>' . $ativo . '</td>
+                        
                         <td>
                             <a href="construtor_forms.php?form_id=' . (int)$form['id'] . '" class="btn-view" title="Gerenciar Perguntas">
                                 <i class="fas fa-edit"></i> Gerenciar
