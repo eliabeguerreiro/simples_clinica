@@ -118,6 +118,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao']) && $_POST['ac
             <p>
                 <strong>Paciente:</strong> <?= htmlspecialchars($paciente['nome'] ?? 'Não informado') ?> (ID: <?= $evolucao['paciente_id'] ?>)<br>
                 <strong>Formulário:</strong> <?= htmlspecialchars($evolucao['nome_formulario']) ?><br>
+                <strong>Especialidade:</strong> <?= htmlspecialchars($evolucao['especialidade'] ?? 'Não informada') ?><br>
                 <strong>Data:</strong> <?= date('d/m/Y H:i', strtotime($evolucao['data_hora'])) ?>
             </p>
         </div>
@@ -222,23 +223,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao']) && $_POST['ac
                 <div class="form-group">
                     <label>Anexos</label>
                     <ul class="anexos-list" style="list-style:none;padding:0;">
-                        <?php foreach ($arquivos as $a): 
+                        <?php foreach ($arquivos as $a):
                             $mime = $a['mime'] ?? '';
-                            // tipos que costumam abrir inline no navegador
+                            $ext = pathinfo($a['nome_salvo'] ?? ($a['nome_original'] ?? ''), PATHINFO_EXTENSION);
+                            // escolher ícone pelo mime/ext
+                            if (preg_match('#^image/#', $mime)) { $icon = 'fa-file-image'; }
+                            elseif (strpos($mime, 'pdf') !== false) { $icon = 'fa-file-pdf'; }
+                            elseif (strpos($mime, 'word') !== false || in_array(strtolower($ext), ['doc','docx'])) { $icon = 'fa-file-word'; }
+                            elseif (strpos($mime, 'excel') !== false || in_array(strtolower($ext), ['xls','xlsx','csv'])) { $icon = 'fa-file-excel'; }
+                            elseif (in_array(strtolower($ext), ['zip','rar'])) { $icon = 'fa-file-zipper'; }
+                            elseif (strpos($mime, 'text') !== false || in_array(strtolower($ext), ['txt','md'])) { $icon = 'fa-file-lines'; }
+                            else { $icon = 'fa-file'; }
+
                             $canInline = preg_match('#^(image/|application/pdf|text/)#', $mime);
                             $urlBase = '../evlt/serve_anexo.php?id=' . (int)$a['id'];
                             $urlOpen = $urlBase . '&download=0';
                             $urlDownload = $urlBase . '&download=1';
+
+                            // tamanho legível
+                            $size = (int)($a['tamanho'] ?? 0);
+                            if ($size >= 1048576) $sizeLabel = round($size/1048576,2).' MB';
+                            elseif ($size >= 1024) $sizeLabel = round($size/1024,1).' KB';
+                            else $sizeLabel = $size.' B';
                         ?>
-                            <li style="margin-bottom:8px;">
-                                <strong><?= htmlspecialchars($a['nome_original'] ?? $a['nome_salvo']) ?></strong>
-                                <small style="color:#666;">(<?= htmlspecialchars($mime) ?>)</small>
-                                <?php if ($canInline): ?>
-                                    <a href="<?= $urlOpen ?>" target="_blank" rel="noopener" class="btn-view" style="margin-left:8px;">Abrir</a>
-                                    <a href="<?= $urlDownload ?>" class="btn-download" style="margin-left:6px;">Baixar</a>
-                                <?php else: ?>
-                                    <a href="<?= $urlDownload ?>" target="_blank" rel="noopener" class="btn-download" style="margin-left:8px;">Baixar</a>
-                                <?php endif; ?>
+                            <li class="anexo-item">
+                                <div class="anexo-icon"><i class="fas <?= $icon ?>"></i></div>
+                                <div class="anexo-meta">
+                                    <span class="nome"><?= htmlspecialchars($a['nome_original'] ?: $a['nome_salvo']) ?></span>
+                                    <span class="meta"><?= htmlspecialchars($mime ?: 'application/octet-stream') ?> &middot; <span class="small-note"><?= $sizeLabel ?></span></span>
+                                </div>
+                                <div class="anexo-actions">
+                                    <?php if ($canInline): ?>
+                                        <a class="btn-anexo btn-open" href="<?= $urlOpen ?>" target="_blank" rel="noopener">
+                                            <i class="fas fa-eye"></i> Abrir
+                                        </a>
+                                    <?php endif; ?>
+                                    <a class="btn-anexo btn-download" href="<?= $urlDownload ?>" target="_blank" rel="noopener">
+                                        <i class="fas fa-download"></i> Baixar
+                                    </a>
+                                </div>
                             </li>
                         <?php endforeach; ?>
                     </ul>
