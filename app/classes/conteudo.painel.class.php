@@ -38,7 +38,7 @@ HTML;
                 'title' => 'BPA',
                 'description' => 'Boletim de Produção Ambulatorial',
                 'icon' => '📊',
-                'link' => 'r_clinico/'
+                'link' => 'bpa/'
             ]
         ];
 

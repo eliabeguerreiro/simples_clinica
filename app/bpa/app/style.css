@@ -1,0 +1,655 @@
+/* Cor de fundo geral */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f9f6fc;
+    color: #333;
+    line-height: 1.6;
+}
+
+/* Cabeçalho */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 40px;
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-bottom: 3px solid #6c63ff;
+}
+
+.logo img {
+    width: 120px;
+}
+
+nav ul {
+    list-style: none;
+    display: flex;
+    gap: 30px;
+}
+
+nav ul li a {
+    text-decoration: none;
+    color: #6c63ff;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+nav ul li a:hover {
+    color: #333;
+}
+
+/* Seção de Novo Atendimento */
+.new-appointment {
+    max-width: 800px;
+    margin: 30px auto;
+    padding: 30px;
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.new-appointment h2 {
+    color: #6c63ff;
+    font-size: 24px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+/* Formulário */
+.new-appointment form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: space-between;
+}
+
+.form-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 15px;
+    align-items: flex-start;
+}
+
+.form-row-horizontal {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 15px;
+}
+
+.form-row-horizontal .form-group {
+    flex: 1;
+    min-width: 220px;
+}
+
+.form-group {
+    flex: 1;
+    min-width: 200px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: #333;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    font-size: 15px;
+    color: #574b90;
+    margin-bottom: 6px;
+    font-weight: 600;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+    background-color: #f5f5fa;
+    transition: border 0.2s;
+}
+
+.form-group select:focus,
+.form-group input:focus {
+    border: 1.5px solid #6c63ff;
+    outline: none;
+    background-color: #fff;
+}
+
+.form-group select:hover {
+    box-shadow: 0 0 4px #6c63ff33;
+}
+
+/* Botão "Usar mês atual" */
+.input-with-button {
+    display: flex;
+    gap: 5px;
+}
+
+.input-with-button input {
+    flex: 1;
+}
+
+.btn-mes-atual {
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 0 8px;
+    font-size: 12px;
+    cursor: pointer;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+}
+
+.btn-mes-atual:hover {
+    background-color: #e0e0e0;
+}
+
+/* Seção de Atendimentos Registrados */
+.appointments {
+    max-width: 800px;
+    margin: 30px auto;
+    padding: 30px;
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.appointments h2 {
+    color: #6c63ff;
+    font-size: 24px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-top: 10px;
+    background-color: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(108, 99, 255, 0.08);
+}
+
+table th,
+table td {
+    padding: 14px 10px;
+    text-align: left;
+    font-size: 15px;
+}
+
+table th {
+    background: #6c63ff33;
+    color: #574b90;
+    font-weight: bold;
+    text-align: center;
+    border-bottom: 2px solid #f5f5fa;
+}
+
+table tr {
+    transition: background 0.2s;
+}
+
+table th:first-child {
+    border-top-left-radius: 10px;
+}
+table th:last-child {
+    border-top-right-radius: 10px;
+}
+
+table tr:nth-child(even) {
+    background-color: #f7f6fd;
+}
+
+table tr:hover {
+    background-color: #e6e6fa;
+}
+
+table td {
+    border-bottom: 1px solid #f0f0f0;
+    vertical-align: middle;
+}
+
+.actions {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+.btn-delete {
+    background-color: #e74c3c;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s, box-shadow 0.2s;
+    box-shadow: 0 2px 4px #e74c3c22;
+}
+
+.btn-delete:hover {
+    background-color: #c0392b;
+    box-shadow: 0 4px 8px #e74c3c33;
+}
+
+.btn-generate {
+    padding: 10px 16px;
+    background-color: #27ae60; /* Botão roxo */
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 14px;
+    display: block;
+    margin: 20px auto 0;
+    text-align: center;
+}
+
+.btn-generate:hover {
+    background-color: #574b90;
+}
+
+.btn-mes-atual {
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 2px 8px;
+    margin-left: 5px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.btn-mes-atual:hover {
+    background-color: #e0e0e0;
+}
+
+/* Estilos para os formulários */
+.form-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 15px;
+    align-items: flex-start; /* Adicione esta linha para alinhar ao topo */
+}
+
+
+.form-group {
+    flex: 1;
+    min-width: 200px;
+}
+
+.input-with-button {
+    display: flex;
+    gap: 5px;
+}
+
+.input-with-button input {
+    flex: 1;
+}
+
+.btn-mes-atual {
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 0 8px;
+    font-size: 12px;
+    cursor: pointer;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+}
+
+.btn-mes-atual:hover {
+    background-color: #e0e0e0;
+}
+
+/* Linha horizontal para agrupar selects */
+.form-row-horizontal {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 15px;
+}
+
+.form-row-horizontal .form-group {
+    flex: 1;
+    min-width: 220px;
+}
+
+/* Select estilizado */
+.form-group select {
+    background-color: #f5f5fa;
+    border: 1px solid #bdbdbd;
+    border-radius: 6px;
+    padding: 10px;
+    font-size: 15px;
+    transition: border 0.2s;
+}
+
+.form-group select:focus {
+    border: 1.5px solid #6c63ff;
+    outline: none;
+    background-color: #fff;
+}
+
+/* Label mais elegante */
+.form-group label {
+    font-size: 15px;
+    color: #574b90;
+    margin-bottom: 6px;
+    font-weight: 600;
+}
+
+.form-group select:hover {
+    box-shadow: 0 0 4px #6c63ff33;
+}
+
+
+.alert-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px 0;
+}
+
+.alert {
+    width: 100%;
+    max-width: 500px;
+    padding: 15px;
+    border-radius: 4px;
+    font-weight: bold;
+    text-align: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.alert-success {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.alert-error {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+
+
+/* Estilos para a seção de filtros */
+.filtros {
+    margin-bottom: 20px; /* Espaço abaixo dos filtros */
+}
+
+.filtros form .form-row {
+    display: flex;
+    align-items: center; /* Alinha verticalmente os elementos */
+    gap: 20px; /* Espaço entre os campos */
+}
+
+.filtros form .form-group {
+    display: flex;
+    flex-direction: column; /* Organiza label e input verticalmente */
+    gap: 5px; /* Espaço entre label e input */
+}
+
+.filtros form .form-group label {
+    font-size: 14px;
+    font-weight: bold;
+    color: #574b90; /* Cor da label */
+}
+
+.filtros form .form-group input {
+    width: 100%; /* Garante que os inputs ocupem toda a largura disponível */
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.btn-filter {
+    background-color: #6c63ff; /* Cor roxa para o botão */
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 20px;
+    font-size: 14px;
+    cursor: pointer;
+    margin-left: auto; /* Posiciona o botão à direita */
+}
+
+/* Estilo para a lista de resultados da busca por paciente */
+.autocomplete-results {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    margin-top: 6px;
+    max-height: 200px;
+    overflow-y: auto;
+    list-style: none;
+    padding: 0;
+    width: 100%;
+    background-color: #fff;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    z-index: 1000;
+    font-size: 14px;
+}
+
+.autocomplete-results::-webkit-scrollbar {
+    width: 6px;
+}
+
+.autocomplete-results::-webkit-scrollbar-thumb {
+    background-color: #ddd;
+    border-radius: 3px;
+}
+
+.autocomplete-results li {
+    display: flex;
+    flex-direction: column;
+    padding: 10px 14px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    border-bottom: 1px solid #f5f5f5;
+}
+
+.autocomplete-results li:last-child {
+    border-bottom: none;
+}
+
+.autocomplete-results li:hover {
+    background-color: #f0f0ff;
+}
+
+/* Destaque no nome e subtítulo com data de nascimento */
+.autocomplete-results li strong {
+    color: #574b90;
+    font-weight: 600;
+}
+
+.autocomplete-results li small {
+    color: #888;
+    font-size: 13px;
+    margin-top: 4px;
+}
+
+.procedure-selector {
+    display: flex;
+    gap: 10px;
+}
+
+.procedure-row-center {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    margin-bottom: 30px;
+
+}
+
+.list-container {
+    width: 357px;
+    border: 1px solid #ccc;
+    padding: 5px;
+}
+
+.buttons-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.btn-add-patient,
+.btn-remove-patient,
+.btn-add-all-patients,
+.btn-remove-all-patients,
+.btn-add-single,
+.btn-remove-single,
+.btn-add-all,
+.btn-remove-all {
+    padding: 5px 10px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+
+#available-patients option,
+#selected-patients option {
+    padding: 5px;
+}
+
+
+.btn-add-professional,
+.btn-remove-professional,
+.btn-add-all-professionals,
+.btn-remove-all-professionals,
+.btn-add-single,
+.btn-remove-single,
+.btn-add-all,
+.btn-remove-all {
+    padding: 5px 10px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-add:hover,
+.btn-add-single:hover,
+.btn-remove-single:hover,
+.btn-add-all:hover,
+.btn-remove-all:hover,
+.btn-add-professional:hover,
+.btn-remove-professional:hover,
+.btn-add-all-professionals:hover,
+.btn-remove-all-professionals:hover {
+    background-color: #218838;
+}
+
+/* Botão principal */
+.btn-add {
+    padding: 16px 32px;
+    background-color: #2ecc71;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 18px;
+    display: block;
+    margin: 40px auto 0 auto;
+    width: 220px;
+    text-align: center;
+}
+
+.btn-add:hover {
+    background-color: #27ae60;
+}
+
+/* Overlay de carregamento */
+#loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.spinner-container {
+    text-align: center;
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.spinner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.spinner div {
+    width: 12px;
+    height: 12px;
+    background-color: #6c63ff;
+    border-radius: 50%;
+    animation: bounce 1.4s infinite ease-in-out both;
+}
+
+.spinner div:nth-child(1) {
+    animation-delay: -0.32s;
+}
+.spinner div:nth-child(2) {
+    animation-delay: -0.16s;
+}
+
+@keyframes bounce {
+    0%, 80%, 100% { transform: scale(0); }
+    40% { transform: scale(1.0); }
+}
+
+.spinner-container p {
+    color: #333;
+    font-size: 16px;
+    margin: 0;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .form-row,
+    .form-row-horizontal {
+        flex-direction: column;
+    }
+    .form-group,
+    .form-row-horizontal .form-group {
+        min-width: 100%;
+    }
+    .procedure-row-center {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .list-container {
+        width: 100%;
+    }
+    .btn-add {
+        width: 100%;
+        font-size: 16px;
+        min-height: 60px;
+    }
+}
