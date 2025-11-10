@@ -1,286 +1,191 @@
 <?php
+session_start();
 
+if (!isset($_SESSION['data_user'])) {
+    die("Acesso negado.");
+}
 
-if (!isset($_GET['id']) || !is_numeric($_GET['id']) || !isset($_GET['formato'])) {
+$formato = $_GET['formato'] ?? '';
+$id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+
+if ($id <= 0 || !in_array($formato, ['pdf', 'csv'])) {
     die("Parâmetros inválidos.");
 }
 
-$evolucao_id = (int)$_GET['id'];
-$formato = $_GET['formato'];
-
-// Carrega o Composer (se existir)
-$composer = false;
-if (file_exists(__DIR__ . '/vendor/autoload.php')) {
-    require_once __DIR__ . '/vendor/autoload.php';
-    $composer = true;
-}
-
-if (!isset($_GET['id']) || !is_numeric($_GET['id']) || !isset($_GET['formato'])) {
-    die("Parâmetros inválidos.");
-}
-
-$evolucao_id = (int)$_GET['id'];
-$formato = $_GET['formato'];
-
-// Carrega o Composer (se existir)
-if (file_exists(__DIR__ . '/vendor/autoload.php')) {
-    require_once __DIR__ . '/vendor/autoload.php';
-    $composer = true;
-} else {
-    $composer = false;
-}
-
-// Conexão
-include "../../../classes/db.class.php";
-$db = DB::connect();
-
-// Busca evolução
-$stmt = $db->prepare("
-    SELECT ec.*, f.nome AS nome_formulario, f.especialidade
-    FROM evolucao_clinica ec
-    LEFT JOIN formulario f ON ec.formulario_id = f.id
-    WHERE ec.id = ?
-");
-$stmt->execute([$evolucao_id]);
-$evolucao = $stmt->fetch(PDO::FETCH_ASSOC);
-
-if (!$evolucao) {
-    die("Evolução não encontrada.");
-}
-
-$respostas = json_decode($evolucao['dados'], true);
-if (json_last_error() !== JSON_ERROR_NONE) {
-    $respostas = [];
-}
-
-// Busca perguntas
-$stmt = $db->prepare("SELECT * FROM formulario_perguntas WHERE formulario_id = ? AND ativo = 1 ORDER BY id");
-$stmt->execute([$evolucao['formulario_id']]);
-$perguntas = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-// Busca paciente
-$stmt = $db->prepare("SELECT nome, cns FROM paciente WHERE id = ?");
-$stmt->execute([$evolucao['paciente_id']]);
-$paciente = $stmt->fetch(PDO::FETCH_ASSOC);
-
-// Função para limpar texto
-function limparTexto($texto) {
-    return str_replace(["\r", "\n"], ' ', strip_tags($texto));
-}
-
-// ==================== EXPORTAÇÃO XLSX ====================
-if ($formato === 'xlsx') {
-    // Verifica se o Composer foi carregado e as classes existem
-    if (!$composer || !class_exists('PhpOffice\\PhpSpreadsheet\\Spreadsheet')) {
-        die("Biblioteca PhpSpreadsheet não encontrada. Execute: composer require phpoffice/phpspreadsheet");
+function getDb() {
+    static $db = null;
+    if ($db === null) {
+        include "../../../classes/db.class.php";
+        $db = DB::connect();
     }
+    return $db;
+}
 
-    // Agora usa as classes diretamente (sem `use` dentro do if)
-    $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
-    $sheet = $spreadsheet->getActiveSheet();
-    $sheet->setTitle('Evolução Clínica');
+try {
+    $db = getDb();
 
-    // Cabeçalho
-    $sheet->setCellValue('A1', 'Evolução Clínica #' . $evolucao_id);
-    $sheet->mergeCells('A1:D1');
-    $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
+    // Busca evolução
+    $stmt = $db->prepare("
+        SELECT ec.*, f.nome AS nome_formulario, f.especialidade
+        FROM evolucao_clinica ec
+        LEFT JOIN formulario f ON ec.formulario_id = f.id
+        WHERE ec.id = ?
+    ");
+    $stmt->execute([$id]);
+    $evolucao = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    $linha = 3;
-    $sheet->setCellValue('A' . $linha, 'Paciente');
-    $sheet->setCellValue('B' . $linha, $paciente['nome'] . ' (ID: ' . $evolucao['paciente_id'] . ')');
-    $linha++;
-    $sheet->setCellValue('A' . $linha, 'Formulário');
-    $sheet->setCellValue('B' . $linha, $evolucao['nome_formulario']);
-    $linha++;
-    $sheet->setCellValue('A' . $linha, 'Especialidade');
-    $sheet->setCellValue('B' . $linha, $evolucao['especialidade']);
-    $linha++;
-    $sheet->setCellValue('A' . $linha, 'Data');
-    $sheet->setCellValue('B' . $linha, date('d/m/Y H:i', strtotime($evolucao['data_hora'])));
-    $linha += 2;
+    if (!$evolucao) die("Evolução não encontrada.");
 
-    // Perguntas e respostas
-    $sheet->setCellValue('A' . $linha, 'Pergunta');
-    $sheet->setCellValue('B' . $linha, 'Resposta');
-    $sheet->getStyle('A' . $linha . ':B' . $linha)->getFont()->setBold(true);
-    $linha++;
+    $respostas = json_decode($evolucao['dados'], true) ?: [];
+    $pacienteStmt = $db->prepare("SELECT nome FROM paciente WHERE id = ?");
+    $pacienteStmt->execute([$evolucao['paciente_id']]);
+    $paciente = $pacienteStmt->fetch(PDO::FETCH_ASSOC);
 
-    foreach ($perguntas as $p) {
-        $nomeCampo = $p['nome_unico'] ?? 'campo_' . $p['id'];
-        $valor = $respostas[$nomeCampo] ?? null;
+    $stmt = $db->prepare("SELECT * FROM formulario_perguntas WHERE formulario_id = ? AND ativo = 1 ORDER BY id");
+    $stmt->execute([$evolucao['formulario_id']]);
+    $perguntas = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        if ($p['tipo_input'] === 'checkbox' && is_array($valor)) {
-            $valor = implode(', ', $valor);
-        } elseif ($p['tipo_input'] === 'sim_nao_justificativa') {
-            $justificativa = $respostas[$nomeCampo . '_justificativa'] ?? '';
-            $valor = ($valor ?: 'Não respondido') . ($justificativa ? ' | Justificativa: ' . $justificativa : '');
-        } elseif ($p['tipo_input'] === 'tabela') {
-            $linhas = json_decode($p['opcoes'], true)['linhas'] ?? [];
-            $resps = [];
-            foreach ($linhas as $linha_item) {
-                $chave = urlencode($linha_item);
-                if (isset($valor[$chave])) {
-                    $resps[] = $linha_item . ': ' . $valor[$chave];
+    // Nome do arquivo base
+    $nomeBase = "Evolucao_{$id}_Paciente_{$evolucao['paciente_id']}";
+
+    if ($formato === 'pdf') {
+        require_once '../../../classes/tcpdf/tcpdf.php';
+
+        $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
+        $pdf->SetCreator(PDF_CREATOR);
+        $pdf->SetAuthor('Sistema Clínico');
+        $pdf->SetTitle("Evolução Clínica #$id");
+        $pdf->SetSubject('Evolução Clínica');
+        $pdf->setPrintHeader(false);
+        $pdf->setPrintFooter(false);
+        $pdf->AddPage();
+        $pdf->SetFont('helvetica', '', 10);
+
+        // Estilo CSS embutido para tabelas (TCPDF suporta CSS básico)
+        $html = '<style>
+            table { border-collapse: collapse; width: 100%; margin: 8px 0; }
+            th, td { border: 1px solid #333; padding: 5px; text-align: left; font-size: 9pt; }
+            th { background-color: #f0f0f0; font-weight: bold; }
+            p { margin: 6px 0; }
+            strong { color: #000; }
+        </style>';
+
+        $html .= '<h1 style="text-align:center; margin-bottom:15px;">Evolução Clínica #' . $id . '</h1>';
+        $html .= '<p><strong>Paciente:</strong> ' . htmlspecialchars($paciente['nome'] ?? 'N/A') . '</p>';
+        $html .= '<p><strong>Formulário:</strong> ' . htmlspecialchars($evolucao['nome_formulario'] ?? 'N/A') . '</p>';
+        $html .= '<p><strong>Especialidade:</strong> ' . htmlspecialchars($evolucao['especialidade'] ?? 'N/A') . '</p>';
+        $html .= '<p><strong>Data:</strong> ' . date('d/m/Y H:i', strtotime($evolucao['data_hora'])) . '</p>';
+        $html .= '<hr>';
+
+        foreach ($perguntas as $p) {
+            $nomeCampo = $p['nome_unico'] ?? 'campo_' . $p['id'];
+            $valor = $respostas[$nomeCampo] ?? null;
+            $titulo = htmlspecialchars($p['titulo']);
+            $resposta = '<em>Não respondido</em>';
+
+            if ($p['tipo_input'] === 'texto' || $p['tipo_input'] === 'number' || $p['tipo_input'] === 'date') {
+                $resposta = htmlspecialchars($valor ?: 'N/A');
+
+            } elseif ($p['tipo_input'] === 'textarea') {
+                $resposta = nl2br(htmlspecialchars($valor ?: 'N/A'));
+
+            } elseif ($p['tipo_input'] === 'radio' || $p['tipo_input'] === 'select') {
+                $resposta = htmlspecialchars($valor ?: 'N/A');
+
+            } elseif ($p['tipo_input'] === 'checkbox') {
+                if (is_array($valor) && !empty($valor)) {
+                    $resposta = implode(', ', array_map('htmlspecialchars', $valor));
                 }
+
+            } elseif ($p['tipo_input'] === 'sim_nao_justificativa') {
+                $resposta = htmlspecialchars($valor ?: 'N/A');
+                $just = $respostas[$nomeCampo . '_justificativa'] ?? '';
+                if ($just) {
+                    $resposta .= "<br><strong>Justificativa:</strong> " . htmlspecialchars($just);
+                }
+
+            } elseif ($p['tipo_input'] === 'tabela') {
+                $config = json_decode($p['opcoes'], true);
+                $linhas = $config['linhas'] ?? [];
+                $colunas = $config['colunas'] ?? [];
+
+                if (!empty($linhas) && !empty($colunas) && is_array($valor)) {
+                    $resposta = '<table>';
+                    $resposta .= '<thead><tr><th>Item</th>';
+                    foreach ($colunas as $col) {
+                        $resposta .= '<th>' . htmlspecialchars($col) . '</th>';
+                    }
+                    $resposta .= '</tr></thead><tbody>';
+
+                    foreach ($linhas as $linha) {
+                        $resposta .= '<tr><td>' . htmlspecialchars($linha) . '</td>';
+                        foreach ($colunas as $col) {
+                            $checked = (isset($valor[urlencode($linha)]) && $valor[urlencode($linha)] === $col) ? '✓' : '';
+                            $resposta .= '<td style="text-align:center;">' . $checked . '</td>';
+                        }
+                        $resposta .= '</tr>';
+                    }
+                    $resposta .= '</tbody></table>';
+                }
+
+            } elseif ($p['tipo_input'] === 'file') {
+                if (!empty($valor) && file_exists('../../' . $valor)) {
+                    $resposta = '<em>Anexo salvo</em>';
+                }
+
+            } else {
+                $resposta = htmlspecialchars($valor ?: 'N/A');
             }
-            $valor = implode('; ', $resps);
+
+            $html .= "<p><strong>{$titulo}:</strong> {$resposta}</p>";
         }
 
-        $sheet->setCellValue('A' . $linha, limparTexto($p['titulo']));
-        $sheet->setCellValue('B' . $linha, limparTexto($valor ?: 'Não respondido'));
-        $linha++;
-    }
-
-    $linha++;
-    $sheet->setCellValue('A' . $linha, 'Observações');
-    $sheet->setCellValue('B' . $linha, limparTexto($evolucao['observacoes'] ?: 'Sem observações'));
-
-    // Ajusta largura
-    $sheet->getColumnDimension('A')->setWidth(40);
-    $sheet->getColumnDimension('B')->setWidth(60);
-
-    // Saída
-    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    header('Content-Disposition: attachment; filename="evolucao_' . $evolucao_id . '.xlsx"');
-    $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
-    $writer->save('php://output');
-    exit;
-}
-
-// ==================== EXPORTAÇÃO CSV ====================
-if ($formato === 'excel') {
-    header('Content-Type: text/csv');
-    header('Content-Disposition: attachment; filename="evolucao_' . $evolucao_id . '.csv"');
-
-    $output = fopen('php://output', 'w');
-    fputcsv($output, ['Evolução Clínica #' . $evolucao_id]);
-    fputcsv($output, []);
-    fputcsv($output, ['Paciente', $paciente['nome'] . ' (ID: ' . $evolucao['paciente_id'] . ')']);
-    fputcsv($output, ['Formulário', $evolucao['nome_formulario']]);
-    fputcsv($output, ['Especialidade', $evolucao['especialidade']]);
-    fputcsv($output, ['Data', date('d/m/Y H:i', strtotime($evolucao['data_hora']))]);
-    fputcsv($output, []);
-
-    foreach ($perguntas as $p) {
-        $nomeCampo = $p['nome_unico'] ?? 'campo_' . $p['id'];
-        $valor = $respostas[$nomeCampo] ?? null;
-
-        if ($p['tipo_input'] === 'checkbox' && is_array($valor)) {
-            $valor = implode(', ', $valor);
-        } elseif ($p['tipo_input'] === 'sim_nao_justificativa') {
-            $justificativa = $respostas[$nomeCampo . '_justificativa'] ?? '';
-            $valor = ($valor ?: 'Não respondido') . ($justificativa ? ' | Justificativa: ' . $justificativa : '');
-        } elseif ($p['tipo_input'] === 'tabela') {
-            $linhas = json_decode($p['opcoes'], true)['linhas'] ?? [];
-            $resps = [];
-            foreach ($linhas as $linha) {
-                $chave = urlencode($linha);
-                if (isset($valor[$chave])) {
-                    $resps[] = $linha . ': ' . $valor[$chave];
-                }
-            }
-            $valor = implode('; ', $resps);
+        if (!empty($evolucao['observacoes'])) {
+            $html .= '<p><strong>Observações:</strong> ' . nl2br(htmlspecialchars($evolucao['observacoes'])) . '</p>';
         }
 
-        fputcsv($output, [
-            limparTexto($p['titulo']),
-            limparTexto($valor ?: 'Não respondido')
-        ]);
-    }
+        $pdf->writeHTML($html, true, false, true, false, '');
+        $pdf->Output($nomeBase . '.pdf', 'I');
 
-    fputcsv($output, []);
-    fputcsv($output, ['Observações', limparTexto($evolucao['observacoes'] ?: 'Sem observações')]);
+    } elseif ($formato === 'csv') {
+        header('Content-Type: text/csv; charset=utf-8');
+        header("Content-Disposition: attachment; filename=\"$nomeBase.csv\"");
 
-    fclose($output);
-    exit;
-}
+        $output = fopen('php://output', 'w');
+        fputs($output, "\xEF\xBB\xBF"); // UTF-8 BOM
 
-// ==================== EXPORTAÇÃO PDF ====================
-if ($formato === 'pdf') {
-    echo '<!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="UTF-8">
-        <title>Evolução #' . $evolucao_id . '</title>
-        <style>
-            body { font-family: Arial, sans-serif; padding: 20px; }
-            h1 { color: #333; }
-            table { width: 100%; border-collapse: collapse; margin: 10px 0; }
-            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-            th { background-color: #f5f5f5; }
-            .cabecalho { margin-bottom: 20px; }
-            .cabecalho p { margin: 5px 0; }
-        </style>
-    </head>
-    <body onload="window.print()">
-        <div class="cabecalho">
-            <h1>Evolução Clínica #' . $evolucao_id . '</h1>
-            <p><strong>Paciente:</strong> ' . htmlspecialchars($paciente['nome']) . ' (ID: ' . $evolucao['paciente_id'] . ')</p>
-            <p><strong>Formulário:</strong> ' . htmlspecialchars($evolucao['nome_formulario']) . '</p>
-            <p><strong>Especialidade:</strong> ' . htmlspecialchars($evolucao['especialidade']) . '</p>
-            <p><strong>Data:</strong> ' . date('d/m/Y H:i', strtotime($evolucao['data_hora'])) . '</p>
-        </div>
+        fputcsv($output, ['Pergunta', 'Resposta'], ';');
 
-        <table>
-            <thead>
-                <tr><th>Pergunta</th><th>Resposta</th></tr>
-            </thead>
-            <tbody>';
+        foreach ($perguntas as $p) {
+            $nomeCampo = $p['nome_unico'] ?? 'campo_' . $p['id'];
+            $valor = $respostas[$nomeCampo] ?? null;
+            $titulo = $p['titulo'];
 
-    foreach ($perguntas as $p) {
-        $nomeCampo = $p['nome_unico'] ?? 'campo_' . $p['id'];
-        $valor = $respostas[$nomeCampo] ?? null;
-
-        if ($p['tipo_input'] === 'checkbox' && is_array($valor)) {
-            $valor = implode(', ', array_map('htmlspecialchars', $valor));
-        } elseif ($p['tipo_input'] === 'sim_nao_justificativa') {
-            $justificativa = $respostas[$nomeCampo . '_justificativa'] ?? '';
-            $valor = htmlspecialchars($valor ?: 'Não respondido');
-            if ($justificativa) {
-                $valor .= '<br><em>Justificativa:</em> ' . htmlspecialchars($justificativa);
+            if ($p['tipo_input'] === 'checkbox' && is_array($valor)) {
+                $resposta = implode(', ', $valor);
+            } elseif ($p['tipo_input'] === 'sim_nao_justificativa') {
+                $resposta = $valor ?: '';
+                $just = $respostas[$nomeCampo . '_justificativa'] ?? '';
+                if ($just) $resposta .= " | Justificativa: $just";
+            } elseif ($p['tipo_input'] === 'tabela') {
+                $resposta = is_array($valor) ? json_encode($valor) : 'N/A';
+            } elseif ($p['tipo_input'] === 'file') {
+                $resposta = $valor ?: 'N/A';
+            } else {
+                $resposta = is_array($valor) ? json_encode($valor) : ($valor ?: '');
             }
-        } elseif ($p['tipo_input'] === 'tabela') {
-            $config = json_decode($p['opcoes'], true);
-            $linhas = $config['linhas'] ?? [];
-            $colunas = $config['colunas'] ?? [];
-            $htmlTabela = '<table style="width:100%; border:1px solid #ddd;"><thead><tr>';
-            foreach ($colunas as $col) {
-                $htmlTabela .= '<th>' . htmlspecialchars($col) . '</th>';
-            }
-            $htmlTabela .= '</tr></thead><tbody>';
-            foreach ($linhas as $linha) {
-                $htmlTabela .= '<tr><td>' . htmlspecialchars($linha) . '</td>';
-                foreach ($colunas as $col) {
-                    $chave = urlencode($linha);
-                    $marcado = isset($valor[$chave]) && $valor[$chave] === $col ? '✅' : '';
-                    $htmlTabela .= '<td style="text-align:center;">' . $marcado . '</td>';
-                }
-                $htmlTabela .= '</tr>';
-            }
-            $htmlTabela .= '</tbody></table>';
-            $valor = $htmlTabela;
-        } else {
-            $valor = htmlspecialchars($valor ?: 'Não respondido');
+
+            fputcsv($output, [$titulo, $resposta], ';');
         }
 
-        echo '<tr>
-            <td><strong>' . htmlspecialchars($p['titulo']) . '</strong></td>
-            <td>' . ($valor ?: 'Não respondido') . '</td>
-        </tr>';
+        if (!empty($evolucao['observacoes'])) {
+            fputcsv($output, ['Observações', $evolucao['observacoes']], ';');
+        }
+
+        fclose($output);
+        exit;
     }
 
-    echo '</tbody></table>';
-
-    if (!empty($evolucao['observacoes'])) {
-        echo '<div style="margin-top:20px;">
-            <h3>Observações</h3>
-            <p>' . nl2br(htmlspecialchars($evolucao['observacoes'])) . '</p>
-        </div>';
-    }
-
-    echo '</body></html>';
-    exit;
+} catch (Exception $e) {
+    die("Erro ao exportar: " . htmlspecialchars($e->getMessage()));
 }
-
-die("Formato inválido.");
-?>

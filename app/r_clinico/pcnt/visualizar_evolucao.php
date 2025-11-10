@@ -276,11 +276,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao']) && $_POST['ac
                 <a href="exportar_evolucao.php?formato=pdf&id=<?= $evolucao_id ?>" target="_blank" class="btn-exportar">
                     <i class="fas fa-file-pdf"></i> PDF
                 </a>
-                <a href="exportar_evolucao.php?formato=excel&id=<?= $evolucao_id ?>" class="btn-exportar">
+                <a href="exportar_evolucao.php?formato=csv&id=<?= $evolucao_id ?>" class="btn-exportar">
                     <i class="fas fa-file-csv"></i> CSV
-                </a>
-                <a href="exportar_evolucao.php?formato=xlsx&id=<?= $evolucao_id ?>" class="btn-exportar">
-                    <i class="fas fa-file-excel"></i> XLSX
                 </a>
                 
                 <a href="javascript:history.back()" class="btn-voltar">Voltar</a>
