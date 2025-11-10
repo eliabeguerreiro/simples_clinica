@@ -4,7 +4,7 @@ ob_start();
 
 // Validar login
 if (!isset($_SESSION['data_user']) || !isset($_SESSION['login_time'])) {
-    $_SESSION['msg'] = '<p>Realize o login para acessar o painel</p>';
+    $_SESSION['msg'] = 'Realize o login para acessar o painel';
     header('Location: ../');
     exit;
 }

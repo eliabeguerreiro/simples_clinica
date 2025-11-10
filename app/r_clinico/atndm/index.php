@@ -16,7 +16,7 @@ include"classes/conteudo.r_clinico.atdnm.class.php";
 
 
 if (Index::validaLogin($_SESSION['data_user'], $_SESSION['login_time'])){}else{
-    $_SESSION['msg'] = '<p>Realize o login para acessar o painel</p>';
+    $_SESSION['msg'] = 'Realize o login para acessar o painel';
     header('Location:../../');
     exit;
 }

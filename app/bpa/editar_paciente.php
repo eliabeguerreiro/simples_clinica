@@ -3,10 +3,7 @@ session_start();
 include_once "classes/db.class.php";
 include_once "classes/painel.class.php";
 
-if (!isset($_SESSION['usuario'])) {
-    header("Location: index.php");
-    exit();
-}
+
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {

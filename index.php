@@ -13,7 +13,6 @@ if (isset($_SESSION['data_user']) && Index::validaLogin($_SESSION['data_user'], 
 }
 */
 
-
 if (!empty($_POST)) {
     $dados_login = filter_input_array(INPUT_POST, FILTER_DEFAULT);
     if (Index::login($dados_login)) {
@@ -27,55 +26,90 @@ if (!empty($_POST)) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simples Clínica - Login</title>
+    <title>Sistema Simples de Gestão Clínica - Login</title>
     <link rel="stylesheet" href="src/login.css">
     <link rel="icon" type="image/png" href="src/favicon.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
 </head>
 <body>
-    <div class="login-container">
-        <div class="login-form">
-            <div class="logo-section">
-                <i class="fas fa-clinic-medical logo-icon"></i>
-                <h1>Simples Clínica</h1>
-                <p class="subtitle">Sistema de Gestão Clínica</p>
+    <section class="login-section">
+        <div class="login-container container">
+            <div class="login-box">
+                <div class="login-header">
+                    <div class="login-logo"><i class="fas fa-clinic-medical"></i></div>
+                    <h1 class="login-title">Simples Clínica</h1>
+                    <p class="login-subtitle">Acesso ao sistema</p>
+                </div>
+
+                <?php 
+                if (isset($_SESSION['msg'])) {
+                    echo '<div class="alert ' . (strpos($_SESSION['msg'], 'sucesso') !== false ? 'alert-success' : 'alert-error') . '">' . htmlspecialchars($_SESSION['msg']) . '</div>';
+                    unset($_SESSION['msg']);
+                }
+                ?>
+
+                <form action="" method="POST" class="login-form">
+                    <div class="form-group">
+                        <label for="username" class="form-label"><i class="fas fa-user"></i> Usuário</label>
+                        <input type="text" id="username" name="login" class="form-input" required autocomplete="username" autofocus>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password" class="form-label"><i class="fas fa-lock"></i> Senha</label>
+                        <input type="password" id="password" name="senha" class="form-input" required autocomplete="current-password">
+                    </div>
+
+                    <div class="form-group form-remember">
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="remember" class="checkbox-input">
+                            <span>Lembrar-me neste computador</span>
+                        </label>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-lg btn-block login-button">
+                        <i class="fas fa-sign-in-alt"></i> Entrar
+                    </button>
+                </form>
+
+                <div class="login-footer">
+                    <p class="login-footer-text"><a href="#" class="link">Esqueceu sua senha?</a></p>
+                </div>
+
+                <!--div class="demo-credentials">
+                    <h4 class="demo-title">🔓 Credenciais de Demonstração</h4>
+                    <div class="demo-item">
+                        <p><strong>Usuário:</strong> teste</p>
+                        <p><strong>Senha:</strong> teste</p>
+                    </div>
+                </!--div-->
             </div>
 
-            <?php 
-            if (isset($_SESSION['msg'])) {
-                echo '<div class="alert ' . (strpos($_SESSION['msg'], 'sucesso') ? 'alert-success' : 'alert-error') . '">' . $_SESSION['msg'] . '</div>';
-                unset($_SESSION['msg']);
-            }
-            ?>
-
-            <form action="" method="POST" class="login-fields">
-                <div class="input-group">
-                    <label for="username">
-                        <i class="fas fa-user"></i>
-                        Usuário
-                    </label>
-                    <input type="text" id="username" name="login" required autocomplete="username">
+            <div class="login-info">
+                <div class="info-card">
+                    <div class="info-icon">🔐</div>
+                    <h3 class="info-title">Segurança</h3>
+                    <p class="info-text">Dados protegidos; use HTTPS em produção.</p>
                 </div>
 
-                <div class="input-group">
-                    <label for="password">
-                        <i class="fas fa-lock"></i>
-                        Senha
-                    </label>
-                    <input type="password" id="password" name="senha" required autocomplete="current-password">
+                <div class="info-card">
+                    <div class="info-icon">⚡</div>
+                    <h3 class="info-title">Acesso Rápido</h3>
+                    <p class="info-text">Painel com agilidade para operações clínicas.</p>
                 </div>
 
-                <button type="submit" class="login-button">
-                    <i class="fas fa-sign-in-alt"></i>
-                    Entrar no Sistema
-                </button>
-            </form>
+                <div class="info-card">
+                    <div class="info-icon">📱</div>
+                    <h3 class="info-title">Responsivo</h3>
+                    <p class="info-text">Funciona bem em desktop e mobile.</p>
+                </div>
 
-            <div class="footer-info">
-                <p><i class="fas fa-shield-alt"></i> Ambiente seguro</p>
-                <p class="version">Simples Clínica v1.0</p>
+                <div class="info-card">
+                    <div class="info-icon">💬</div>
+                    <h3 class="info-title">Suporte</h3>
+                    <p class="info-text">Contate o administrador para credenciais reais.</p>
+                </div>
             </div>
         </div>
-    </div>
+    </section>
 </body>
 </html>

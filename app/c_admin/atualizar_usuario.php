@@ -3,7 +3,7 @@ session_start();
 include "classes/gest-user.class.php";
 
 if (!isset($_SESSION['data_user'])) {
-    $_SESSION['msg'] = '<p>Realize o login para acessar o painel</p>';
+    $_SESSION['msg'] = 'Realize o login para acessar o painel';
     header('Location: ../');
     exit;
 }

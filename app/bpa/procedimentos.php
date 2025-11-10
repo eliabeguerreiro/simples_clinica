@@ -1,11 +1,6 @@
 <?php
 session_start();
 
-if (!isset($_SESSION['usuario'])) {
-    header("Location: ../index.php");
-    exit();
-}
-
 require_once "classes/db.class.php";
 require_once "classes/painel.class.php";
 

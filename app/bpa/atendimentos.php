@@ -3,10 +3,6 @@ session_start();
 
 //var_dump($_SESSION);
 
-if (!isset($_SESSION['usuario'])) {
-    header("Location: ../index.php");
-    exit();
-}
 
 include_once "classes/painel.class.php";
 include_once "classes/db.class.php";

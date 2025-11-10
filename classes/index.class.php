@@ -63,11 +63,11 @@ class Index
                 $_SESSION['login_time'] = time();
                 return true;
             } else {
-                $_SESSION['msg'] = "<p id='aviso'>Login ou senha incorreto</p>";
+                $_SESSION['msg'] = "Login ou senha incorreto";
                 return false;
             }
         } catch (Exception $e) {
-            $_SESSION['msg'] = "<p id='aviso'>Erro no sistema. Tente novamente.</p>";
+            $_SESSION['msg'] = "Erro no sistema. Tente novamente.";
             return false;
         }
     }
