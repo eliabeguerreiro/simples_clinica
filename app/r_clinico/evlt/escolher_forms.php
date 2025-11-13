@@ -13,6 +13,17 @@ try {
     $stmt = $db->prepare("SELECT id, nome, descricao, especialidade FROM formulario WHERE ativo = 1 ORDER BY nome");
     $stmt->execute();
     $formularios = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+
+
+
+    $db = DB::connect();
+    $stmt = $db->prepare("SELECT nome FROM paciente WHERE id = $paciente_id");
+    $stmt->execute();
+    $n = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $nome = $n[0]['nome'];
+
 } catch (Exception $e) {
     die("<h2>Erro</h2><p>" . htmlspecialchars($e->getMessage()) . "</p>");
 }
@@ -98,7 +109,7 @@ try {
     <div class="container">
         <a href="../pcnt/?id=<?= $paciente_id ?>&sub=documentos" class="back-link">&larr; Voltar ao paciente</a>
         <h2>Escolha um Formulário para Evolução</h2>
-        <p><strong>Paciente ID:</strong> <?= $paciente_id ?></p>
+        <p><strong>Paciente:</strong> <?= htmlspecialchars($nome) ?></p>
 
         <?php if (empty($formularios)): ?>
             <div class="no-forms">
