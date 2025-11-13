@@ -18,5 +18,5 @@ if (!$evolucao) {
 
 // Redireciona para render_forms.php com os dados pré-preenchidos
 // (você pode adaptar o render_forms.php para aceitar ?evolucao_id=4)
-header("Location: ../evlt/render_forms.php?form_id=" . $evolucao['formulario_id'] . "&paciente_id=" . $evolucao['paciente_id'] . "&evolucao_id=" . $evolucao_id);
+header("Location: ../evlt/render_forms_edicao.php?form_id=" . $evolucao['formulario_id'] . "&paciente_id=" . $evolucao['paciente_id'] . "&evolucao_id=" . $evolucao_id);
 exit;
