@@ -185,22 +185,22 @@ HTML;
                 <input type="hidden" name="acao" value="cadastrar">
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="nome">Nome Completo*</label>
+                        <label for="nome" class="required">Nome Completo</label>
                         <input required type="text" id="nome" name="nome" required maxlength="100" placeholder="Digite o nome completo"
                                value="' . (isset($dadosForm['nome']) ? htmlspecialchars($dadosForm['nome']) : '') . '">
                     </div>
                     <div class="form-group">
-                        <label for="cns">CNS*</label>
+                        <label for="cns" class="required">CNS</label>
                         <input required type="text" id="cns" name="cns" required maxlength="100" placeholder="Digite o CNS"
                                value="' . (isset($dadosForm['cns']) ? htmlspecialchars($dadosForm['cns']) : '') . '">
                     </div>
                     <div class="form-group">
-                        <label for="data_nascimento">Data*</label>
+                        <label for="data_nascimento" class="required">Data</label>
                         <input type="date" id="data_nascimento" name="data_nascimento" required placeholder="dd/mm/aaaa"
                                value="' . (isset($dadosForm['data_nascimento']) ? htmlspecialchars($dadosForm['data_nascimento']) : '') . '">
                     </div>
                     <div class="form-group">
-                        <label for="raca_cor">Raça/Cor*</label>
+                        <label for="raca_cor" class="required">Raça/Cor</label>
                         <select required id="raca_cor" name="raca_cor" required>
                             <option value="">Selecionar</option>
                             <option value="01" ' . (isset($dadosForm['raca_cor']) && $dadosForm['raca_cor'] == '01' ? 'selected' : '') . '>Branca</option>
@@ -214,8 +214,8 @@ HTML;
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="sexo">Sexo*</label>
-                        <select required id="sexo" name="sexo" required>
+                        <label for="sexo" class="required">Sexo</label>
+                        <select id="sexo" name="sexo">
                             <option value="">Selecionar</option>
                             <option value="M" ' . (isset($dadosForm['sexo']) && $dadosForm['sexo'] == 'M' ? 'selected' : '') . '>Masculino</option>
                             <option value="F" ' . (isset($dadosForm['sexo']) && $dadosForm['sexo'] == 'F' ? 'selected' : '') . '>Feminino</option>
@@ -227,7 +227,7 @@ HTML;
                                value="' . (isset($dadosForm['etnia']) ? htmlspecialchars($dadosForm['etnia']) : '') . '">
                     </div>
                     <div class="form-group">
-                        <label for="nacionalidade">Nacionalidade*</label>
+                        <label for="nacionalidade" class="required">Nacionalidade</label>
                         <select required id="nacionalidade" name="nacionalidade" required>
                             <option value="">Selecionar</option>
                             <option value="10" ' . (isset($dadosForm['nacionalidade']) && $dadosForm['nacionalidade'] == '10' ? 'selected' : '') . '>Brasileira</option>
@@ -238,7 +238,7 @@ HTML;
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="codigo_logradouro">Tipo do Logradouro*</label>
+                        <label for="codigo_logradouro" class="required">Tipo do Logradouro</label>
                         <select required id="codigo_logradouro" name="codigo_logradouro" required>
                             <option value="">Selecionar</option>
                             <option value="81" ' . (isset($dadosForm['codigo_logradouro']) && $dadosForm['codigo_logradouro'] == '81' ? 'selected' : '') . '>Rua</option>
@@ -246,12 +246,12 @@ HTML;
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="endereco">Logradouro*</label>
+                        <label for="endereco" class="required">Logradouro</label>
                         <input required type="text" id="endereco" name="endereco" required maxlength="100" placeholder="Digite o logradouro"
                                value="' . (isset($dadosForm['endereco']) ? htmlspecialchars($dadosForm['endereco']) : '') . '">
                     </div>
                     <div class="form-group">
-                        <label for="numero">Número*</label>
+                        <label for="numero" class="required">Número</label>
                         <input required type="text" id="numero" name="numero" required maxlength="10" placeholder="Digite o número"
                                value="' . (isset($dadosForm['numero']) ? htmlspecialchars($dadosForm['numero']) : '') . '">
                     </div>
@@ -263,19 +263,19 @@ HTML;
                                value="' . (isset($dadosForm['complemento']) ? htmlspecialchars($dadosForm['complemento']) : '') . '">
                     </div>
                     <div class="form-group">
-                        <label for="bairro">Bairro*</label>
+                        <label for="bairro" class="required">Bairro</label>
                         <input required type="text" id="bairro" name="bairro" required maxlength="60" placeholder="Informe o bairro"
                                value="' . (isset($dadosForm['bairro']) ? htmlspecialchars($dadosForm['bairro']) : '') . '">
                     </div>
                     <div class="form-group">
-                        <label for="cep">CEP*</label>
+                        <label for="cep" class="required">CEP</label>
                         <input required type="text" id="cep" name="cep" required maxlength="9" placeholder="00000-000"
                                value="' . (isset($dadosForm['cep']) ? htmlspecialchars($dadosForm['cep']) : '') . '">
                     </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="telefone">Telefone*</label>
+                        <label for="telefone" class="required">Telefone</label>
                         <input required type="text" id="telefone" name="telefone" required maxlength="15" placeholder="(00) 00000-0000"
                                value="' . (isset($dadosForm['telefone']) ? htmlspecialchars($dadosForm['telefone']) : '') . '">
                     </div>
@@ -285,7 +285,7 @@ HTML;
                                value="' . (isset($dadosForm['email']) ? htmlspecialchars($dadosForm['email']) : '') . '">
                     </div>
                     <div class="form-group">
-                        <label for="situacao_rua">Situação de Rua?</label>
+                        <label for="situacao_rua" class="required">Situação de Rua?</label>
                         <select required id="situacao_rua" name="situacao_rua" required>
                             <option value="N" ' . (isset($dadosForm['situacao_rua']) && $dadosForm['situacao_rua'] == 'N' ? 'selected' : '') . '>Não</option>
                             <option value="S" ' . (isset($dadosForm['situacao_rua']) && $dadosForm['situacao_rua'] == 'S' ? 'selected' : '') . '>Sim</option>
@@ -558,22 +558,22 @@ HTML;
                 <input type="hidden" name="id" value="' . $id . '">
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="nome">Nome Completo*</label>
+                        <label for="nome" class="required">Nome Completo</label>
                         <input required type="text" id="nome" name="nome" required maxlength="100" placeholder="Digite o nome completo"
                             value="' . (isset($dadosForm['nome']) ? htmlspecialchars($dadosForm['nome']) : '') . '">
                     </div>
                     <div class="form-group">
-                        <label for="cns">CNS*</label>
+                        <label for="cns" class="required">CNS</label>
                         <input required type="text" id="cns" name="cns" required maxlength="100" placeholder="Digite o CNS"
                             value="' . (isset($dadosForm['cns']) ? htmlspecialchars($dadosForm['cns']) : '') . '">
                     </div>
                     <div class="form-group">
-                        <label for="data_nascimento">Data*</label>
+                        <label for="data_nascimento" class="required">Data</label>
                         <input type="date" id="data_nascimento" name="data_nascimento" required placeholder="dd/mm/aaaa"
                             value="' . (isset($dadosForm['data_nascimento']) ? htmlspecialchars($dadosForm['data_nascimento']) : '') . '">
                     </div>
                     <div class="form-group">
-                        <label for="raca_cor">Raça/Cor*</label>
+                        <label for="raca_cor" class="required">Raça/Cor</label>
                         <select required id="raca_cor" name="raca_cor" required>
                             <option value="">Selecionar</option>
                             <option value="01" ' . (isset($dadosForm['raca_cor']) && $dadosForm['raca_cor'] == '01' ? 'selected' : '') . '>Branca</option>
@@ -587,7 +587,7 @@ HTML;
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="sexo">Sexo*</label>
+                        <label for="sexo" class="required">Sexo</label>
                         <select required id="sexo" name="sexo" required>
                             <option value="">Selecionar</option>
                             <option value="M" ' . (isset($dadosForm['sexo']) && $dadosForm['sexo'] == 'M' ? 'selected' : '') . '>Masculino</option>
@@ -596,12 +596,12 @@ HTML;
                     </div>
                     <div class="form-group">
                         <label for="etnia">Etnia</label>
-                        <input type="text" id="etnia" name="etnia" maxlength="4" placeholder="Selecionar"
+                        <input type="text" id="etnia" name="etnia" maxlength="4" placeholder=""
                             value="' . (isset($dadosForm['etnia']) ? htmlspecialchars($dadosForm['etnia']) : '') . '">
                     </div>
                     <div class="form-group">
-                        <label for="nacionalidade">Nacionalidade*</label>
-                        <select required id="nacionalidade" name="nacionalidade" required>
+                        <label for="nacionalidade" class="required">Nacionalidade</label>
+                        <select id="nacionalidade" name="nacionalidade">
                             <option value="">Selecionar</option>
                             <option value="10" ' . (isset($dadosForm['nacionalidade']) && $dadosForm['nacionalidade'] == '10' ? 'selected' : '') . '>Brasileira</option>
                             <option value="20" ' . (isset($dadosForm['nacionalidade']) && $dadosForm['nacionalidade'] == '20' ? 'selected' : '') . '>Naturalizado</option>
@@ -611,7 +611,7 @@ HTML;
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="codigo_logradouro">Tipo do Logradouro*</label>
+                        <label for="codigo_logradouro" class="required">Tipo do Logradouro</label>
                         <select required id="codigo_logradouro" name="codigo_logradouro" required>
                             <option value="">Selecionar</option>
                             <option value="81" ' . (isset($dadosForm['codigo_logradouro']) && $dadosForm['codigo_logradouro'] == '81' ? 'selected' : '') . '>Rua</option>
@@ -619,13 +619,13 @@ HTML;
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="endereco">Logradouro*</label>
-                        <input required type="text" id="endereco" name="endereco" required maxlength="100" placeholder="Digite o logradouro"
+                        <label for="endereco" class="required">Logradouro</label>
+                        <input type="text" id="endereco" name="endereco" maxlength="100" placeholder="Digite o logradouro"
                             value="' . (isset($dadosForm['endereco']) ? htmlspecialchars($dadosForm['endereco']) : '') . '">
                     </div>
                     <div class="form-group">
-                        <label for="numero">Número*</label>
-                        <input required type="text" id="numero" name="numero" required maxlength="10" placeholder="Digite o número"
+                        <label for="numero" class="required">Número</label>
+                        <input type="text" id="numero" name="numero" maxlength="10" placeholder="Digite o número"
                             value="' . (isset($dadosForm['numero']) ? htmlspecialchars($dadosForm['numero']) : '') . '">
                     </div>
                 </div>
@@ -636,19 +636,19 @@ HTML;
                             value="' . (isset($dadosForm['complemento']) ? htmlspecialchars($dadosForm['complemento']) : '') . '">
                     </div>
                     <div class="form-group">
-                        <label for="bairro">Bairro*</label>
+                        <label for="bairro" class="required">Bairro</label>
                         <input required type="text" id="bairro" name="bairro" required maxlength="60" placeholder="Informe o bairro"
                             value="' . (isset($dadosForm['bairro']) ? htmlspecialchars($dadosForm['bairro']) : '') . '">
                     </div>
                     <div class="form-group">
-                        <label for="cep">CEP*</label>
-                        <input required type="text" id="cep" name="cep" required maxlength="9" placeholder="00000-000"
+                        <label for="cep" class="required">CEP</label>
+                        <input type="text" id="cep" name="cep" maxlength="9" placeholder="00000-000"
                             value="' . (isset($dadosForm['cep']) ? htmlspecialchars($dadosForm['cep']) : '') . '">
                     </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="telefone">Telefone*</label>
+                        <label for="telefone" class="required">Telefone</label>
                         <input required type="text" id="telefone" name="telefone" required maxlength="15" placeholder="(00) 00000-0000"
                             value="' . (isset($dadosForm['telefone']) ? htmlspecialchars($dadosForm['telefone']) : '') . '">
                     </div>
@@ -658,8 +658,8 @@ HTML;
                             value="' . (isset($dadosForm['email']) ? htmlspecialchars($dadosForm['email']) : '') . '">
                     </div>
                     <div class="form-group">
-                        <label for="situacao_rua">Situação de Rua?</label>
-                        <select required id="situacao_rua" name="situacao_rua" required>
+                        <label for="situacao_rua" class="required">Situação de Rua?</label>
+                        <select id="situacao_rua" name="situacao_rua">
                             <option value="N" ' . (isset($dadosForm['situacao_rua']) && $dadosForm['situacao_rua'] == 'N' ? 'selected' : '') . '>Não</option>
                             <option value="S" ' . (isset($dadosForm['situacao_rua']) && $dadosForm['situacao_rua'] == 'S' ? 'selected' : '') . '>Sim</option>
                         </select>

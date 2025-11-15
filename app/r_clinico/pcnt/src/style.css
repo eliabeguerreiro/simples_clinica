@@ -237,14 +237,10 @@ nav ul li a:hover {
 }
 
 /* Estilo para campos obrigatórios */
-.form-group label::after {
+.form-group label.required::after {
     content: " *";
     color: #ff6b6b;
     font-weight: bold;
-}
-
-.form-group label.no-required::after {
-    content: "";
 }
 
 .listagem-container {
