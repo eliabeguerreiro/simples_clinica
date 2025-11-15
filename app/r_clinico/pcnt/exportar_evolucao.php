@@ -78,6 +78,9 @@ try {
         $html .= '<hr>';
 
         foreach ($perguntas as $p) {
+            if ($p['tipo_input'] === 'file') {
+                continue; // Ignora campos de anexo nas respostas
+            }
             $nomeCampo = $p['nome_unico'] ?? 'campo_' . $p['id'];
             $valor = $respostas[$nomeCampo] ?? null;
             $titulo = htmlspecialchars($p['titulo']);
@@ -157,6 +160,9 @@ try {
         fputcsv($output, ['Pergunta', 'Resposta'], ';');
 
         foreach ($perguntas as $p) {
+            if ($p['tipo_input'] === 'file') {
+                continue; // Ignora campos de anexo nas respostas
+            }
             $nomeCampo = $p['nome_unico'] ?? 'campo_' . $p['id'];
             $valor = $respostas[$nomeCampo] ?? null;
             $titulo = $p['titulo'];

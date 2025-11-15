@@ -1,6 +1,4 @@
 <?php
-
-
 // Valida ID da evolução
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
     die("<h2>Erro</h2><p>ID da evolução não especificado.</p>");
@@ -130,86 +128,91 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao']) && $_POST['ac
         <form method="POST" id="form-edicao">
             <input type="hidden" name="acao" value="atualizar">
 
-            <?php foreach ($perguntas as $p): ?>
-                <?php
-                $nomeCampo = $p['nome_unico'] ?? 'campo_' . $p['id'];
-                $valor = $respostas[$nomeCampo] ?? null;
-                $justificativa = $respostas[$nomeCampo . '_justificativa'] ?? '';
-                ?>
+            <?php foreach ($perguntas as $p): 
+            ?>
+            <?php
+            $nomeCampo = $p['nome_unico'] ?? 'campo_' . $p['id'];
+            $valor = $respostas[$nomeCampo] ?? null;
+            $justificativa = $respostas[$nomeCampo . '_justificativa'] ?? '';
 
-                <div class="form-group">
-                    <label><?= htmlspecialchars($p['titulo']) ?></label>
-                    <?php if (!empty($p['descricao'])): ?>
-                        <small><?= htmlspecialchars($p['descricao']) ?></small>
+            // Ignorar perguntas do tipo 'file' — elas são exibidas na seção de anexos
+            if ($p['tipo_input'] === 'file') {
+                continue; // Pula para a próxima pergunta
+            }
+            ?>
+
+            <div class="form-group">
+                <label><?= htmlspecialchars($p['titulo']) ?></label>
+                <?php if (!empty($p['descricao'])): ?>
+                    <small><?= htmlspecialchars($p['descricao']) ?></small>
+                <?php endif; ?>
+
+                <?php if ($p['tipo_input'] === 'texto' || $p['tipo_input'] === 'number' || $p['tipo_input'] === 'date'): ?>
+                    <div class="resposta-readonly"><?= $valor ? htmlspecialchars($valor) : '<em>Não respondido</em>' ?></div>
+
+                <?php elseif ($p['tipo_input'] === 'textarea'): ?>
+                    <div class="resposta-readonly"><?= $valor ? nl2br(htmlspecialchars($valor)) : '<em>Não respondido</em>' ?></div>
+
+                <?php elseif (in_array($p['tipo_input'], ['radio', 'select'])): ?>
+                    <div class="resposta-readonly"><?= $valor ? htmlspecialchars($valor) : '<em>Não respondido</em>' ?></div>
+
+                <?php elseif ($p['tipo_input'] === 'checkbox'): ?>
+                    <?php if (!empty($valor) && is_array($valor)): ?>
+                        <ul class="resposta-lista">
+                            <?php foreach ($valor as $v): ?>
+                                <li><?= htmlspecialchars($v) ?></li>
+                            <?php endforeach; ?>
+                        </ul>
+                    <?php else: ?>
+                        <div class="resposta-readonly"><em>Não respondido</em></div>
                     <?php endif; ?>
 
-                    <?php if ($p['tipo_input'] === 'texto' || $p['tipo_input'] === 'number' || $p['tipo_input'] === 'date'): ?>
-                        <div class="resposta-readonly"><?= $valor ? htmlspecialchars($valor) : '<em>Não respondido</em>' ?></div>
-
-                    <?php elseif ($p['tipo_input'] === 'textarea'): ?>
-                        <div class="resposta-readonly"><?= $valor ? nl2br(htmlspecialchars($valor)) : '<em>Não respondido</em>' ?></div>
-
-                    <?php elseif (in_array($p['tipo_input'], ['radio', 'select'])): ?>
-                        <div class="resposta-readonly"><?= $valor ? htmlspecialchars($valor) : '<em>Não respondido</em>' ?></div>
-
-                    <?php elseif ($p['tipo_input'] === 'checkbox'): ?>
-                        <?php if (!empty($valor) && is_array($valor)): ?>
-                            <ul class="resposta-lista">
-                                <?php foreach ($valor as $v): ?>
-                                    <li><?= htmlspecialchars($v) ?></li>
-                                <?php endforeach; ?>
-                            </ul>
-                        <?php else: ?>
-                            <div class="resposta-readonly"><em>Não respondido</em></div>
+                <?php elseif ($p['tipo_input'] === 'sim_nao_justificativa'): ?>
+                    <div class="resposta-readonly">
+                        <strong>Resposta:</strong> <?= $valor ? htmlspecialchars($valor) : '<em>Não respondido</em>' ?><br>
+                        <?php if ($justificativa): ?>
+                            <strong>Justificativa:</strong> <?= htmlspecialchars($justificativa) ?>
                         <?php endif; ?>
+                    </div>
 
-                    <?php elseif ($p['tipo_input'] === 'sim_nao_justificativa'): ?>
-                        <div class="resposta-readonly">
-                            <strong>Resposta:</strong> <?= $valor ? htmlspecialchars($valor) : '<em>Não respondido</em>' ?><br>
-                            <?php if ($justificativa): ?>
-                                <strong>Justificativa:</strong> <?= htmlspecialchars($justificativa) ?>
-                            <?php endif; ?>
-                        </div>
-
-                    <?php elseif ($p['tipo_input'] === 'tabela'): ?>
-                        <?php
-                        $config = json_decode($p['opcoes'], true);
-                        $linhas = $config['linhas'] ?? [];
-                        $colunas = $config['colunas'] ?? [];
-                        ?>
-                        <?php if (!empty($linhas) && !empty($colunas) && is_array($valor)): ?>
-                            <table class="tabela-resposta">
-                                <thead>
+                <?php elseif ($p['tipo_input'] === 'tabela'): ?>
+                    <?php
+                    $config = json_decode($p['opcoes'], true);
+                    $linhas = $config['linhas'] ?? [];
+                    $colunas = $config['colunas'] ?? [];
+                    ?>
+                    <?php if (!empty($linhas) && !empty($colunas) && is_array($valor)): ?>
+                        <table class="tabela-resposta">
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <?php foreach ($colunas as $col): ?>
+                                        <th><?= htmlspecialchars($col) ?></th>
+                                    <?php endforeach; ?>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($linhas as $linha): ?>
                                     <tr>
-                                        <th>Item</th>
+                                        <td><?= htmlspecialchars($linha) ?></td>
                                         <?php foreach ($colunas as $col): ?>
-                                            <th><?= htmlspecialchars($col) ?></th>
+                                            <td style="text-align: center;">
+                                                <?= isset($valor[urlencode($linha)]) && $valor[urlencode($linha)] === $col ? '✅' : '' ?>
+                                            </td>
                                         <?php endforeach; ?>
                                     </tr>
-                                </thead>
-                                <tbody>
-                                    <?php foreach ($linhas as $linha): ?>
-                                        <tr>
-                                            <td><?= htmlspecialchars($linha) ?></td>
-                                            <?php foreach ($colunas as $col): ?>
-                                                <td style="text-align: center;">
-                                                    <?= isset($valor[urlencode($linha)]) && $valor[urlencode($linha)] === $col ? '✅' : '' ?>
-                                                </td>
-                                            <?php endforeach; ?>
-                                        </tr>
-                                    <?php endforeach; ?>
-                                </tbody>
-                            </table>
-                        <?php else: ?>
-                            <div class="resposta-readonly"><em>Não respondido</em></div>
-                        <?php endif; ?>
-
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
                     <?php else: ?>
-                        <div class="resposta-readonly"><?= $valor ? htmlspecialchars($valor) : '<em>Não respondido</em>' ?></div>
+                        <div class="resposta-readonly"><em>Não respondido</em></div>
                     <?php endif; ?>
-                </div>
-            <?php endforeach; ?>
 
+                <?php else: ?>
+                    <div class="resposta-readonly"><?= $valor ? htmlspecialchars($valor) : '<em>Não respondido</em>' ?></div>
+                <?php endif; ?>
+            </div>
+        <?php endforeach; ?>
             <!-- Observações -->
             <div class="form-group">
                 <label>Observações</label>
@@ -280,7 +283,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao']) && $_POST['ac
                     <i class="fas fa-file-csv"></i> CSV
                 </a>
                 
-                <a href="javascript:history.back()" class="btn-voltar">Voltar</a>
+                <a href="../" class="btn-voltar">Voltar</a>
             </div>
         </form>
     </div>
