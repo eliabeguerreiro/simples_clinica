@@ -65,6 +65,7 @@ try {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editar <?= htmlspecialchars($evolucao['nome_formulario']) ?></title>
     <link rel="stylesheet" href="render_forms.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
 </head>
 <body>
     <div class="form-container">

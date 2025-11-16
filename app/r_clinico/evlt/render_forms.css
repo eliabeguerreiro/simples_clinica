@@ -1,131 +1,250 @@
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f9f6fc;
-            padding: 20px;
-        }
-        .form-container {
-            max-width: 1000px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.08);
-            padding: 30px;
-        }
-        .form-header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .form-header h1 {
-            color: #6c63ff;
-            font-size: 24px;
-            margin-bottom: 8px;
-        }
-        .form-header p {
-            color: #574b90;
-            font-size: 14px;
-        }
-        .form-group {
-            margin-bottom: 24px;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #333;
-            font-size: 15px;
-        }
-        .form-group small {
-            display: block;
-            margin-top: 6px;
-            color: #666;
-            font-size: 13px;
-            font-weight: normal;
-        }
-        .form-control {
-            width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #e1e1ff;
-            border-radius: 8px;
-            font-size: 15px;
-            background: #fafaff;
-            transition: all 0.3s;
-        }
-        .form-control:focus {
-            outline: none;
-            border-color: #6c63ff;
-            background: white;
-            box-shadow: 0 0 0 3px rgba(108,99,255,0.1);
-        }
-        .radio-group, .checkbox-group {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 16px;
-            margin-top: 8px;
-        }
-        .radio-item, .checkbox-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .btn-submit {
-            background: linear-gradient(135deg, #6c63ff 0%, #574b90 100%);
-            color: white;
-            border: none;
-            padding: 14px 25px;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            width: 100%;
-            max-width: 200px;
-            margin: 20px auto 0;
-            display: block;
-        }
-        .btn-submit:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(108,99,255,0.3);
-        }
-        .required::after {
-            content: " *";
-            color: #ff6b6b;
-        }
-        .btn-secundario {
-            display: inline-block;
-            background: #e1e1ff;
-            color: #333;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-size: 14px;
-            text-align: center;
-            text-decoration: none;
-            transition: all 0.3s;
-        }
-        .btn-secundario:hover {
-            background: #d4d4ff;
-            transform: translateY(-2px);
-        }
-        .preview-mode {
-            background: #fff8e1;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            text-align: center;
-            color: #5d4037;
-            font-weight: 500;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-        }
-        table th, table td {
-            border: 1px solid #ddd;
-            padding: 10px;
-            text-align: center;
-        }
-        table th {
-            background-color: #f5f5f7;
-            font-weight: 600;
-        }
+/* --- Variáveis CSS (alinhadas ao sistema CLINIG) --- */
+:root {
+    --cor-primaria: #6c63ff;
+    --cor-secundaria: #574b90;
+    --cor-sucesso: #28a745;
+    --cor-erro: #dc3545;
+    --cor-fundo: #f9f6fc;
+    --cor-texto: #333;
+    --cor-texto-secundario: #666;
+    --cor-fundo-card: rgba(255, 255, 255, 0.95);
+    --sombra-media: 0 8px 24px rgba(0, 0, 0, 0.08);
+    --borda-raio: 16px;
+    --transicao: all 0.3s ease;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--cor-fundo);
+    color: var(--cor-texto);
+    line-height: 1.6;
+    background-image: url('../../src/img/bkcg.png');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    padding: 20px;
+}
+
+.form-container {
+    max-width: 1000px;
+    margin: 40px auto;
+    padding: 30px;
+    background: var(--cor-fundo-card);
+    border-radius: var(--borda-raio);
+    box-shadow: var(--sombra-media);
+    backdrop-filter: blur(6px);
+    transition: transform 0.2s ease;
+}
+
+.form-container:hover {
+    transform: translateY(-2px);
+}
+
+.form-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.form-header h1 {
+    color: var(--cor-primaria);
+    font-size: 26px;
+    margin-bottom: 8px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+}
+
+.form-header p {
+    color: var(--cor-secundaria);
+    font-size: 15px;
+    line-height: 1.5;
+}
+
+.form-group {
+    margin-bottom: 26px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--cor-texto);
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+}
+
+.form-group label.required::after {
+    content: " *";
+    color: var(--cor-erro);
+    font-weight: bold;
+    margin-left: 4px;
+}
+
+.form-group small {
+    display: block;
+    margin-top: 6px;
+    color: var(--cor-texto-secundario);
+    font-size: 13px;
+    font-weight: normal;
+}
+
+.form-control {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #e1e1ff;
+    border-radius: 10px;
+    font-size: 15px;
+    background: #fafaff;
+    transition: var(--transicao);
+    font-family: inherit;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--cor-primaria);
+    background: white;
+    box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.15);
+}
+
+/* Grupos de opções */
+.radio-group, .checkbox-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 12px;
+    padding: 12px;
+    background: #f8f9ff;
+    border-radius: 10px;
+    border: 1px solid #e1e1ff;
+}
+
+.radio-item, .checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.radio-item input, .checkbox-item input {
+    width: auto;
+    margin: 0;
+}
+
+/* Tabelas (para campos tipo "tabela") */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 12px;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+table th,
+table td {
+    border: 1px solid #eee;
+    padding: 12px;
+    text-align: center;
+    font-size: 14px;
+}
+
+table th {
+    background-color: #f5f5f7;
+    font-weight: 600;
+    color: var(--cor-secundaria);
+}
+
+/* Botões */
+.btn-submit {
+    background: linear-gradient(135deg, var(--cor-primaria), var(--cor-secundaria));
+    color: white;
+    border: none;
+    padding: 14px 25px;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transicao);
+    width: 100%;
+    max-width: 220px;
+    margin: 20px auto 0;
+    display: block;
+    box-shadow: 0 4px 12px rgba(108, 99, 255, 0.2);
+}
+
+.btn-submit:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(108, 99, 255, 0.3);
+}
+
+.btn-secundario {
+    display: inline-block;
+    background: #f5f5f7;
+    color: var(--cor-secundaria);
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-size: 14px;
+    text-align: center;
+    text-decoration: none;
+    transition: var(--transicao);
+    font-weight: 600;
+    border: 1px solid #ddd;
+}
+
+.btn-secundario:hover {
+    background: #e8e8f0;
+    transform: translateY(-2px);
+}
+
+/* Modo de visualização (somente leitura) */
+.preview-mode {
+    background: #fff8e1;
+    padding: 12px;
+    border-radius: 10px;
+    margin-bottom: 24px;
+    text-align: center;
+    color: #5d4037;
+    font-weight: 600;
+    font-size: 15px;
+    border-left: 4px solid #ffc107;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.preview-mode i {
+    color: #ffc107;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+
+    .form-container {
+        margin: 20px;
+        padding: 20px;
+        max-width: 95%;
+    }
+
+    .radio-group, .checkbox-group {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .form-header h1 {
+        font-size: 22px;
+    }
+
+    .btn-submit {
+        max-width: 100%;
+    }
+}
