@@ -5,11 +5,21 @@
     box-sizing: border-box;
 }
 
+/* Body com fundo de imagem */
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background-color: #f9f6fc;
     color: #333;
     line-height: 1.6;
+    background-image: url('./img/bkcg.png');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    /* Suporte a tema escuro (opcional) */
+    @media (prefers-color-scheme: dark) {
+        background-color: #121212;
+    }
 }
 
 /* Header */
@@ -29,6 +39,7 @@ header {
 .logo img {
     width: 120px;
     height: auto;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
 }
 
 nav ul {
@@ -44,11 +55,15 @@ nav ul li a {
     color: #6c63ff;
     font-weight: 600;
     font-size: 15px;
-    transition: color 0.2s ease;
+    transition: color 0.2s ease, transform 0.1s ease;
+    padding: 6px 12px;
+    border-radius: 6px;
 }
 
 nav ul li a:hover {
     color: #333;
+    background-color: #f0f0ff;
+    transform: scale(1.02);
 }
 
 /* Container principal */
@@ -56,10 +71,16 @@ nav ul li a:hover {
     max-width: 800px;
     margin: 40px auto;
     padding: 40px;
-    background: white;
+    background: rgba(255, 255, 255, 0.95); /* Fundo branco semi-transparente */
     border-radius: 16px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
     text-align: center;
+    backdrop-filter: blur(5px); /* Efeito moderno de vidro fosco */
+    transition: transform 0.2s ease;
+}
+
+.simple-box:hover {
+    transform: translateY(-2px);
 }
 
 .simple-box h2 {
@@ -67,6 +88,14 @@ nav ul li a:hover {
     font-size: 28px;
     margin-bottom: 30px;
     font-weight: 600;
+    letter-spacing: -0.5px;
+}
+
+.simple-box p {
+    color: #666;
+    font-size: 16px;
+    margin-bottom: 20px;
+    font-weight: 400;
 }
 
 /* Grid de módulos */
@@ -88,6 +117,20 @@ nav ul li a:hover {
     text-decoration: none;
     color: inherit;
     box-shadow: 0 2px 8px rgba(108, 99, 255, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.module-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, transparent, #6c63ff, transparent);
+    opacity: 0;
+    transition: opacity 0.3s ease;
 }
 
 .module-card:hover {
@@ -95,6 +138,9 @@ nav ul li a:hover {
     box-shadow: 0 8px 20px rgba(108, 99, 255, 0.2);
     background: linear-gradient(135deg, #f0f2ff 0%, #e8ebff 100%);
     border-color: #6c63ff;
+    ::before {
+        opacity: 1;
+    }
 }
 
 .module-card h3 {
@@ -102,18 +148,25 @@ nav ul li a:hover {
     font-size: 18px;
     margin-bottom: 10px;
     font-weight: 600;
+    letter-spacing: -0.3px;
 }
 
 .module-card p {
     color: #666;
     font-size: 14px;
     line-height: 1.5;
+    margin: 0;
 }
 
 .module-icon {
-    font-size: 32px;
+    font-size: 36px; /* Maior para impacto visual */
     margin-bottom: 15px;
     color: #6c63ff;
+    transition: transform 0.2s ease;
+}
+
+.module-card:hover .module-icon {
+    transform: scale(1.1);
 }
 
 /* Responsividade */
@@ -121,6 +174,7 @@ nav ul li a:hover {
     .simple-box {
         margin: 20px;
         padding: 25px;
+        max-width: 95%;
     }
     
     .modules-grid {
@@ -137,5 +191,13 @@ nav ul li a:hover {
         gap: 15px;
         flex-wrap: wrap;
         justify-content: center;
+    }
+    
+    .module-card h3 {
+        font-size: 16px;
+    }
+    
+    .module-icon {
+        font-size: 32px;
     }
 }
