@@ -92,9 +92,9 @@ HTML;
                         <label for="competencia">Competência (AAAAMM)</label>
                         <div class="input-with-button">
                             <input type="text" id="competencia" name="competencia" required pattern="\d{6}" title="Formato: AAAAMM">
-                            <button type="button" class="btn-mes-atual" onclick="document.getElementById(\'competencia\').value=\'' . date('Ym') . '\'">
-                                Usar mês atual
-                            </button>
+                            <!--<button type="button" class="btn-mes-atual" onclick="document.getElementById(\'competencia\').value=\'' . date('Ym') . '\'">
+                                Usar mês atual<br>
+                            </button>-->
                         </div>
                     </div>
                     <div class="form-group">
