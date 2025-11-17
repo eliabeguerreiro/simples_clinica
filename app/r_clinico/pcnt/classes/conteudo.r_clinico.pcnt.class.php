@@ -103,7 +103,7 @@ $html = <<<HTML
 HTML;
 
             if ($this->paciente_id) {
-                $html .= '<button class="tab-btn" data-main="pacientes" data-sub="historico" onclick="showSubTab(\'pacientes\', \'historico\', this)">Histórico</button>';
+                $html .= '<button class="tab-btn" data-main="pacientes" data-sub="historico" onclick="showSubTab(\'pacientes\', \'historico\', this)">Histórico de Evoluções</button>';
             }
 
 $html .= <<<HTML
@@ -325,10 +325,9 @@ HTML;
             $tabelaPacientes = '
             <div class="table-container">
                 <div class="paciente-detalhe">
-                    <h3>Dados do Paciente Encontrado</h3>
+                    <h3 id="titulo-paciente">' . htmlspecialchars($pacienteBuscado['nome']) . '</h3>
                     <div class="paciente-info">
                         <p><strong>ID:</strong> ' . htmlspecialchars($pacienteBuscado['id']) . '</p>
-                        <p><strong>Nome:</strong> ' . htmlspecialchars($pacienteBuscado['nome']) . '</p>
                         <p><strong>CNS:</strong> ' . (!empty($pacienteBuscado['cns']) ? htmlspecialchars($pacienteBuscado['cns']) : '-') . '</p>
                         <p><strong>Data de Nascimento:</strong> ' . $dataNasc . '</p>
                         <p><strong>Sexo:</strong> ' . ($pacienteBuscado['sexo'] == 'M' ? 'Masculino' : 'Feminino') . '</p>
@@ -351,9 +350,7 @@ HTML;
                         <button class="btn-evolucao" onclick="abrirEvolucao(' . $pacienteBuscado['id'] . ')">
                             <i class="fas fa-file-medical"></i> Evolução
                         </button>
-                        <button class="btn-historico" onclick="showSubTab(\'pacientes\', \'historico\', this)">
-                            <i class="fas fa-history"></i> Histórico
-                        </button>
+                        
                         <a href="?sub=documentos" class="btn-clear">
                             <i class="fas fa-arrow-left"></i> Voltar
                         </a>

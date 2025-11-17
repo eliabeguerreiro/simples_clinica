@@ -76,3 +76,17 @@ function redirectToEvolucoes(pacienteId) {
     // Implementação do redirecionamento para evoluções
     window.location.href = '../evlt/?paciente=' + pacienteId;
 }
+
+// Atualiza o texto da sub-aba "Listagem" para "Detalhes do Paciente", se estiver visualizando um paciente
+document.addEventListener('DOMContentLoaded', function() {
+    // Verifica se existe o título "Detalhes do Paciente" na página
+    const tituloDetalhes = Array.from(document.querySelectorAll('.table-header h3'))
+        .find(el => el.textContent.trim() === 'Detalhes do Paciente');
+
+    if (tituloDetalhes) {
+        const botaoListagem = document.querySelector('#sub-pacientes .tab-btn[data-sub="documentos"]');
+        if (botaoListagem) {
+            botaoListagem.textContent = 'Detalhes do Paciente';
+        }
+    }
+});
