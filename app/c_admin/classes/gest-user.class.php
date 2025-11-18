@@ -14,9 +14,7 @@ class GestUser
         }
     }
 
-    /**
-     * Lista todos os usuários ATIVOS com nome do perfil
-     */
+    // =========== USUÁRIOS ===========
     public function listar()
     {
         $sql = "
@@ -32,65 +30,28 @@ class GestUser
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    /**
-     * Busca usuário por ID (inclui perfil_id e ativo)
-     */
     public function buscarPorId($id)
     {
-        $sql = "
-            SELECT u.id, u.cpf, u.login, u.nm_usuario, u.perfil_id, u.ativo
-            FROM usuarios u
-            WHERE u.id = ? LIMIT 1
-        ";
+        $sql = "SELECT id, cpf, login, nm_usuario, perfil_id, ativo FROM usuarios WHERE id = ? LIMIT 1";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$id]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
-    /**
-     * Lista todos os perfis para o select
-     */
-    public function listarPerfis()
-    {
-        $stmt = $this->db->prepare("SELECT id, nome, descricao FROM perfis ORDER BY nome");
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    /**
-     * Cadastra novo usuário com perfil_id
-     */
     public function cadastrar($dados)
     {
-        // Validações básicas
         if (empty(trim($dados['cpf'])) || strlen(trim($dados['cpf'])) !== 11) {
             return ['sucesso' => false, 'erros' => ['CPF inválido ou vazio.'], 'dados' => $dados];
         }
-        if (empty(trim($dados['login']))) {
-            return ['sucesso' => false, 'erros' => ['Login é obrigatório.'], 'dados' => $dados];
-        }
-        if (empty(trim($dados['nm_usuario']))) {
-            return ['sucesso' => false, 'erros' => ['Nome do usuário é obrigatório.'], 'dados' => $dados];
-        }
-        if (empty($dados['perfil_id'])) {
-            return ['sucesso' => false, 'erros' => ['Tipo de usuário é obrigatório.'], 'dados' => $dados];
-        }
-        if (empty($dados['senha'])) {
-            return ['sucesso' => false, 'erros' => ['Senha é obrigatória.'], 'dados' => $dados];
-        }
+        if (empty(trim($dados['login']))) return ['sucesso' => false, 'erros' => ['Login é obrigatório.'], 'dados' => $dados];
+        if (empty(trim($dados['nm_usuario']))) return ['sucesso' => false, 'erros' => ['Nome do usuário é obrigatório.'], 'dados' => $dados];
+        if (empty($dados['perfil_id'])) return ['sucesso' => false, 'erros' => ['Tipo de usuário é obrigatório.'], 'dados' => $dados];
+        if (empty($dados['senha'])) return ['sucesso' => false, 'erros' => ['Senha é obrigatória.'], 'dados' => $dados];
 
-        // Verifica duplicidades
-        if ($this->existeCpf(trim($dados['cpf']))) {
-            return ['sucesso' => false, 'erros' => ['Já existe um usuário com este CPF.'], 'dados' => $dados];
-        }
-        if ($this->existeLogin(trim($dados['login']))) {
-            return ['sucesso' => false, 'erros' => ['Já existe um usuário com este login.'], 'dados' => $dados];
-        }
+        if ($this->existeCpf(trim($dados['cpf']))) return ['sucesso' => false, 'erros' => ['Já existe um usuário com este CPF.'], 'dados' => $dados];
+        if ($this->existeLogin(trim($dados['login']))) return ['sucesso' => false, 'erros' => ['Já existe um usuário com este login.'], 'dados' => $dados];
 
-        // Hash da senha
         $senhaHash = password_hash($dados['senha'], PASSWORD_DEFAULT);
-
-        // Insere com perfil_id e ativo = 1
         $sql = "INSERT INTO usuarios (cpf, login, senha, nm_usuario, perfil_id, ativo) VALUES (?, ?, ?, ?, ?, 1)";
         $stmt = $this->db->prepare($sql);
         $resultado = $stmt->execute([
@@ -101,43 +62,23 @@ class GestUser
             (int)$dados['perfil_id']
         ]);
 
-        if ($resultado) {
-            return [
-                'sucesso' => true,
-                'mensagem' => 'Usuário cadastrado com sucesso!',
-                'id' => $this->db->lastInsertId()
-            ];
-        } else {
-            return ['sucesso' => false, 'erros' => ['Erro ao cadastrar usuário. Tente novamente.'], 'dados' => $dados];
-        }
+        return $resultado
+            ? ['sucesso' => true, 'mensagem' => 'Usuário cadastrado com sucesso!', 'id' => $this->db->lastInsertId()]
+            : ['sucesso' => false, 'erros' => ['Erro ao cadastrar usuário.'], 'dados' => $dados];
     }
 
-    /**
-     * Atualiza usuário (com perfil_id e senha opcional)
-     */
     public function atualizar($id, $dados)
     {
         if (empty(trim($dados['cpf'])) || strlen(trim($dados['cpf'])) !== 11) {
             return ['sucesso' => false, 'erros' => ['CPF inválido ou vazio.'], 'dados' => $dados];
         }
-        if (empty(trim($dados['login']))) {
-            return ['sucesso' => false, 'erros' => ['Login é obrigatório.'], 'dados' => $dados];
-        }
-        if (empty(trim($dados['nm_usuario']))) {
-            return ['sucesso' => false, 'erros' => ['Nome do usuário é obrigatório.'], 'dados' => $dados];
-        }
-        if (empty($dados['perfil_id'])) {
-            return ['sucesso' => false, 'erros' => ['Tipo de usuário é obrigatório.'], 'dados' => $dados];
-        }
+        if (empty(trim($dados['login']))) return ['sucesso' => false, 'erros' => ['Login é obrigatório.'], 'dados' => $dados];
+        if (empty(trim($dados['nm_usuario']))) return ['sucesso' => false, 'erros' => ['Nome do usuário é obrigatório.'], 'dados' => $dados];
+        if (empty($dados['perfil_id'])) return ['sucesso' => false, 'erros' => ['Tipo de usuário é obrigatório.'], 'dados' => $dados];
 
-        if ($this->existeCpf(trim($dados['cpf']), $id)) {
-            return ['sucesso' => false, 'erros' => ['Já existe outro usuário com este CPF.'], 'dados' => $dados];
-        }
-        if ($this->existeLogin(trim($dados['login']), $id)) {
-            return ['sucesso' => false, 'erros' => ['Já existe outro usuário com este login.'], 'dados' => $dados];
-        }
+        if ($this->existeCpf(trim($dados['cpf']), $id)) return ['sucesso' => false, 'erros' => ['Já existe outro usuário com este CPF.'], 'dados' => $dados];
+        if ($this->existeLogin(trim($dados['login']), $id)) return ['sucesso' => false, 'erros' => ['Já existe outro usuário com este login.'], 'dados' => $dados];
 
-        // Monta query dinamicamente (senha opcional)
         $campos = "cpf = ?, login = ?, nm_usuario = ?, perfil_id = ?";
         $valores = [
             trim($dados['cpf']),
@@ -157,30 +98,20 @@ class GestUser
         $stmt = $this->db->prepare($sql);
         $resultado = $stmt->execute($valores);
 
-        if ($resultado) {
-            return ['sucesso' => true, 'mensagem' => 'Usuário atualizado com sucesso!'];
-        } else {
-            return ['sucesso' => false, 'erros' => ['Erro ao atualizar usuário.'], 'dados' => $dados];
-        }
+        return $resultado
+            ? ['sucesso' => true, 'mensagem' => 'Usuário atualizado com sucesso!']
+            : ['sucesso' => false, 'erros' => ['Erro ao atualizar usuário.'], 'dados' => $dados];
     }
 
-    /**
-     * Desativa (não exclui) um usuário
-     */
     public function desativar($id)
     {
         $stmt = $this->db->prepare("UPDATE usuarios SET ativo = 0 WHERE id = ?");
         $resultado = $stmt->execute([$id]);
-        if ($resultado) {
-            return ['sucesso' => true, 'mensagem' => 'Usuário desativado com sucesso!'];
-        } else {
-            return ['sucesso' => false, 'erros' => ['Erro ao desativar usuário.']];
-        }
+        return $resultado
+            ? ['sucesso' => true, 'mensagem' => 'Usuário desativado com sucesso!']
+            : ['sucesso' => false, 'erros' => ['Erro ao desativar usuário.']];
     }
 
-    /**
-     * Verifica se CPF já existe (ignora próprio ID)
-     */
     private function existeCpf($cpf, $idExcluir = null)
     {
         $sql = "SELECT id FROM usuarios WHERE cpf = ?";
@@ -194,9 +125,6 @@ class GestUser
         return $stmt->rowCount() > 0;
     }
 
-    /**
-     * Verifica se login já existe (ignora próprio ID)
-     */
     private function existeLogin($login, $idExcluir = null)
     {
         $sql = "SELECT id FROM usuarios WHERE login = ?";
@@ -208,6 +136,126 @@ class GestUser
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
         return $stmt->rowCount() > 0;
+    }
+
+    // =========== PERFIS ===========
+    public function listarPerfis()
+    {
+        $stmt = $this->db->prepare("SELECT id, nome, especialidade, descricao FROM perfis ORDER BY nome");
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function buscarPerfilPorId($id)
+    {
+        $stmt = $this->db->prepare("SELECT id, nome, especialidade, descricao FROM perfis WHERE id = ? LIMIT 1");
+        $stmt->execute([$id]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function cadastrarPerfil($dados)
+    {
+        $nome = trim($dados['nome'] ?? '');
+        $especialidade = !empty($dados['especialidade']) ? trim($dados['especialidade']) : null;
+        $descricao = trim($dados['descricao'] ?? '');
+
+        if (empty($nome)) return ['sucesso' => false, 'erros' => ['Nome do perfil é obrigatório.'], 'dados' => $dados];
+        if ($this->existeNomePerfil($nome)) return ['sucesso' => false, 'erros' => ['Já existe um perfil com este nome.'], 'dados' => $dados];
+
+        $sql = "INSERT INTO perfis (nome, especialidade, descricao) VALUES (?, ?, ?)";
+        $stmt = $this->db->prepare($sql);
+        $resultado = $stmt->execute([$nome, $especialidade, $descricao]);
+
+        if ($resultado) {
+            $perfilId = $this->db->lastInsertId();
+            if (!empty($dados['permissoes'])) {
+                $this->atualizarPermissoes($perfilId, $dados['permissoes']);
+            }
+            return ['sucesso' => true, 'mensagem' => 'Perfil criado com sucesso!', 'id' => $perfilId];
+        } else {
+            return ['sucesso' => false, 'erros' => ['Erro ao salvar o perfil.'], 'dados' => $dados];
+        }
+    }
+
+    public function atualizarPerfil($id, $dados)
+    {
+        $nome = trim($dados['nome'] ?? '');
+        $especialidade = !empty($dados['especialidade']) ? trim($dados['especialidade']) : null;
+        $descricao = trim($dados['descricao'] ?? '');
+
+        if (empty($nome)) return ['sucesso' => false, 'erros' => ['Nome do perfil é obrigatório.'], 'dados' => $dados];
+        if ($this->existeNomePerfil($nome, $id)) return ['sucesso' => false, 'erros' => ['Já existe outro perfil com este nome.'], 'dados' => $dados];
+
+        $sql = "UPDATE perfis SET nome = ?, especialidade = ?, descricao = ? WHERE id = ?";
+        $stmt = $this->db->prepare($sql);
+        $resultado = $stmt->execute([$nome, $especialidade, $descricao, $id]);
+
+        if ($resultado) {
+            if (isset($dados['permissoes'])) {
+                $this->atualizarPermissoes($id, $dados['permissoes']);
+            }
+            return ['sucesso' => true, 'mensagem' => 'Perfil atualizado com sucesso!'];
+        } else {
+            return ['sucesso' => false, 'erros' => ['Erro ao atualizar o perfil.'], 'dados' => $dados];
+        }
+    }
+
+    public function excluirPerfil($id)
+    {
+        $stmt = $this->db->prepare("SELECT COUNT(*) AS total FROM usuarios WHERE perfil_id = ?");
+        $stmt->execute([$id]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($row['total'] > 0) {
+            return ['sucesso' => false, 'erros' => ['Não é possível excluir: existem usuários vinculados a este perfil.']];
+        }
+
+        $stmt = $this->db->prepare("DELETE FROM perfis WHERE id = ?");
+        $resultado = $stmt->execute([$id]);
+        return $resultado
+            ? ['sucesso' => true, 'mensagem' => 'Perfil excluído com sucesso!']
+            : ['sucesso' => false, 'erros' => ['Erro ao excluir o perfil.']];
+    }
+
+    private function existeNomePerfil($nome, $idExcluir = null)
+    {
+        $sql = "SELECT id FROM perfis WHERE nome = ?";
+        $params = [$nome];
+        if ($idExcluir) {
+            $sql .= " AND id != ?";
+            $params[] = $idExcluir;
+        }
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->rowCount() > 0;
+    }
+
+    // =========== PERMISSÕES ===========
+    public function listarPermissoes()
+    {
+        $stmt = $this->db->prepare("SELECT id, chave, descricao FROM permissoes ORDER BY chave");
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getPermissoesDoPerfil($perfilId)
+    {
+        $sql = "SELECT permissao_id FROM perfil_permissao WHERE perfil_id = ?";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$perfilId]);
+        return array_column($stmt->fetchAll(PDO::FETCH_ASSOC), 'permissao_id');
+    }
+
+    public function atualizarPermissoes($perfilId, $permissoesIds = [])
+    {
+        $this->db->prepare("DELETE FROM perfil_permissao WHERE perfil_id = ?")->execute([$perfilId]);
+        if (!empty($permissoesIds)) {
+            $sql = "INSERT INTO perfil_permissao (perfil_id, permissao_id) VALUES (?, ?)";
+            $stmt = $this->db->prepare($sql);
+            foreach ($permissoesIds as $permissaoId) {
+                $stmt->execute([$perfilId, (int)$permissaoId]);
+            }
+        }
+        return true;
     }
 }
 ?>

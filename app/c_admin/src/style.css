@@ -521,6 +521,53 @@ nav ul li a:hover {
     opacity: 0.9;
 }
 
+/* Botões de ação na tabela */
+.table-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+.btn-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    border: 1px solid transparent;
+}
+
+.btn-edit {
+    background: #e3f2fd;
+    color: #1976d2;
+    border-color: #bbdefb;
+}
+.btn-edit:hover {
+    background: #bbdefb;
+    color: #0d47a1;
+    transform: translateY(-1px);
+}
+
+.btn-delete {
+    background: #ffebee;
+    color: #c62828;
+    border-color: #ffcdd2;
+}
+.btn-delete:hover {
+    background: #ffcdd2;
+    color: #b71c1c;
+    transform: translateY(-1px);
+}
+
+.btn-action i {
+    font-size: 14px;
+}
+
 /* Responsividade */
 @media (max-width: 768px) {
     .simple-box {
