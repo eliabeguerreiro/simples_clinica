@@ -1,5 +1,4 @@
 <?php
-
 include_once "gest-user.class.php";
 
 class ConteudoPainelUser
@@ -13,7 +12,7 @@ class ConteudoPainelUser
 
     public function render()
     {
-$html = <<<HTML
+        $html = <<<HTML
             <!DOCTYPE html>
             <html lang="pt-BR">
             <head>
@@ -25,12 +24,10 @@ $html = <<<HTML
             </head>
 HTML;
 
-        // Renderiza o corpo da página
         $body = $this->renderBody();
-
         $html .= $body;
 
-$html .= <<<HTML
+        $html .= <<<HTML
             <script src="src/script.js"></script>
             <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
             <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
@@ -43,17 +40,16 @@ HTML;
 
     private function renderBody()
     {
-        $nome = htmlspecialchars($_SESSION['data_user']['nm_usuario']);
+        $nome = htmlspecialchars($_SESSION['data_user']['nm_usuario'] ?? '');
 
-        // Processa formulário se foi enviado
         $resultado = null;
         if ($_POST && isset($_POST['acao'])) {
             switch ($_POST['acao']) {
                 case 'cadastrar':
                     $resultado = $this->usuario->cadastrar($_POST);
                     break;
-                case 'excluir':
-                    $resultado = $this->usuario->excluir($_POST['id']);
+                case 'desativar':
+                    $resultado = $this->usuario->desativar($_POST['id']);
                     break;
                 case 'atualizar':
                     if (isset($_POST['id']) && is_numeric($_POST['id'])) {
@@ -69,7 +65,7 @@ HTML;
             }
         }
 
-$html = <<<HTML
+        $html = <<<HTML
             <body>
                 <header>
                     <div class="logo">
@@ -83,25 +79,20 @@ $html = <<<HTML
                         </ul>
                     </nav>
                 </header>
-
                 <section class="simple-box">
                     <h2>Gestão de Usuários</h2>
-
                     <!-- Abas principais -->
                     <div class="tabs" id="main-tabs">
                         <button class="tab-btn active" onclick="redirectToTab('usuarios')">Usuários</button>
                         <button class="tab-btn disabled" title="Módulo em desenvolvimento" style="cursor:not-allowed; opacity:0.6;" onclick="event.preventDefault();">Perfis</button>
                     </div>
-
                     <!-- Sub-abas -->
                     <div id="sub-tabs">
                         <div class="sub-tabs" id="sub-usuarios">
                             <button class="tab-btn" data-main="usuarios" data-sub="cadastro" onclick="showSubTab('usuarios', 'cadastro', this)">Cadastro</button>
                             <button class="tab-btn active" data-main="usuarios" data-sub="documentos" onclick="showSubTab('usuarios', 'documentos', this)">Listagem</button>
-                            
                         </div>
                     </div>
-
                     <!-- Conteúdo das abas -->
                     <div id="tab-content">
                         <div id="usuarios-cadastro" class="tab-content" style="display:none;">
@@ -115,28 +106,23 @@ $html = <<<HTML
                         </div>
                     </div>
                 </section>
-
-                <!-- Modal de confirmação de exclusão -->
+                <!-- Modal de confirmação de desativação -->
                 <div id="modal-exclusao" class="modal" style="display:none;">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h3>Confirmar Exclusão</h3>
+                            <h3>Confirmar Desativação</h3>
                             <span class="close-modal" onclick="fecharModal()">&times;</span>
                         </div>
                         <div class="modal-body">
-                            <p>Tem certeza que deseja excluir este usuário?</p>
-                            <p><strong>Esta ação não pode ser desfeita.</strong></p>
+                            <p>Tem certeza que deseja desativar este usuário?</p>
+                            <p><strong>O usuário não terá mais acesso ao sistema.</strong></p>
                         </div>
                         <div class="modal-footer">
                             <button class="btn-cancel" onclick="fecharModal()">Cancelar</button>
-                            <button class="btn-delete" id="confirmar-exclusao">Excluir</button>
+                            <button class="btn-delete" id="confirmar-exclusao">Desativar</button>
                         </div>
                     </div>
                 </div>
-
-                <script src="../src/script.js"></script>
-                <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-                <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
             </body>
 HTML;
 
@@ -145,7 +131,6 @@ HTML;
 
     private function getFormularioCadastro($resultado = null)
     {
-        // Mantém os dados no formulário em caso de erro
         $dadosForm = [];
         if ($resultado && isset($resultado['dados'])) {
             $dadosForm = $resultado['dados'];
@@ -153,7 +138,6 @@ HTML;
             $dadosForm = $_POST;
         }
 
-        // Exibe mensagens de sucesso/erro
         $mensagens = '';
         if ($resultado && (!isset($_POST['acao']) || $_POST['acao'] == 'cadastrar')) {
             if (isset($resultado['sucesso']) && $resultado['sucesso']) {
@@ -165,6 +149,15 @@ HTML;
                 }
                 $mensagens .= '</div>';
             }
+        }
+
+        // Carrega perfis do banco
+        $perfis = $this->usuario->listarPerfis();
+        $opcoesPerfis = '<option value="">Selecionar</option>';
+        foreach ($perfis as $perfil) {
+            $selected = (isset($dadosForm['perfil_id']) && $dadosForm['perfil_id'] == $perfil['id']) ? 'selected' : '';
+            $nomeExibicao = ucfirst(str_replace('_', ' ', $perfil['nome'])); // ex: fisioterapeuta -> Fisioterapeuta
+            $opcoesPerfis .= '<option value="' . $perfil['id'] . '" ' . $selected . '>' . htmlspecialchars($nomeExibicao) . '</option>';
         }
 
         return '
@@ -189,7 +182,6 @@ HTML;
                                value="' . (isset($dadosForm['nm_usuario']) ? htmlspecialchars($dadosForm['nm_usuario']) : '') . '">
                     </div>
                 </div>
-
                 <div class="form-row">
                     <div class="form-group">
                         <label for="senha">Senha*</label>
@@ -197,15 +189,12 @@ HTML;
                                value="">
                     </div>
                     <div class="form-group">
-                        <label for="tipo">Tipo de Usuário*</label>
-                        <select required id="tipo" name="tipo" required>
-                            <option value="">Selecionar</option>
-                            <option value="admin" ' . (isset($dadosForm['tipo']) && $dadosForm['tipo'] == 'admin' ? 'selected' : '') . '>Administrador</option>
-                            <option value="user" ' . (isset($dadosForm['tipo']) && $dadosForm['tipo'] == 'user' ? 'selected' : '') . '>Usuário Comum</option>
+                        <label for="perfil_id">Tipo de Usuário*</label>
+                        <select required name="perfil_id">
+                            ' . $opcoesPerfis . '
                         </select>
                     </div>
                 </div>
-
                 <button type="submit" class="btn-add">
                     <i class="fas fa-save"></i> Salvar Usuário
                 </button>
@@ -215,104 +204,94 @@ HTML;
 
     private function getListagemUsuarios($resultado = null)
     {
-    // Exibe mensagens de sucesso/erro
-    $mensagens = '';
-    if ($resultado && isset($_POST['acao']) && $_POST['acao'] == 'excluir') {
-        if (isset($resultado['sucesso']) && $resultado['sucesso']) {
-            $mensagens = '<div class="form-message success">' . $resultado['mensagem'] . '</div>';
-        } elseif (isset($resultado['erros'])) {
-            $mensagens = '<div class="form-message error">';
-            foreach ($resultado['erros'] as $erro) {
-                $mensagens .= '<p>' . htmlspecialchars($erro) . '</p>';
+        $mensagens = '';
+        if ($resultado && isset($_POST['acao']) && $_POST['acao'] == 'desativar') {
+            if (isset($resultado['sucesso']) && $resultado['sucesso']) {
+                $mensagens = '<div class="form-message success">' . $resultado['mensagem'] . '</div>';
+            } elseif (isset($resultado['erros'])) {
+                $mensagens = '<div class="form-message error">';
+                foreach ($resultado['erros'] as $erro) {
+                    $mensagens .= '<p>' . htmlspecialchars($erro) . '</p>';
+                }
+                $mensagens .= '</div>';
             }
-            $mensagens .= '</div>';
         }
-    }
 
-    // Buscar todos os usuários
-    $usuarios = $this->usuario->listar();
-    $total = count($usuarios);
+        $usuarios = $this->usuario->listar();
+        $total = count($usuarios);
+        $tabelaUsuarios = '';
 
-    $tabelaUsuarios = '';
+        if (!empty($usuarios)) {
+            $tabelaUsuarios = '
+            <div class="table-container">
+                <table class="pacientes-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>CPF</th>
+                            <th>Login</th>
+                            <th>Nome</th>
+                            <th>Perfil</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>';
 
-    if (!empty($usuarios)) {
-        $tabelaUsuarios = '
-        <div class="table-container">
-            <table class="pacientes-table">
-                <thead>
+            foreach ($usuarios as $usuario) {
+                $tabelaUsuarios .= '
                     <tr>
-                        <th>ID</th>
-                        <th>CPF</th>
-                        <th>Login</th>
-                        <th>Nome</th>
-                        <th>Tipo</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody>';
+                        <td>' . htmlspecialchars($usuario['id']) . '</td>
+                        <td>' . htmlspecialchars($usuario['cpf']) . '</td>
+                        <td>' . htmlspecialchars($usuario['login']) . '</td>
+                        <td>' . htmlspecialchars($usuario['nm_usuario']) . '</td>
+                        <td>' . htmlspecialchars($usuario['perfil_nome'] ?? '—') . '</td>
+                        <td>
+                            <a href="atualizar_usuario.php?id=' . $usuario['id'] . '" class="btn-edit" title="Editar">
+                                <i class="fas fa-edit"></i> Editar
+                            </a>
+                            <button type="button" class="btn-delete" onclick="confirmarDesativacao(' . $usuario['id'] . ')" title="Desativar">
+                                <i class="fas fa-trash"></i> Desativar
+                            </button>
+                        </td>
+                    </tr>';
+            }
 
-        foreach ($usuarios as $usuario) {
             $tabelaUsuarios .= '
-                <tr>
-                    <td>' . htmlspecialchars($usuario['id']) . '</td>
-                    <td>' . htmlspecialchars($usuario['cpf']) . '</td>
-                    <td>' . htmlspecialchars($usuario['login']) . '</td>
-                    <td>' . htmlspecialchars($usuario['nm_usuario']) . '</td>
-                    <td>' . htmlspecialchars($usuario['tipo']) . '</td>
-                    <td>
-                        <a href="atualizar_usuario.php?id=' . $usuario['id'] . '" class="btn-edit" title="Editar">
-                            <i class="fas fa-edit"></i>
-                        </a>
-                        <a href="apagar.php?id=' . $usuario['id'] . '" class="btn-delete" title="Excluir">
-                            <i class="fas fa-trash"></i> Excluir
-                        </a>
-                    </td>
-                </tr>';
+                </tbody>
+            </table>
+        </div>';
+        } else {
+            $tabelaUsuarios = '<div class="no-data">Nenhum usuário ativo encontrado.</div>';
         }
 
-        $tabelaUsuarios .= '
-            </tbody>
-        </table>
-    </div>';
-    } else {
-        $tabelaUsuarios = '<div class="no-data">Nenhum usuário encontrado.</div>';
+        return '
+        <div class="listagem-container">
+            ' . $mensagens . '
+            <div class="table-header">
+                <h3>Listagem de Usuários (' . $total . ' ativo' . ($total != 1 ? 's' : '') . ')</h3>
+            </div>
+            ' . $tabelaUsuarios . '
+        </div>';
     }
-
-    return '
-    <div class="listagem-container">
-        ' . $mensagens . '
-        <div class="table-header">
-            <h3>Listagem de Usuários (' . $total . ' cadastrado' . ($total != 1 ? 's' : '') . ')</h3>
-        </div>
-        ' . $tabelaUsuarios . '
-    </div>';
-}
 
     private function getFormularioEdicao($resultado = null)
     {
         // Verifica se há ID na URL
         $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
-
         if ($id <= 0) {
             return '<div class="form-message error">ID do usuário não informado.</div>';
         }
 
-        // Busca o usuário
         $usuario = $this->usuario->buscarPorId($id);
-
         if (!$usuario) {
             return '<div class="form-message error">Usuário não encontrado.</div>';
         }
 
-        // Mantém os dados no formulário em caso de erro
-        $dadosForm = [];
+        $dadosForm = $usuario;
         if ($resultado && isset($resultado['dados'])) {
             $dadosForm = $resultado['dados'];
-        } else {
-            $dadosForm = $usuario; // Usa os dados do banco como padrão
         }
 
-        // Exibe mensagens de sucesso/erro
         $mensagens = '';
         if ($resultado && (!isset($_POST['acao']) || $_POST['acao'] == 'atualizar')) {
             if (isset($resultado['sucesso']) && $resultado['sucesso']) {
@@ -326,6 +305,15 @@ HTML;
             }
         }
 
+        // Carrega perfis
+        $perfis = $this->usuario->listarPerfis();
+        $opcoesPerfis = '<option value="">Selecionar</option>';
+        foreach ($perfis as $perfil) {
+            $selected = (isset($dadosForm['perfil_id']) && $dadosForm['perfil_id'] == $perfil['id']) ? 'selected' : '';
+            $nomeExibicao = ucfirst(str_replace('_', ' ', $perfil['nome']));
+            $opcoesPerfis .= '<option value="' . $perfil['id'] . '" ' . $selected . '>' . htmlspecialchars($nomeExibicao) . '</option>';
+        }
+
         return '
         <div class="form-container">
             ' . $mensagens . '
@@ -336,35 +324,31 @@ HTML;
                     <div class="form-group">
                         <label for="cpf">CPF*</label>
                         <input required type="text" id="cpf" name="cpf" required maxlength="11" placeholder="Digite o CPF"
-                            value="' . (isset($dadosForm['cpf']) ? htmlspecialchars($dadosForm['cpf']) : '') . '">
+                               value="' . (isset($dadosForm['cpf']) ? htmlspecialchars($dadosForm['cpf']) : '') . '">
                     </div>
                     <div class="form-group">
                         <label for="login">Login*</label>
                         <input required type="text" id="login" name="login" required maxlength="60" placeholder="Digite o login"
-                            value="' . (isset($dadosForm['login']) ? htmlspecialchars($dadosForm['login']) : '') . '">
+                               value="' . (isset($dadosForm['login']) ? htmlspecialchars($dadosForm['login']) : '') . '">
                     </div>
                     <div class="form-group">
                         <label for="nm_usuario">Nome Completo*</label>
                         <input required type="text" id="nm_usuario" name="nm_usuario" required maxlength="45" placeholder="Digite o nome"
-                            value="' . (isset($dadosForm['nm_usuario']) ? htmlspecialchars($dadosForm['nm_usuario']) : '') . '">
+                               value="' . (isset($dadosForm['nm_usuario']) ? htmlspecialchars($dadosForm['nm_usuario']) : '') . '">
                     </div>
                 </div>
-
                 <div class="form-row">
                     <div class="form-group">
                         <label for="senha">Nova Senha (opcional)</label>
                         <input type="password" id="senha" name="senha" maxlength="30" placeholder="Deixe em branco para manter a mesma">
                     </div>
                     <div class="form-group">
-                        <label for="tipo">Tipo de Usuário*</label>
-                        <select required id="tipo" name="tipo" required>
-                            <option value="">Selecionar</option>
-                            <option value="admin" ' . (isset($dadosForm['tipo']) && $dadosForm['tipo'] == 'admin' ? 'selected' : '') . '>Administrador</option>
-                            <option value="user" ' . (isset($dadosForm['tipo']) && $dadosForm['tipo'] == 'user' ? 'selected' : '') . '>Usuário Comum</option>
+                        <label for="perfil_id">Tipo de Usuário*</label>
+                        <select required name="perfil_id">
+                            ' . $opcoesPerfis . '
                         </select>
                     </div>
                 </div>
-
                 <button type="submit" class="btn-add">
                     <i class="fas fa-save"></i> Atualizar Usuário
                 </button>

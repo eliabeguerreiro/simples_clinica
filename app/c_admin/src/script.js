@@ -6,7 +6,6 @@ function redirectToTab(tabId) {
     if (tabId === 'pacientes') destino = '../pcnt';
     if (tabId === 'atendimentos') destino = '../atndm';
     if (tabId === 'evolucoes') destino = '../evlt';
-    
     if (destino) {
         window.location.href = destino + '/';
     }
@@ -14,67 +13,73 @@ function redirectToTab(tabId) {
 
 // Mostra sub-aba e oculta as outras
 function showSubTab(mainId, subId, clickedButton) {
-    // Oculta todos os conteúdos das abas
     document.querySelectorAll('.tab-content').forEach(el => {
         el.style.display = 'none';
     });
-
-    // Remove classe 'active' de todos os botões da sub-aba
     const activeButtons = document.querySelectorAll(`#sub-${mainId} .tab-btn`);
     activeButtons.forEach(btn => btn.classList.remove('active'));
-
-    // Ativa o botão clicado
     if (clickedButton) {
         clickedButton.classList.add('active');
     }
-
-    // Mostra o conteúdo correspondente
     const content = document.getElementById(`${mainId}-${subId}`);
     if (content) {
         content.style.display = 'block';
     }
 }
 
-// Função para editar usuário (redireciona para página de edição)
-function editarUsuario(id) {
-    window.location.href = 'atualizar_usuario.php?id=' + id;
-}
+// Confirmação de DESATIVAÇÃO
+let usuarioParaDesativar = null;
 
-// Função para confirmar exclusão com modal
-let usuarioParaExcluir = null;
-
-function confirmarExclusao(id) {
-    usuarioParaExcluir = id;
+function confirmarDesativacao(id) {
+    usuarioParaDesativar = id;
     document.getElementById('modal-exclusao').style.display = 'flex';
 }
 
 function fecharModal() {
     document.getElementById('modal-exclusao').style.display = 'none';
-    usuarioParaExcluir = null;
+    usuarioParaDesativar = null;
 }
 
-// Confirma exclusão no modal
-document.addEventListener('DOMContentLoaded', function() {
+// Confirma desativação via POST
+document.addEventListener('DOMContentLoaded', function () {
     const confirmarBtn = document.getElementById('confirmar-exclusao');
     if (confirmarBtn) {
-        confirmarBtn.addEventListener('click', function() {
-            if (usuarioParaExcluir) {
-                window.location.href = 'apagar.php?id=' + usuarioParaExcluir;
+        confirmarBtn.textContent = 'Desativar';
+        confirmarBtn.addEventListener('click', function () {
+            if (usuarioParaDesativar) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.style.display = 'none';
+
+                const inputAcao = document.createElement('input');
+                inputAcao.type = 'hidden';
+                inputAcao.name = 'acao';
+                inputAcao.value = 'desativar';
+
+                const inputId = document.createElement('input');
+                inputId.type = 'hidden';
+                inputId.name = 'id';
+                inputId.value = usuarioParaDesativar;
+
+                form.appendChild(inputAcao);
+                form.appendChild(inputId);
+                document.body.appendChild(form);
+                form.submit();
             }
         });
     }
 });
 
 // Fechar modal ao clicar fora
-document.addEventListener('click', function(e) {
+document.addEventListener('click', function (e) {
     const modal = document.getElementById('modal-exclusao');
     if (modal && e.target === modal) {
         fecharModal();
     }
 });
 
-// Fechar modal com tecla ESC
-document.addEventListener('keydown', function(e) {
+// Fechar com ESC
+document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') {
         fecharModal();
     }
