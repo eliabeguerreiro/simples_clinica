@@ -1,0 +1,234 @@
+:root {
+    --cor-primaria: #6c63ff;
+    --cor-secundaria: #574b90;
+    --cor-texto: #333;
+    --cor-texto-secundario: #666;
+    --cor-fundo: #f9f6fc;
+    --cor-fundo-card: rgba(255, 255, 255, 0.95);
+    --sombra-media: 0 8px 24px rgba(0, 0, 0, 0.08);
+    --borda-raio: 16px;
+    --transicao: all 0.3s ease;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--cor-fundo);
+    color: var(--cor-texto);
+    line-height: 1.6;
+    background-image: url('../../src/img/bkcg.png');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    padding: 20px;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 40px;
+    background: white;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    border-bottom: 3px solid var(--cor-primaria);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    margin: -20px -20px 30px -20px;
+    border-radius: 0;
+}
+
+.logo img {
+    width: 120px;
+    height: auto;
+}
+
+.nav-actions {
+    display: flex;
+    gap: 24px;
+}
+
+.nav-actions a {
+    text-decoration: none;
+    color: var(--cor-primaria);
+    font-weight: 600;
+    font-size: 15px;
+    transition: color 0.2s ease;
+}
+
+.nav-actions a:hover {
+    color: var(--cor-texto);
+}
+
+.container {
+    max-width: 850px;
+    margin: 0 auto;
+    padding: 30px;
+    background: var(--cor-fundo-card);
+    border-radius: var(--borda-raio);
+    box-shadow: var(--sombra-media);
+    backdrop-filter: blur(6px);
+    transition: transform 0.2s ease;
+}
+
+.container:hover {
+    transform: translateY(-2px);
+}
+
+h2 {
+    color: var(--cor-primaria);
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+}
+
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--cor-primaria);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 15px;
+    margin-bottom: 20px;
+}
+
+.back-link:hover {
+    color: var(--cor-secundaria);
+}
+
+.paciente-info {
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 18px;
+}
+
+.especialidade-secao {
+    margin-bottom: 30px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.especialidade-titulo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 0;
+    color: var(--cor-secundaria);
+    font-size: 20px;
+    font-weight: 600;
+    cursor: pointer;
+    user-select: none;
+}
+
+.especialidade-titulo:hover {
+    background-color: #f0f0ff;
+    border-radius: 8px;
+}
+
+.accordion-icon {
+    margin-left: auto;
+    transition: transform 0.3s ease;
+}
+
+.accordion-content {
+    padding: 0 10px;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, padding 0.3s ease;
+}
+
+.accordion-content.show {
+    max-height: 1000px;
+    padding: 10px 0;
+}
+
+.form-item {
+    padding: 20px;
+    background: #fafaff;
+    border-radius: 10px;
+    margin: 15px 0;
+    transition: var(--transicao);
+}
+
+.form-item:hover {
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.form-item h3 {
+    margin-bottom: 10px;
+    color: var(--cor-texto);
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.form-item p.desc {
+    color: var(--cor-texto-secundario);
+    font-size: 14px;
+    margin-bottom: 12px;
+    line-height: 1.5;
+}
+
+.form-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.btn {
+    padding: 10px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: var(--transicao);
+}
+
+.btn-usar {
+    background: linear-gradient(135deg, var(--cor-primaria), var(--cor-secundaria));
+    color: white;
+    box-shadow: 0 4px 12px rgba(108, 99, 255, 0.2);
+}
+
+.btn-usar:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(108, 99, 255, 0.3);
+}
+
+.no-forms {
+    text-align: center;
+    padding: 40px;
+    color: var(--cor-texto-secundario);
+    font-size: 16px;
+}
+
+@media (max-width: 768px) {
+    .header {
+        padding: 14px 20px;
+        margin: -20px -20px 20px -20px;
+    }
+
+    .container {
+        margin: 0 10px;
+        padding: 20px;
+    }
+
+    .form-actions {
+        flex-direction: column;
+    }
+
+    .btn {
+        justify-content: center;
+    }
+}
