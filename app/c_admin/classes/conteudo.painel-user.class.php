@@ -373,7 +373,9 @@ HTML;
                     </div>
                 </div>
                 <button type="submit" class="btn-add">Atualizar Usuário</button>
-                <a href="?tab=usuarios&sub=documentos" style="margin-left:10px;">Voltar</a>
+                <a href="index.php" class="btn-back">
+                    <i class="fas fa-arrow-left"></i> Voltar à Listagem
+                </a>
             </form>
         </div>';
     }
@@ -549,8 +551,10 @@ HTML;
                     </div>
                 </div>
                 <button type="submit" class="btn-add">Atualizar Perfil</button>
+                <a href="index.php" class="btn-back">
+                    <i class="fas fa-arrow-left"></i> Voltar à Listagem
+                </a>
             </form>
         </div>';
     }
 }
-?>
