@@ -401,13 +401,15 @@ HTML;
                             <td>' . (!empty($paciente['cns']) ? htmlspecialchars($paciente['cns']) : '-') . '</td>   
                             <td>' . (!empty($paciente['telefone']) ? htmlspecialchars($paciente['telefone']) : '-') . '</td>
                             <td>
-                                <a href="?id=' . $paciente['id'] . '&sub=documentos" class="btn-view" title="Visualizar">
-                                    <i class="fas fa-eye"></i>
-                                </a>
-                                <button class="btn-edit" onclick="abrirEvolucao(' . $paciente['id'] . ')" title="Evolucao">
-                                    <i class="fas fa-file-medical"></i>
-                                </button>
-                            </td>
+                        <div class="table-actions">
+                            <a href="?id=' . $paciente['id'] . '&sub=documentos" class="btn-action btn-view">
+                                <i class="fas fa-eye"></i> Detalhes
+                            </a>
+                            <button type="button" class="btn-action btn-evolucao" onclick="abrirEvolucao(' . $paciente['id'] . ')">
+                                <i class="fas fa-file-medical"></i> Evolução
+                            </button>
+                        </div>
+                    </td>
                         </tr>';
                 }
                 $tabelaPacientes .= '

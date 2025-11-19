@@ -355,11 +355,62 @@ nav ul li a:hover {
     background: #f9f8ff;
 }
 
-/* Botões de ação */
+/* === BOTÕES NA TABELA === */
+.table-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.btn-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    border: none;
+    white-space: nowrap;
+}
+
+.btn-action i {
+    font-size: 12px;
+}
+
+/* Botão "Ver" */
+.btn-view {
+    background: rgba(40, 167, 69, 0.1);
+    color: var(--cor-sucesso);
+    border: 1px solid rgba(40, 167, 69, 0.3);
+}
+.btn-view:hover {
+    background: rgba(40, 167, 69, 0.2);
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(40, 167, 69, 0.2);
+}
+
+/* Botão "Evolução" */
+.btn-evolucao {
+    background: rgba(108, 99, 255, 0.1);
+    color: var(--cor-primaria);
+    border: 1px solid rgba(108, 99, 255, 0.3);
+}
+.btn-evolucao:hover {
+    background: rgba(108, 99, 255, 0.2);
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(108, 99, 255, 0.2);
+}
+
+/* Botões de ação isolados (fora da tabela) */
 .btn-edit,
 .btn-delete,
-.btn-view,
-.btn-evolucao-small {
+.btn-historico {
     background: none;
     border: none;
     padding: 8px 12px;
@@ -374,23 +425,25 @@ nav ul li a:hover {
     gap: 6px;
 }
 
-.btn-edit { color: var(--cor-primaria); }
-.btn-edit:hover { background: var(--cor-primaria); color: white; }
+.btn-edit { color: var(--cor-primaria); } .btn-edit:hover { background: var(--cor-primaria); color: white; }
+.btn-delete { color: var(--cor-erro); } .btn-delete:hover { background: var(--cor-erro); color: white; }
 
-.btn-delete { color: var(--cor-erro); }
-.btn-delete:hover { background: var(--cor-erro); color: white; }
-
-.btn-view { color: var(--cor-sucesso); }
-.btn-view:hover { background: var(--cor-sucesso); color: white; }
-
-.btn-evolucao-small {
-    background: var(--cor-sucesso);
+/* Exclusão múltipla */
+.btn-delete-multiple {
+    background: var(--cor-erro);
     color: white;
-    padding: 8px;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-top: 15px;
 }
-.btn-evolucao-small:hover {
-    background: #218838;
-    color: white;
+.btn-delete-multiple:hover {
+    background: #c82333;
+    transform: translateY(-1px);
 }
 
 /* Detalhes do paciente */
@@ -437,7 +490,10 @@ nav ul li a:hover {
     align-items: center;
 }
 
-.paciente-actions button,
+.paciente-actions .btn-edit,
+.paciente-actions .btn-delete,
+.paciente-actions .btn-evolucao,
+.paciente-actions .btn-historico,
 .paciente-actions .btn-clear {
     display: inline-flex;
     align-items: center;
@@ -452,42 +508,17 @@ nav ul li a:hover {
     font-size: 15px;
 }
 
-.paciente-actions .btn-edit {
-    background: var(--cor-primaria);
-    color: white;
-}
-.paciente-actions .btn-edit:hover {
-    background: var(--cor-secundaria);
-    transform: translateY(-2px);
-}
+.paciente-actions .btn-edit { background: var(--cor-primaria); color: white; }
+.paciente-actions .btn-edit:hover { background: var(--cor-secundaria); transform: translateY(-2px); }
 
-.paciente-actions .btn-delete {
-    background: var(--cor-erro);
-    color: white;
-}
-.paciente-actions .btn-delete:hover {
-    background: #c82333;
-    transform: translateY(-2px);
-}
+.paciente-actions .btn-delete { background: var(--cor-erro); color: white; }
+.paciente-actions .btn-delete:hover { background: #c82333; transform: translateY(-2px); }
 
-.paciente-actions .btn-evolucao {
-    background: var(--cor-sucesso);
-    color: white;
-}
-.paciente-actions .btn-evolucao:hover {
-    background: #218838;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
-}
+.paciente-actions .btn-evolucao { background: var(--cor-sucesso); color: white; }
+.paciente-actions .btn-evolucao:hover { background: #218838; transform: translateY(-2px); }
 
-.paciente-actions .btn-historico {
-    background: var(--cor-secundaria);
-    color: white;
-}
-.paciente-actions .btn-historico:hover {
-    background: #4a3f7a;
-    transform: translateY(-2px);
-}
+.paciente-actions .btn-historico { background: var(--cor-secundaria); color: white; }
+.paciente-actions .btn-historico:hover { background: #4a3f7a; transform: translateY(-2px); }
 
 .paciente-actions .btn-clear {
     background: #f5f5f7;
@@ -664,6 +695,16 @@ nav ul li a:hover {
         padding: 10px;
     }
 
+    .table-actions {
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .btn-action {
+        width: 100%;
+        justify-content: center;
+    }
+
     .paciente-info {
         grid-template-columns: 1fr;
     }
@@ -672,7 +713,8 @@ nav ul li a:hover {
         flex-direction: column;
     }
 
-    .paciente-actions button,
+    .paciente-actions .btn-edit,
+    .paciente-actions .btn-delete,
     .paciente-actions .btn-clear {
         width: 100%;
         justify-content: center;
