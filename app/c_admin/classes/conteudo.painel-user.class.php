@@ -40,6 +40,8 @@ HTML;
 
     private function renderBody()
     {
+        $nome = htmlspecialchars($_SESSION['data_user']['nm_usuario'] ?? '');
+
         $resultado = null;
         if ($_POST && isset($_POST['acao'])) {
             switch ($_POST['acao']) {
@@ -53,7 +55,11 @@ HTML;
                     if (isset($_POST['id']) && is_numeric($_POST['id'])) {
                         $resultado = $this->usuario->atualizar($_POST['id'], $_POST);
                     } else {
-                        $resultado = ['sucesso' => false, 'erros' => ['ID inválido.'], 'dados' => $_POST];
+                        $resultado = [
+                            'sucesso' => false,
+                            'erros' => ['ID do usuário inválido.'],
+                            'dados' => $_POST
+                        ];
                     }
                     break;
                 case 'cadastrar_perfil':
@@ -63,7 +69,11 @@ HTML;
                     if (isset($_POST['id']) && is_numeric($_POST['id'])) {
                         $resultado = $this->usuario->atualizarPerfil($_POST['id'], $_POST);
                     } else {
-                        $resultado = ['sucesso' => false, 'erros' => ['ID de perfil inválido.'], 'dados' => $_POST];
+                        $resultado = [
+                            'sucesso' => false,
+                            'erros' => ['ID de perfil inválido.'],
+                            'dados' => $_POST
+                        ];
                     }
                     break;
                 case 'excluir_perfil':
@@ -72,11 +82,21 @@ HTML;
             }
         }
 
+        // Detectar aba ativa com base na URL
         $tabAtiva = 'usuarios';
         $subTabAtiva = 'documentos';
+        $id = $_GET['id'] ?? 0;
+        $id_perfil = $_GET['id_perfil'] ?? 0;
+
         if (isset($_GET['tab']) && $_GET['tab'] === 'perfis') {
             $tabAtiva = 'perfis';
             $subTabAtiva = $_GET['sub'] ?? 'listagem';
+        } elseif ($id) {
+            $tabAtiva = 'usuarios';
+            $subTabAtiva = 'edicao';
+        } elseif ($id_perfil) {
+            $tabAtiva = 'perfis';
+            $subTabAtiva = 'edicao';
         }
 
         $usuariosClass = $tabAtiva === 'usuarios' ? 'tab-btn active' : 'tab-btn';
@@ -87,9 +107,16 @@ HTML;
 
         $usuariosCadastroStyle = ($tabAtiva === 'usuarios' && $subTabAtiva === 'cadastro') ? 'display:block;' : 'display:none;';
         $usuariosListagemStyle = ($tabAtiva === 'usuarios' && $subTabAtiva === 'documentos') ? 'display:block;' : 'display:none;';
+        $usuariosEdicaoStyle = ($tabAtiva === 'usuarios' && $subTabAtiva === 'edicao') ? 'display:block;' : 'display:none;';
         $perfisListagemStyle = ($tabAtiva === 'perfis' && $subTabAtiva === 'listagem') ? 'display:block;' : 'display:none;';
         $perfisCadastroStyle = ($tabAtiva === 'perfis' && $subTabAtiva === 'cadastro') ? 'display:block;' : 'display:none;';
         $perfisEdicaoStyle = ($tabAtiva === 'perfis' && $subTabAtiva === 'edicao') ? 'display:block;' : 'display:none;';
+
+        // Script de inicialização das abas
+        $initScript = '';
+        if ($subTabAtiva === 'edicao') {
+            $initScript = "<script>document.addEventListener('DOMContentLoaded', function() { showSubTab('{$tabAtiva}', 'edicao', null); });</script>";
+        }
 
         return <<<HTML
         <body>
@@ -129,6 +156,9 @@ HTML;
                     <div id="usuarios-documentos" class="tab-content" style="{$usuariosListagemStyle}">
                         {$this->getListagemUsuarios($resultado)}
                     </div>
+                    <div id="usuarios-edicao" class="tab-content" style="{$usuariosEdicaoStyle}">
+                        {$this->getFormularioEdicao($resultado)}
+                    </div>
                     <div id="perfis-listagem" class="tab-content" style="{$perfisListagemStyle}">
                         {$this->getListagemPerfis($resultado)}
                     </div>
@@ -157,6 +187,7 @@ HTML;
                     </div>
                 </div>
             </div>
+            {$initScript}
         </body>
 HTML;
     }
@@ -171,7 +202,18 @@ HTML;
             $dadosForm = $_POST;
         }
 
-        $mensagens = $this->renderMensagens($resultado, 'cadastrar');
+        $mensagens = '';
+        if ($resultado && (!isset($_POST['acao']) || ($_POST['acao'] ?? '') === 'cadastrar')) {
+            if (isset($resultado['sucesso']) && $resultado['sucesso']) {
+                $mensagens = '<div class="form-message success">' . $resultado['mensagem'] . '</div>';
+            } elseif (isset($resultado['erros'])) {
+                $mensagens = '<div class="form-message error">';
+                foreach ($resultado['erros'] as $erro) {
+                    $mensagens .= '<p>' . htmlspecialchars($erro) . '</p>';
+                }
+                $mensagens .= '</div>';
+            }
+        }
 
         $perfis = $this->usuario->listarPerfis();
         $opcoesPerfis = '<option value="">Selecionar</option>';
@@ -216,7 +258,19 @@ HTML;
 
     private function getListagemUsuarios($resultado = null)
     {
-        $mensagens = $this->renderMensagens($resultado, 'desativar');
+        $mensagens = '';
+        if ($resultado && isset($_POST['acao']) && $_POST['acao'] == 'desativar') {
+            if (isset($resultado['sucesso']) && $resultado['sucesso']) {
+                $mensagens = '<div class="form-message success">' . $resultado['mensagem'] . '</div>';
+            } elseif (isset($resultado['erros'])) {
+                $mensagens = '<div class="form-message error">';
+                foreach ($resultado['erros'] as $erro) {
+                    $mensagens .= '<p>' . htmlspecialchars($erro) . '</p>';
+                }
+                $mensagens .= '</div>';
+            }
+        }
+
         $usuarios = $this->usuario->listar();
         $total = count($usuarios);
         $rows = '';
@@ -229,7 +283,7 @@ HTML;
                 <td>' . htmlspecialchars($u['perfil_nome'] ?? '—') . '</td>
                 <td>
                     <div class="table-actions">
-                        <a href="#" class="btn-action btn-edit" onclick="alert(\'Edição em desenvolvimento.\'); return false;">
+                        <a href="?tab=usuarios&sub=edicao&id=' . $u['id'] . '" class="btn-action btn-edit">
                             <i class="fas fa-edit"></i> Editar
                         </a>
                         <button type="button" class="btn-action btn-delete" onclick="confirmarDesativacao(' . $u['id'] . ')">
@@ -239,6 +293,7 @@ HTML;
                 </td>
             </tr>';
         }
+
         $tabela = $rows ? '<table class="pacientes-table">
             <thead><tr><th>ID</th><th>CPF</th><th>Login</th><th>Nome</th><th>Perfil</th><th>Ações</th></tr></thead>
             <tbody>' . $rows . '</tbody>
@@ -250,10 +305,95 @@ HTML;
         </div>';
     }
 
+    private function getFormularioEdicao($resultado = null)
+    {
+        $id = $_GET['id'] ?? 0;
+        if (!$id) {
+            return '<div class="form-message error">ID do usuário não informado.</div>';
+        }
+
+        $usuario = $this->usuario->buscarPorId($id);
+        if (!$usuario) {
+            return '<div class="form-message error">Usuário não encontrado.</div>';
+        }
+
+        $dadosForm = $usuario;
+        if ($resultado && isset($resultado['dados'])) {
+            $dadosForm = $resultado['dados'];
+        }
+
+        $mensagens = '';
+        if ($resultado && (!isset($_POST['acao']) || $_POST['acao'] == 'atualizar')) {
+            if (isset($resultado['sucesso']) && $resultado['sucesso']) {
+                $mensagens = '<div class="form-message success">' . $resultado['mensagem'] . '</div>';
+            } elseif (isset($resultado['erros'])) {
+                $mensagens = '<div class="form-message error">';
+                foreach ($resultado['erros'] as $erro) {
+                    $mensagens .= '<p>' . htmlspecialchars($erro) . '</p>';
+                }
+                $mensagens .= '</div>';
+            }
+        }
+
+        $perfis = $this->usuario->listarPerfis();
+        $opcoesPerfis = '<option value="">Selecionar</option>';
+        foreach ($perfis as $perfil) {
+            $selected = ($dadosForm['perfil_id'] == $perfil['id']) ? 'selected' : '';
+            $nomeExibicao = ucfirst(str_replace('_', ' ', $perfil['nome']));
+            $opcoesPerfis .= '<option value="' . $perfil['id'] . '" ' . $selected . '>' . htmlspecialchars($nomeExibicao) . '</option>';
+        }
+
+        return '
+        <div class="form-container">' . $mensagens . '
+            <form method="POST">
+                <input type="hidden" name="acao" value="atualizar">
+                <input type="hidden" name="id" value="' . $id . '">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>CPF*</label>
+                        <input required name="cpf" maxlength="11" value="' . htmlspecialchars($dadosForm['cpf'] ?? '') . '">
+                    </div>
+                    <div class="form-group">
+                        <label>Login*</label>
+                        <input required name="login" maxlength="60" value="' . htmlspecialchars($dadosForm['login'] ?? '') . '">
+                    </div>
+                    <div class="form-group">
+                        <label>Nome*</label>
+                        <input required name="nm_usuario" maxlength="45" value="' . htmlspecialchars($dadosForm['nm_usuario'] ?? '') . '">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Nova Senha (opcional)</label>
+                        <input type="password" name="senha" maxlength="30" placeholder="Deixe em branco para manter a mesma">
+                    </div>
+                    <div class="form-group">
+                        <label>Tipo de Usuário*</label>
+                        <select required name="perfil_id">' . $opcoesPerfis . '</select>
+                    </div>
+                </div>
+                <button type="submit" class="btn-add">Atualizar Usuário</button>
+                <a href="?tab=usuarios&sub=documentos" style="margin-left:10px;">Voltar</a>
+            </form>
+        </div>';
+    }
+
     // =========== PERFIS ===========
     private function getListagemPerfis($resultado = null)
     {
-        $mensagens = $this->renderMensagens($resultado, 'excluir_perfil');
+        $mensagens = '';
+        if ($resultado && isset($_POST['acao']) && $_POST['acao'] == 'excluir_perfil') {
+            if (isset($resultado['sucesso']) && $resultado['sucesso']) {
+                $mensagens = '<div class="form-message success">' . $resultado['mensagem'] . '</div>';
+            } elseif (isset($resultado['erros'])) {
+                $mensagens = '<div class="form-message error">';
+                foreach ($resultado['erros'] as $erro) {
+                    $mensagens .= '<p>' . htmlspecialchars($erro) . '</p>';
+                }
+                $mensagens .= '</div>';
+            }
+        }
+
         $perfis = $this->usuario->listarPerfis();
         $total = count($perfis);
         $rows = '';
@@ -266,10 +406,10 @@ HTML;
                 <td>' . $espec . '</td>
                 <td>
                     <div class="table-actions">
-                        <a href="#" class="btn-action btn-edit" onclick="showSubTab(\'perfis\', \'edicao\', this); return false;">
+                        <a href="?tab=perfis&sub=edicao&id_perfil=' . $p['id'] . '" class="btn-action btn-edit">
                             <i class="fas fa-edit"></i> Editar
                         </a>
-                        <form method="POST" style="display:inline;" onsubmit="return confirm(\'Excluir perfil?\');">
+                        <form method="POST" style="display:inline;" onsubmit="return confirm(\'Excluir perfil? Usuários vinculados perderão acesso.\');">
                             <input type="hidden" name="acao" value="excluir_perfil">
                             <input type="hidden" name="id" value="' . $p['id'] . '">
                             <button type="submit" class="btn-action btn-delete">
@@ -280,6 +420,7 @@ HTML;
                 </td>
             </tr>';
         }
+
         $tabela = $rows ? '<table class="pacientes-table">
             <thead><tr><th>ID</th><th>Nome</th><th>Descrição</th><th>Esp.</th><th>Ações</th></tr></thead>
             <tbody>' . $rows . '</tbody>
@@ -300,12 +441,24 @@ HTML;
             $dadosForm = $_POST;
         }
 
-        $mensagens = $this->renderMensagens($resultado, 'cadastrar_perfil');
-        $permissoes = $this->usuario->listarPermissoes();
+        $mensagens = '';
+        if ($resultado && (!isset($_POST['acao']) || ($_POST['acao'] ?? '') === 'cadastrar_perfil')) {
+            if (isset($resultado['sucesso']) && $resultado['sucesso']) {
+                $mensagens = '<div class="form-message success">' . $resultado['mensagem'] . '</div>';
+            } elseif (isset($resultado['erros'])) {
+                $mensagens = '<div class="form-message error">';
+                foreach ($resultado['erros'] as $erro) {
+                    $mensagens .= '<p>' . htmlspecialchars($erro) . '</p>';
+                }
+                $mensagens .= '</div>';
+            }
+        }
+
+        $permissoes = $this->usuario->listarTodasPermissoes();
         $checkboxes = '';
         foreach ($permissoes as $p) {
             $checked = (isset($dadosForm['permissoes']) && in_array($p['id'], $dadosForm['permissoes'])) ? 'checked' : '';
-            $checkboxes .= '<label><input type="checkbox" name="permissoes[]" value="' . $p['id'] . '" ' . $checked . '> ' . htmlspecialchars($p['chave']) . ' — ' . htmlspecialchars($p['descricao']) . '</label><br>';
+            $checkboxes .= '<label style="display:block;margin:6px 0;"><input type="checkbox" name="permissoes[]" value="' . $p['id'] . '" ' . $checked . '> ' . htmlspecialchars($p['chave']) . ' — ' . htmlspecialchars($p['descricao']) . '</label>';
         }
 
         return '
@@ -340,7 +493,7 @@ HTML;
     private function getFormularioEdicaoPerfil($resultado = null)
     {
         $id = $_GET['id_perfil'] ?? 0;
-        if (!$id) return '<div class="form-message error">ID não informado.</div>';
+        if (!$id) return '<div class="form-message error">ID do perfil não informado.</div>';
         $perfil = $this->usuario->buscarPerfilPorId($id);
         if (!$perfil) return '<div class="form-message error">Perfil não encontrado.</div>';
 
@@ -349,13 +502,25 @@ HTML;
             $dadosForm = $resultado['dados'];
         }
 
-        $mensagens = $this->renderMensagens($resultado, 'atualizar_perfil');
-        $permissoes = $this->usuario->listarPermissoes();
+        $mensagens = '';
+        if ($resultado && (!isset($_POST['acao']) || $_POST['acao'] == 'atualizar_perfil')) {
+            if (isset($resultado['sucesso']) && $resultado['sucesso']) {
+                $mensagens = '<div class="form-message success">' . $resultado['mensagem'] . '</div>';
+            } elseif (isset($resultado['erros'])) {
+                $mensagens = '<div class="form-message error">';
+                foreach ($resultado['erros'] as $erro) {
+                    $mensagens .= '<p>' . htmlspecialchars($erro) . '</p>';
+                }
+                $mensagens .= '</div>';
+            }
+        }
+
+        $permissoes = $this->usuario->listarTodasPermissoes();
         $permissoesAtuais = $this->usuario->getPermissoesDoPerfil($id);
         $checkboxes = '';
         foreach ($permissoes as $p) {
             $checked = in_array($p['id'], $permissoesAtuais) ? 'checked' : '';
-            $checkboxes .= '<label><input type="checkbox" name="permissoes[]" value="' . $p['id'] . '" ' . $checked . '> ' . htmlspecialchars($p['chave']) . ' — ' . htmlspecialchars($p['descricao']) . '</label><br>';
+            $checkboxes .= '<label style="display:block;margin:6px 0;"><input type="checkbox" name="permissoes[]" value="' . $p['id'] . '" ' . $checked . '> ' . htmlspecialchars($p['chave']) . ' — ' . htmlspecialchars($p['descricao']) . '</label>';
         }
 
         return '
@@ -386,22 +551,6 @@ HTML;
                 <button type="submit" class="btn-add">Atualizar Perfil</button>
             </form>
         </div>';
-    }
-
-    private function renderMensagens($resultado, $acaoEsperada)
-    {
-        if (!$resultado) return '';
-        if (!isset($_POST['acao']) || ($_POST['acao'] ?? '') !== $acaoEsperada) return '';
-
-        if ($resultado['sucesso']) {
-            return '<div class="form-message success">' . $resultado['mensagem'] . '</div>';
-        } else {
-            $msgs = '<div class="form-message error">';
-            foreach ($resultado['erros'] as $erro) {
-                $msgs .= '<p>' . htmlspecialchars($erro) . '</p>';
-            }
-            return $msgs . '</div>';
-        }
     }
 }
 ?>
