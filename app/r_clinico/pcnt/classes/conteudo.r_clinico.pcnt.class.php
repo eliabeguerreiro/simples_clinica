@@ -405,9 +405,6 @@ HTML;
                             <a href="?id=' . $paciente['id'] . '&sub=documentos" class="btn-action btn-view">
                                 <i class="fas fa-eye"></i> Detalhes
                             </a>
-                            <button type="button" class="btn-action btn-evolucao" onclick="abrirEvolucao(' . $paciente['id'] . ')">
-                                <i class="fas fa-file-medical"></i> Evolução
-                            </button>
                         </div>
                     </td>
                         </tr>';
