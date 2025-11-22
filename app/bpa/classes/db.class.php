@@ -11,7 +11,7 @@
 conexão pra usar no laragon:
 
 
- $host = '127.0.0.1';          // MySQL local
+        $host = '127.0.0.1';          // MySQL local
         $port = 3306;                 // Porta padrão
         $user = 'teste_user';         // Usuário dedicado
         $pass = 'Teste@Senha2025!';   // Senha

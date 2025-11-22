@@ -65,6 +65,7 @@ $atendimentos = Painel::getAtendimentos($filtros, $pagina, $por_pagina);
         </div>
         <nav>
             <ul>
+                <li><a href="../">Inicio</a></li>
                 <li><a href="./">Novos atendimentos</a></li>
                 <li><a href="atendimentos.php">Atendimentos</a></li>
                 <li><a href="pacientes.php">Pacientes</a></li>

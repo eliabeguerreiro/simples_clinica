@@ -81,6 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
     <nav>
         <ul>
+            <li><a href="../">Inicio</a></li>
             <li><a href="./">Novos atendimentos</a></li>
             <li><a href="atendimentos.php">Atendimentos</a></li>
             <li><a href="pacientes.php">Pacientes</a></li>
