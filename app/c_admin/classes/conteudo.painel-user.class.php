@@ -82,7 +82,6 @@ HTML;
             }
         }
 
-        // Detectar aba ativa com base na URL
         $tabAtiva = 'usuarios';
         $subTabAtiva = 'documentos';
         $id = $_GET['id'] ?? 0;
@@ -112,7 +111,6 @@ HTML;
         $perfisCadastroStyle = ($tabAtiva === 'perfis' && $subTabAtiva === 'cadastro') ? 'display:block;' : 'display:none;';
         $perfisEdicaoStyle = ($tabAtiva === 'perfis' && $subTabAtiva === 'edicao') ? 'display:block;' : 'display:none;';
 
-        // Script de inicialização das abas
         $initScript = '';
         if ($subTabAtiva === 'edicao') {
             $initScript = "<script>document.addEventListener('DOMContentLoaded', function() { showSubTab('{$tabAtiva}', 'edicao', null); });</script>";
@@ -396,8 +394,7 @@ HTML;
             }
         }
 
-        // Agora carrega todos os campos (especialidade, descricao)
-        $perfis = $this->usuario->listarPerfisDetalhado();
+        $perfis = $this->usuario->listarPerfis();
         $total = count($perfis);
         $rows = '';
         foreach ($perfis as $p) {
@@ -457,18 +454,8 @@ HTML;
             }
         }
 
-        // Inclui permissões de c_admin
         $permissoes = $this->usuario->listarTodasPermissoes();
-        $checkboxes = '';
-        foreach ($permissoes as $p) {
-            $checked = (isset($dadosForm['permissoes']) && in_array($p['id'], $dadosForm['permissoes'])) ? 'checked' : '';
-            // Destaque para permissões do c_admin
-            $icone = '';
-            if (strpos($p['chave'], 'cadmin.') === 0) {
-                $icone = '<i class="fas fa-lock" style="color:#6c63ff; margin-right:4px;"></i>';
-            }
-            $checkboxes .= '<label style="display:block;margin:6px 0;">' . $icone . '<input type="checkbox" name="permissoes[]" value="' . $p['id'] . '" ' . $checked . '> ' . htmlspecialchars($p['chave']) . ' — ' . htmlspecialchars($p['descricao']) . '</label>';
-        }
+        $checkboxes = $this->gerarHtmlPermissoes($permissoes, $dadosForm['permissoes'] ?? []);
 
         return '
         <div class="form-container">' . $mensagens . '
@@ -490,7 +477,7 @@ HTML;
                 </div>
                 <div class="form-group">
                     <label>Permissões</label>
-                    <div style="max-height:300px; overflow-y:auto; padding:10px; border:1px solid #eee; border-radius:8px;">
+                    <div class="accordion-container">
                         ' . $checkboxes . '
                     </div>
                 </div>
@@ -526,15 +513,7 @@ HTML;
 
         $permissoes = $this->usuario->listarTodasPermissoes();
         $permissoesAtuais = $this->usuario->getPermissoesDoPerfil($id);
-        $checkboxes = '';
-        foreach ($permissoes as $p) {
-            $checked = in_array($p['id'], $permissoesAtuais) ? 'checked' : '';
-            $icone = '';
-            if (strpos($p['chave'], 'cadmin.') === 0) {
-                $icone = '<i class="fas fa-lock" style="color:#6c63ff; margin-right:4px;"></i>';
-            }
-            $checkboxes .= '<label style="display:block;margin:6px 0;">' . $icone . '<input type="checkbox" name="permissoes[]" value="' . $p['id'] . '" ' . $checked . '> ' . htmlspecialchars($p['chave']) . ' — ' . htmlspecialchars($p['descricao']) . '</label>';
-        }
+        $checkboxes = $this->gerarHtmlPermissoes($permissoes, $permissoesAtuais);
 
         return '
         <div class="form-container">' . $mensagens . '
@@ -557,16 +536,63 @@ HTML;
                 </div>
                 <div class="form-group">
                     <label>Permissões</label>
-                    <div style="max-height:300px; overflow-y:auto; padding:10px; border:1px solid #eee; border-radius:8px;">
+                    <div class="accordion-container">
                         ' . $checkboxes . '
                     </div>
                 </div>
                 <button type="submit" class="btn-add">Atualizar Perfil</button>
-                <a href="index.php" class="btn-back">
+                <a href="?tab=perfis&sub=listagem" class="btn-back">
                     <i class="fas fa-arrow-left"></i> Voltar à Listagem
                 </a>
             </form>
         </div>';
+    }
+
+    private function gerarHtmlPermissoes($todasPermissoes, $idsSelecionados)
+    {
+        $grupos = [
+            'cadmin' => ['nome' => 'Painel Administrativo', 'icon' => 'fa-cogs'],
+            'atendimento' => ['nome' => 'Atendimentos', 'icon' => 'fa-stethoscope'],
+            'formularios' => ['nome' => 'Evoluções', 'icon' => 'fa-file-medical'],
+        ];
+
+        $html = '';
+        foreach ($grupos as $prefixo => $info) {
+            $permissoesDoGrupo = array_filter($todasPermissoes, function($p) use ($prefixo) {
+                return strpos($p['chave'], $prefixo . '.') === 0;
+            });
+
+            if (empty($permissoesDoGrupo)) continue;
+
+            $idsDoGrupo = array_column($permissoesDoGrupo, 'id');
+            $checkedMaster = count(array_intersect($idsDoGrupo, $idsSelecionados)) === count($idsDoGrupo);
+
+            $html .= '<div class="accordion-item">
+                <div class="accordion-header">
+                    <i class="fas ' . $info['icon'] . '"></i>
+                    <strong>' . htmlspecialchars($info['nome']) . '</strong>
+                    <label class="switch">
+                        <input type="checkbox" 
+                               class="master-toggle" 
+                               data-prefix="' . $prefixo . '"
+                               ' . ($checkedMaster ? 'checked' : '') . '>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="accordion-content" ' . ($checkedMaster ? '' : 'style="display:none;"') . '>';
+
+            foreach ($permissoesDoGrupo as $p) {
+                $checked = in_array($p['id'], $idsSelecionados) ? 'checked' : '';
+                $html .= '<label class="permission-item">
+                    <input type="checkbox" name="permissoes[]" value="' . $p['id'] . '" ' . $checked . '>
+                    ' . htmlspecialchars($p['chave']) . ' — ' . htmlspecialchars($p['descricao']) . '
+                </label>';
+            }
+
+            $html .= '</div></div>';
+        }
+
+        return $html;
     }
 }
 ?>

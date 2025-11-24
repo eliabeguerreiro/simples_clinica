@@ -1,3 +1,4 @@
+// Redireciona para abas principais
 function switchMainTab(tabId, clickedButton) {
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     clickedButton.classList.add('active');
@@ -13,28 +14,13 @@ function switchMainTab(tabId, clickedButton) {
     }
 }
 
+// Mostra sub-abas
 function showSubTab(mainId, subId, clickedButton) {
     document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
     document.querySelectorAll(`#sub-${mainId} .tab-btn`).forEach(btn => btn.classList.remove('active'));
     if (clickedButton) clickedButton.classList.add('active');
-    const contentId = `${mainId}-${subId}`;
-    const content = document.getElementById(contentId);
+    const content = document.getElementById(`${mainId}-${subId}`);
     if (content) content.style.display = 'block';
-}
-
-// Para preencher formulário de edição sem AJAX
-function preencherFormEdicaoUsuario(id) {
-    // Opcional: carregar via JS ou manter como está (com GET)
-    // Aqui mantemos o modelo com abas e dados já carregados
-}
-
-function preencherFormEdicaoPerfil(id) {
-    const url = new URL(window.location);
-    url.searchParams.set('tab', 'perfis');
-    url.searchParams.set('sub', 'edicao');
-    url.searchParams.set('id_perfil', id);
-    window.history.pushState({}, '', url);
-    showSubTab('perfis', 'edicao', null);
 }
 
 // Desativação de usuário
@@ -64,9 +50,64 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     }
+
+    // Acordeão + Toggle mestre (com visibilidade condicional)
+    document.querySelectorAll('.master-toggle').forEach(master => {
+        const prefix = master.dataset.prefix;
+        const content = master.closest('.accordion-item').querySelector('.accordion-content');
+
+        // Inicializa visibilidade com base no estado do toggle
+        if (master.checked) {
+            content.style.display = 'block';
+        } else {
+            content.style.display = 'none';
+        }
+
+        master.addEventListener('change', function() {
+            if (this.checked) {
+                content.style.display = 'block';
+                // Marca todas
+                document.querySelectorAll(`input[name="permissoes[]"][value^="${prefix}."]`).forEach(cb => {
+                    cb.checked = true;
+                });
+            } else {
+                content.style.display = 'none';
+                // Desmarca todas
+                document.querySelectorAll(`input[name="permissoes[]"][value^="${prefix}."]`).forEach(cb => {
+                    cb.checked = false;
+                });
+            }
+        });
+    });
+
+    // Sincroniza toggle mestre com checkboxes individuais
+    document.querySelectorAll('input[name="permissoes[]"]').forEach(cb => {
+        cb.addEventListener('change', function() {
+            const prefix = this.value.split('.')[0];
+            const master = document.querySelector(`.master-toggle[data-prefix="${prefix}"]`);
+            const content = master?.closest('.accordion-item')?.querySelector('.accordion-content');
+            if (!master || !content) return;
+
+            const checkboxesDoModulo = Array.from(document.querySelectorAll(`input[name="permissoes[]"][value^="${prefix}."]`));
+            const todasMarcadas = checkboxesDoModulo.every(c => c.checked);
+            const nenhumaMarcada = checkboxesDoModulo.every(c => !c.checked);
+
+            master.checked = todasMarcadas;
+
+            if (todasMarcadas) {
+                content.style.display = 'block';
+            } else if (nenhumaMarcada) {
+                content.style.display = 'none';
+            } else {
+                // Parcialmente marcado → mantém visível e ativa o mestre
+                master.checked = true;
+                content.style.display = 'block';
+            }
+        });
+    });
 });
 
-// Fechar modal
+// Fecha modal
 document.addEventListener('click', e => {
     const modal = document.getElementById('modal-exclusao');
     if (modal && e.target === modal) fecharModal();
