@@ -23,7 +23,7 @@ class GestUser
             FROM usuarios u
             LEFT JOIN perfis p ON u.perfil_id = p.id
             WHERE u.ativo = 1
-            ORDER BY u.nm_usuario
+            ORDER BY u.id DESC
         ";
         $stmt = $this->db->prepare($sql);
         $stmt->execute();
@@ -228,6 +228,14 @@ class GestUser
     }
 
     // =========== PERMISSÕES ===========
+
+    public function listarPerfisDetalhado()
+{
+    $stmt = $this->db->prepare("SELECT id, nome, especialidade, descricao FROM perfis ORDER BY nome");
+    $stmt->execute();
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
     public function listarTodasPermissoes()
     {
         $stmt = $this->db->prepare("SELECT id, chave, descricao FROM permissoes ORDER BY chave");
@@ -254,6 +262,41 @@ class GestUser
         }
         return true;
     }
+
+    /**
+ * Retorna as chaves das permissões do perfil (ex: ['cadmin.acessar', 'atendimento.visualizar'])
+ */
+    public function getPermissoesChavesDoPerfil($perfilId)
+    {
+        try {
+            $stmt = $this->db->prepare("
+                SELECT p.chave
+                FROM perfil_permissao pp
+                JOIN permissoes p ON pp.permissao_id = p.id
+                WHERE pp.perfil_id = ?
+            ");
+            $stmt->execute([$perfilId]);
+            return $stmt->fetchAll(PDO::FETCH_COLUMN);
+        } catch (Exception $e) {
+            error_log("Erro ao carregar permissões por chave: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Carrega as permissões do perfil na sessão (útil para inicialização)
+     * @param int $perfilId
+     * @return bool
+     */
+    public function carregarPermissoesDoPerfilNaSessao($perfilId)
+    {
+        $chaves = $this->getPermissoesChavesDoPerfil($perfilId);
+        if ($chaves === false) {
+            return false;
+        }
+        $_SESSION['data_user']['permissoes'] = $chaves;
+        return true;
+}
 
     // =========== AUXILIARES ===========
     private function existeCpf($cpf, $idExcluir = null)

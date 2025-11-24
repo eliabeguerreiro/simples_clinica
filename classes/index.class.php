@@ -3,11 +3,8 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 
-
 session_start();
 ob_start();
-
-
 
 class Index
 {
@@ -26,7 +23,6 @@ class Index
         return false;
     }
 
-    
     public static function login($data)
     {
         if (!isset($data['login']) || !isset($data['senha'])) {
@@ -34,9 +30,8 @@ class Index
             return false;
         }
 
-        // Limpeza dos valores coletados
         $login = trim(htmlspecialchars($data['login']));
-        $senha = $data['senha']; // Não precisa de htmlspecialchars para senha
+        $senha = $data['senha'];
 
         if (empty($login) || empty($senha)) {
             $_SESSION['msg'] = "<p id='aviso'>Preencha todos os campos</p>";
@@ -45,20 +40,35 @@ class Index
 
         try {
             $db = DB::connect();
-            
-            // Usando prepared statements para evitar SQL Injection
-            $stmt = $db->prepare("SELECT id, nm_usuario, login, senha FROM usuarios WHERE login = ? LIMIT 1");
+
+            // Consulta com JOIN para carregar dados do perfil
+            $stmt = $db->prepare("
+                SELECT 
+                    u.id, 
+                    u.nm_usuario, 
+                    u.login, 
+                    u.senha,
+                    u.perfil_id,
+                    p.nome AS perfil_nome,
+                    p.especialidade
+                FROM usuarios u
+                LEFT JOIN perfis p ON u.perfil_id = p.id
+                WHERE u.login = ? AND u.ativo = 1
+                LIMIT 1
+            ");
             $stmt->execute([$login]);
-            $usuario = $stmt->fetchObject();
-            
+            $usuario = $stmt->fetch(PDO::FETCH_OBJ);
+
             if ($usuario && password_verify($senha, $usuario->senha)) {
-                // Regenera o ID da sessão para segurança
                 session_regenerate_id(true);
-                
+
                 $_SESSION['data_user'] = [
                     'id' => $usuario->id,
                     'nm_usuario' => $usuario->nm_usuario,
-                    'login' => $usuario->login
+                    'login' => $usuario->login,
+                    'perfil_id' => $usuario->perfil_id,
+                    'perfil_nome' => $usuario->perfil_nome,
+                    'especialidade' => $usuario->especialidade
                 ];
                 $_SESSION['login_time'] = time();
                 return true;
@@ -74,11 +84,9 @@ class Index
 
     public static function logOut()
     {
-        // Limpa todas as variáveis de sessão
         if (session_status() === PHP_SESSION_ACTIVE) {
             $_SESSION = array();
 
-            // Se for necessário destruir o cookie de sessão
             if (ini_get("session.use_cookies")) {
                 $params = session_get_cookie_params();
                 setcookie(
@@ -92,14 +100,10 @@ class Index
                 );
             }
 
-            // Destrói a sessão
             session_destroy();
         }
 
-        // Redireciona para a página de login
         header("Location: ../");
         exit;
     }
-
 }
-?>

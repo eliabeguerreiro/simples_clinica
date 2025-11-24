@@ -396,7 +396,8 @@ HTML;
             }
         }
 
-        $perfis = $this->usuario->listarPerfis();
+        // Agora carrega todos os campos (especialidade, descricao)
+        $perfis = $this->usuario->listarPerfisDetalhado();
         $total = count($perfis);
         $rows = '';
         foreach ($perfis as $p) {
@@ -456,11 +457,17 @@ HTML;
             }
         }
 
+        // Inclui permissões de c_admin
         $permissoes = $this->usuario->listarTodasPermissoes();
         $checkboxes = '';
         foreach ($permissoes as $p) {
             $checked = (isset($dadosForm['permissoes']) && in_array($p['id'], $dadosForm['permissoes'])) ? 'checked' : '';
-            $checkboxes .= '<label style="display:block;margin:6px 0;"><input type="checkbox" name="permissoes[]" value="' . $p['id'] . '" ' . $checked . '> ' . htmlspecialchars($p['chave']) . ' — ' . htmlspecialchars($p['descricao']) . '</label>';
+            // Destaque para permissões do c_admin
+            $icone = '';
+            if (strpos($p['chave'], 'cadmin.') === 0) {
+                $icone = '<i class="fas fa-lock" style="color:#6c63ff; margin-right:4px;"></i>';
+            }
+            $checkboxes .= '<label style="display:block;margin:6px 0;">' . $icone . '<input type="checkbox" name="permissoes[]" value="' . $p['id'] . '" ' . $checked . '> ' . htmlspecialchars($p['chave']) . ' — ' . htmlspecialchars($p['descricao']) . '</label>';
         }
 
         return '
@@ -483,7 +490,7 @@ HTML;
                 </div>
                 <div class="form-group">
                     <label>Permissões</label>
-                    <div style="max-height:200px; overflow-y:auto; padding:10px; border:1px solid #eee; border-radius:8px;">
+                    <div style="max-height:300px; overflow-y:auto; padding:10px; border:1px solid #eee; border-radius:8px;">
                         ' . $checkboxes . '
                     </div>
                 </div>
@@ -522,7 +529,11 @@ HTML;
         $checkboxes = '';
         foreach ($permissoes as $p) {
             $checked = in_array($p['id'], $permissoesAtuais) ? 'checked' : '';
-            $checkboxes .= '<label style="display:block;margin:6px 0;"><input type="checkbox" name="permissoes[]" value="' . $p['id'] . '" ' . $checked . '> ' . htmlspecialchars($p['chave']) . ' — ' . htmlspecialchars($p['descricao']) . '</label>';
+            $icone = '';
+            if (strpos($p['chave'], 'cadmin.') === 0) {
+                $icone = '<i class="fas fa-lock" style="color:#6c63ff; margin-right:4px;"></i>';
+            }
+            $checkboxes .= '<label style="display:block;margin:6px 0;">' . $icone . '<input type="checkbox" name="permissoes[]" value="' . $p['id'] . '" ' . $checked . '> ' . htmlspecialchars($p['chave']) . ' — ' . htmlspecialchars($p['descricao']) . '</label>';
         }
 
         return '
@@ -546,7 +557,7 @@ HTML;
                 </div>
                 <div class="form-group">
                     <label>Permissões</label>
-                    <div style="max-height:200px; overflow-y:auto; padding:10px; border:1px solid #eee; border-radius:8px;">
+                    <div style="max-height:300px; overflow-y:auto; padding:10px; border:1px solid #eee; border-radius:8px;">
                         ' . $checkboxes . '
                     </div>
                 </div>
@@ -558,3 +569,4 @@ HTML;
         </div>';
     }
 }
+?>
