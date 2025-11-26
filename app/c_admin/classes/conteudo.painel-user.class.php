@@ -548,16 +548,88 @@ HTML;
         </div>';
     }
 
-    private function gerarHtmlPermissoes($todasPermissoes, $idsSelecionados)
-    {
-        $grupos = [
-            'cadmin' => ['nome' => 'Painel Administrativo', 'icon' => 'fa-cogs'],
-            'atendimento' => ['nome' => 'Atendimentos', 'icon' => 'fa-stethoscope'],
-            'formularios' => ['nome' => 'Evoluções', 'icon' => 'fa-file-medical'],
-        ];
+private function gerarHtmlPermissoes($todasPermissoes, $idsSelecionados)
+{
+    // Definir estrutura dos grupos e subgrupos
+    $grupos = [
+        'cadmin' => [
+            'nome' => 'Painel Administrativo',
+            'icon' => 'fa-cogs',
+            'subgrupos' => [
+                'usuarios' => [
+                    'nome' => 'Usuários',
+                    'permissoes' => [
+                        'visualizar' => 'Visualizar lista de usuários',
+                        'criar' => 'Criar novos usuários',
+                        'editar' => 'Editar usuários'
+                    ]
+                ],
+                'perfis' => [
+                    'nome' => 'Perfis',
+                    'permissoes' => [
+                        'visualizar' => 'Visualizar perfis',
+                        'criar' => 'Criar perfis',
+                        'editar' => 'Editar perfis'
+                    ]
+                ]
+            ]
+        ],
+        'atendimento' => [
+            'nome' => 'Atendimentos',
+            'icon' => 'fa-stethoscope',
+            'subgrupos' => [
+                'geral' => [
+                    'nome' => 'Geral',
+                    'permissoes' => [
+                        'visualizar' => 'Visualizar atendimentos',
+                        'criar' => 'Criar novos atendimentos'
+                    ]
+                ]
+            ]
+        ],
+        'formularios' => [
+            'nome' => 'Evoluções',
+            'icon' => 'fa-file-medical',
+            'subgrupos' => [
+                'geral' => [
+                    'nome' => 'Geral',
+                    'permissoes' => [
+                        'visualizar' => 'Visualizar todas as evoluções',
+                        'editar' => 'Editar qualquer evolução'
+                    ]
+                ],
+                'fisio' => [
+                    'nome' => 'Fisioterapia',
+                    'permissoes' => [
+                        'criar' => 'Criar evolução de fisioterapia',
+                        'visualizar' => 'Visualizar evoluções de fisioterapia',
+                        'editar' => 'Editar evoluções de fisioterapia'
+                    ]
+                ],
+                'fono' => [
+                    'nome' => 'Fonoaudiologia',
+                    'permissoes' => [
+                        'criar' => 'Criar evolução de fonoaudiologia',
+                        'visualizar' => 'Visualizar evoluções de fonoaudiologia',
+                        'editar' => 'Editar evoluções de fonoaudiologia'
+                    ]
+                ],
+                'teoc' => [
+                    'nome' => 'Terapia Ocupacional',
+                    'permissoes' => [
+                        'criar' => 'Criar evolução de terapia ocupacional',
+                        'visualizar' => 'Visualizar evoluções de terapia ocupacional',
+                        'editar' => 'Editar evoluções de terapia ocupacional'
+                    ]
+                ]
+            ]
+        ]
+    ];
 
-        $html = '';
-        foreach ($grupos as $prefixo => $info) {
+    $html = '';
+    foreach ($grupos as $prefixo => $info) {
+        if (!isset($info['subgrupos'])) {
+            // Grupo simples (não tem subgrupos)
             $permissoesDoGrupo = array_filter($todasPermissoes, function($p) use ($prefixo) {
                 return strpos($p['chave'], $prefixo . '.') === 0;
             });
@@ -590,9 +662,96 @@ HTML;
             }
 
             $html .= '</div></div>';
-        }
 
-        return $html;
+        } else {
+            // Grupo com subgrupos
+            $html .= '<div class="accordion-item">
+                <div class="accordion-header">
+                    <i class="fas ' . $info['icon'] . '"></i>
+                    <strong>' . htmlspecialchars($info['nome']) . '</strong>
+                    <label class="switch">
+                        <input type="checkbox" 
+                               class="master-toggle" 
+                               data-prefix="' . $prefixo . '"
+                               ' . ($this->todosSubgruposMarcados($prefixo, $info['subgrupos'], $idsSelecionados) ? 'checked' : '') . '>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="accordion-content" ' . ($this->todosSubgruposMarcados($prefixo, $info['subgrupos'], $idsSelecionados) ? '' : 'style="display:none;"') . '>';
+
+            foreach ($info['subgrupos'] as $subPrefixo => $subInfo) {
+                $subNome = match($subPrefixo) {
+                    'usuarios' => 'Usuários',
+                    'perfis' => 'Perfis',
+                    'geral' => 'Geral',
+                    'fisio' => 'Fisioterapia',
+                    'fono' => 'Fonoaudiologia',
+                    'teoc' => 'Terapia Ocupacional',
+                    default => ucfirst($subPrefixo)
+                };
+
+                $html .= '<div class="subgroup-container">
+                    <div class="subgroup-header">
+                        <i class="fas fa-folder-open" style="color:#574b90; margin-right:6px;"></i>
+                        <strong>' . htmlspecialchars($subNome) . '</strong>
+                        <label class="switch">
+                            <input type="checkbox" 
+                                   class="sub-master-toggle" 
+                                   data-prefix="' . $prefixo . '.' . $subPrefixo . '"
+                                   ' . ($this->todasPermissoesDoSubgrupoMarcadas($prefixo, $subPrefixo, $subInfo['permissoes'], $todasPermissoes, $idsSelecionados) ? 'checked' : '') . '>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="subgroup-content" ' . ($this->todasPermissoesDoSubgrupoMarcadas($prefixo, $subPrefixo, $subInfo['permissoes'], $todasPermissoes, $idsSelecionados) ? '' : 'style="display:none;"') . '>';
+
+                foreach ($subInfo['permissoes'] as $chavePermissao => $descricao) {
+                    $chaveCompleta = $prefixo . '.' . $subPrefixo . '.' . $chavePermissao;
+                    $permissao = array_filter($todasPermissoes, function($p) use ($chaveCompleta) {
+                        return $p['chave'] === $chaveCompleta;
+                    });
+                    $p = reset($permissao);
+                    if (!$p) continue;
+
+                    $checked = in_array($p['id'], $idsSelecionados) ? 'checked' : '';
+                    $html .= '<label class="permission-item">
+                        <input type="checkbox" name="permissoes[]" value="' . $p['id'] . '" ' . $checked . '>
+                        ' . htmlspecialchars($chaveCompleta) . ' — ' . htmlspecialchars($descricao) . '
+                    </label>';
+                }
+
+                $html .= '</div></div>';
+            }
+
+            $html .= '</div></div>';
+        }
+    }
+
+    return $html;
+}
+
+    private function todosSubgruposMarcados($prefixo, $subgrupos, $idsSelecionados)
+    {
+        foreach ($subgrupos as $subPrefixo => $subInfo) {
+            if (!$this->todasPermissoesDoSubgrupoMarcadas($prefixo, $subPrefixo, $subInfo['permissoes'], $this->usuario->listarTodasPermissoes(), $idsSelecionados)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private function todasPermissoesDoSubgrupoMarcadas($prefixo, $subPrefixo, $permissoes, $todasPermissoes, $idsSelecionados)
+    {
+        foreach ($permissoes as $chave => $descricao) {
+            $chaveCompleta = $prefixo . '.' . $subPrefixo . '.' . $chave;
+            $permissao = array_filter($todasPermissoes, function($p) use ($chaveCompleta) {
+                return $p['chave'] === $chaveCompleta;
+            });
+            $p = reset($permissao);
+            if (!$p || !in_array($p['id'], $idsSelecionados)) {
+                return false;
+            }
+        }
+        return true;
     }
 }
 ?>
