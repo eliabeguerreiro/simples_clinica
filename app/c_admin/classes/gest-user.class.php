@@ -147,7 +147,7 @@ class GestUser
     // =========== PERFIS ===========
     public function listarPerfis()
     {
-        $stmt = $this->db->prepare("SELECT id, nome, descricao FROM perfis ORDER BY nome");
+        $stmt = $this->db->prepare("SELECT id, nome, descricao FROM perfis ORDER BY id DESC");
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -239,7 +239,7 @@ class GestUser
 
     public function listarPerfisDetalhado()
 {
-    $stmt = $this->db->prepare("SELECT id, nome, descricao FROM perfis ORDER BY nome");
+    $stmt = $this->db->prepare("SELECT id, nome, descricao FROM perfis ORDER BY id DESC");
     $stmt->execute();
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
