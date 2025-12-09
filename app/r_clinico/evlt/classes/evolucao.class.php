@@ -16,11 +16,40 @@ class Evolucao
     /**
      * Lista todos os formulários cadastrados
      */
-    public function listarFormularios()
+/**
+ * Lista formulários com filtro de status
+ */
+    public function listarFormularios($ativos = true)
     {
-        $stmt = $this->db->prepare("SELECT id, nome, especialidade, descricao, ativo FROM formulario ORDER BY id DESC");
-        $stmt->execute();
+        $status = $ativos ? 1 : 0;
+        $stmt = $this->db->prepare("SELECT id, nome, especialidade, descricao, ativo FROM formulario WHERE ativo = ? ORDER BY nome ASC");
+        $stmt->execute([$status]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Alterna o status de um formulário (ativo/inativo)
+     */
+    public function alternarStatusFormulario($form_id)
+    {
+        try {
+            // Verifica se existe
+            $stmt = $this->db->prepare("SELECT ativo FROM formulario WHERE id = ?");
+            $stmt->execute([$form_id]);
+            $atual = $stmt->fetchColumn();
+            if ($atual === false) {
+                return ['sucesso' => false, 'erros' => ['Formulário não encontrado.']];
+            }
+
+            $novoStatus = $atual == 1 ? 0 : 1;
+            $stmt = $this->db->prepare("UPDATE formulario SET ativo = ? WHERE id = ?");
+            $stmt->execute([$novoStatus, $form_id]);
+
+            $msg = $novoStatus == 1 ? 'Formulário reativado com sucesso!' : 'Formulário desativado com sucesso!';
+            return ['sucesso' => true, 'mensagem' => $msg];
+        } catch (Exception $e) {
+            return ['sucesso' => false, 'erros' => ['Erro ao alterar status: ' . $e->getMessage()]];
+        }
     }
 
     /**

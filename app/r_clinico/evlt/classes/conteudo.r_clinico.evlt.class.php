@@ -231,7 +231,10 @@ HTML;
                         
                         <td>
                             <a href="construtor_forms.php?form_id=' . (int)$form['id'] . '" class="btn-view" title="Gerenciar Perguntas">
-                                <i class="fas fa-edit"></i> Gerenciar
+                                <i class="fas fa-list"></i> Perguntas
+                            </a>
+                            <a href="editar_forms.php?form_id=' . (int)$form['id'] . '" class="btn-view" title="Editar Dados do Formulário" style="margin-left:8px;">
+                                <i class="fas fa-edit"></i> Editar Dados
                             </a>
                             <a href="render_forms.php?form_id=' . (int)$form['id'] . '" class="btn-view" title="Visualizar Formulário" style="margin-left:8px;">
                                 <i class="fas fa-eye"></i> Visualizar
