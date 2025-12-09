@@ -147,14 +147,14 @@ class GestUser
     // =========== PERFIS ===========
     public function listarPerfis()
     {
-        $stmt = $this->db->prepare("SELECT id, nome, especialidade, descricao FROM perfis ORDER BY nome");
+        $stmt = $this->db->prepare("SELECT id, nome, descricao FROM perfis ORDER BY nome");
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public function buscarPerfilPorId($id)
     {
-        $stmt = $this->db->prepare("SELECT id, nome, especialidade, descricao FROM perfis WHERE id = ? LIMIT 1");
+        $stmt = $this->db->prepare("SELECT id, nome, descricao FROM perfis WHERE id = ? LIMIT 1");
         $stmt->execute([$id]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
@@ -162,7 +162,6 @@ class GestUser
     public function cadastrarPerfil($dados)
     {
         $nome = trim($dados['nome'] ?? '');
-        $especialidade = !empty($dados['especialidade']) ? trim($dados['especialidade']) : null;
         $descricao = trim($dados['descricao'] ?? '');
 
         if (empty($nome)) {
@@ -173,9 +172,9 @@ class GestUser
             return ['sucesso' => false, 'erros' => ['Já existe um perfil com este nome.'], 'dados' => $dados];
         }
 
-        $sql = "INSERT INTO perfis (nome, especialidade, descricao) VALUES (?, ?, ?)";
+        $sql = "INSERT INTO perfis (nome, descricao) VALUES (?, ?)";
         $stmt = $this->db->prepare($sql);
-        $resultado = $stmt->execute([$nome, $especialidade, $descricao]);
+        $resultado = $stmt->execute([$nome, $descricao]);
 
         if ($resultado) {
             return ['sucesso' => true, 'mensagem' => 'Perfil criado com sucesso!', 'id' => $this->db->lastInsertId()];
@@ -187,8 +186,8 @@ class GestUser
     public function atualizarPerfil($id, $dados)
     {
         $nome = trim($dados['nome'] ?? '');
-        $especialidade = !empty($dados['especialidade']) ? trim($dados['especialidade']) : null;
         $descricao = trim($dados['descricao'] ?? '');
+        $permissoesIds = is_array($dados['permissoes'] ?? null) ? array_map('intval', $dados['permissoes']) : [];
 
         if (empty($nome)) {
             return ['sucesso' => false, 'erros' => ['Nome do perfil é obrigatório.'], 'dados' => $dados];
@@ -198,14 +197,23 @@ class GestUser
             return ['sucesso' => false, 'erros' => ['Já existe outro perfil com este nome.'], 'dados' => $dados];
         }
 
-        $sql = "UPDATE perfis SET nome = ?, especialidade = ?, descricao = ? WHERE id = ?";
-        $stmt = $this->db->prepare($sql);
-        $resultado = $stmt->execute([$nome, $especialidade, $descricao, $id]);
+        try {
+            // Inicia transação
+            $this->db->beginTransaction();
 
-        if ($resultado) {
+            // Atualiza nome e descrição
+            $sql = "UPDATE perfis SET nome = ?, descricao = ? WHERE id = ?";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([$nome, $descricao, $id]);
+
+            // Atualiza permissões
+            $this->atualizarPermissoes($id, $permissoesIds);
+
+            $this->db->commit();
             return ['sucesso' => true, 'mensagem' => 'Perfil atualizado com sucesso!'];
-        } else {
-            return ['sucesso' => false, 'erros' => ['Erro ao atualizar o perfil.'], 'dados' => $dados];
+        } catch (Exception $e) {
+            $this->db->rollBack();
+            return ['sucesso' => false, 'erros' => ['Erro ao atualizar perfil.'], 'dados' => $dados];
         }
     }
 
@@ -231,7 +239,7 @@ class GestUser
 
     public function listarPerfisDetalhado()
 {
-    $stmt = $this->db->prepare("SELECT id, nome, especialidade, descricao FROM perfis ORDER BY nome");
+    $stmt = $this->db->prepare("SELECT id, nome, descricao FROM perfis ORDER BY nome");
     $stmt->execute();
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }

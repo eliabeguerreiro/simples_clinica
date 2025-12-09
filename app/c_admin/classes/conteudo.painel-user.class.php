@@ -398,12 +398,12 @@ HTML;
         $total = count($perfis);
         $rows = '';
         foreach ($perfis as $p) {
-            $espec = !empty($p['especialidade']) ? htmlspecialchars($p['especialidade']) : '—';
+
             $rows .= '<tr>
                 <td>' . htmlspecialchars($p['id']) . '</td>
                 <td>' . htmlspecialchars($p['nome']) . '</td>
                 <td>' . htmlspecialchars($p['descricao'] ?? '') . '</td>
-                <td>' . $espec . '</td>
+
                 <td>
                     <div class="table-actions">
                         <a href="?tab=perfis&sub=edicao&id_perfil=' . $p['id'] . '" class="btn-action btn-edit">
@@ -422,7 +422,7 @@ HTML;
         }
 
         $tabela = $rows ? '<table class="pacientes-table">
-            <thead><tr><th>ID</th><th>Nome</th><th>Descrição</th><th>Esp.</th><th>Ações</th></tr></thead>
+            <thead><tr><th>ID</th><th>Nome</th><th>Descrição</th><th>Ações</th></tr></thead>
             <tbody>' . $rows . '</tbody>
         </table>' : '<div class="no-data">Nenhum perfil cadastrado.</div>';
 
@@ -465,10 +465,6 @@ HTML;
                     <div class="form-group">
                         <label>Nome*</label>
                         <input required name="nome" maxlength="50" value="' . htmlspecialchars($dadosForm['nome'] ?? '') . '">
-                    </div>
-                    <div class="form-group">
-                        <label>Especialidade</label>
-                        <input name="especialidade" maxlength="30" value="' . htmlspecialchars($dadosForm['especialidade'] ?? '') . '">
                     </div>
                 </div>
                 <div class="form-group">
@@ -525,10 +521,6 @@ HTML;
                         <label>Nome*</label>
                         <input required name="nome" maxlength="50" value="' . htmlspecialchars($dadosForm['nome'] ?? '') . '">
                     </div>
-                    <div class="form-group">
-                        <label>Especialidade</label>
-                        <input name="especialidade" maxlength="30" value="' . htmlspecialchars($dadosForm['especialidade'] ?? '') . '">
-                    </div>
                 </div>
                 <div class="form-group">
                     <label>Descrição</label>
@@ -584,13 +576,16 @@ HTML;
         foreach ($grupos as $prefixo => $info) {
             if (empty($info['permissoes'])) continue;
 
-            $checkedMaster = true; // Inicializa como marcado
+            // Verifica se pelo menos uma permissão do grupo está marcada
+            $temPermissaoMarcada = false;
             foreach ($info['permissoes'] as $p) {
-                if (!in_array($p['id'], $idsSelecionados)) {
-                    $checkedMaster = false;
+                if (in_array($p['id'], $idsSelecionados)) {
+                    $temPermissaoMarcada = true;
                     break;
                 }
             }
+
+            $checkedMaster = $temPermissaoMarcada;
 
             $html .= '<div class="accordion-item">
                 <div class="accordion-header">
@@ -598,9 +593,9 @@ HTML;
                     <strong>' . htmlspecialchars($info['nome']) . '</strong>
                     <label class="switch">
                         <input type="checkbox" 
-                               class="master-toggle" 
-                               data-prefix="' . $prefixo . '"
-                               ' . ($checkedMaster ? 'checked' : '') . '>
+                            class="master-toggle" 
+                            data-prefix="' . $prefixo . '"
+                            ' . ($checkedMaster ? 'checked' : '') . '>
                         <span class="slider"></span>
                     </label>
                 </div>
@@ -620,4 +615,3 @@ HTML;
         return $html;
     }
 }
-?>

@@ -49,8 +49,7 @@ class Index
                     u.login, 
                     u.senha,
                     u.perfil_id,
-                    p.nome AS perfil_nome,
-                    p.especialidade
+                    p.nome AS perfil_nome
                 FROM usuarios u
                 LEFT JOIN perfis p ON u.perfil_id = p.id
                 WHERE u.login = ? AND u.ativo = 1
@@ -67,8 +66,7 @@ class Index
                     'nm_usuario' => $usuario->nm_usuario,
                     'login' => $usuario->login,
                     'perfil_id' => $usuario->perfil_id,
-                    'perfil_nome' => $usuario->perfil_nome,
-                    'especialidade' => $usuario->especialidade
+                    'perfil_nome' => $usuario->perfil_nome
                 ];
                 $_SESSION['login_time'] = time();
                 return true;
