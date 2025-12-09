@@ -30,6 +30,22 @@ class GestUser
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+
+    public function listarInativos()
+{
+    $sql = "
+        SELECT u.id, u.cpf, u.login, u.nm_usuario,
+               p.nome AS perfil_nome
+        FROM usuarios u
+        LEFT JOIN perfis p ON u.perfil_id = p.id
+        WHERE u.ativo = 0
+        ORDER BY u.nm_usuario
+    ";
+    $stmt = $this->db->prepare($sql);
+    $stmt->execute();
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
     public function buscarPorId($id)
     {
         $sql = "SELECT id, cpf, login, nm_usuario, perfil_id FROM usuarios WHERE id = ? AND ativo = 1 LIMIT 1";
@@ -141,6 +157,22 @@ class GestUser
             return ['sucesso' => true, 'mensagem' => 'Usuário desativado com sucesso!'];
         } else {
             return ['sucesso' => false, 'erros' => ['Erro ao desativar usuário.']];
+        }
+    }
+
+    public function reativar($id)
+    {
+        $stmt = $this->db->prepare("UPDATE usuarios SET ativo = 1 WHERE id = ?");
+        $resultado = $stmt->execute([$id]);
+        if ($resultado) {
+            // Redireciona para a lista de ativos com mensagem
+            return [
+                'sucesso' => true,
+                'mensagem' => 'Usuário reativado com sucesso!',
+                'redirect' => '?tab=usuarios&sub=documentos&msg=reativado'
+            ];
+        } else {
+            return ['sucesso' => false, 'erros' => ['Erro ao reativar usuário.']];
         }
     }
 

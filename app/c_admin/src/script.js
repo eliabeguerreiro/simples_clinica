@@ -33,7 +33,25 @@ function fecharModal() {
     document.getElementById('modal-exclusao').style.display = 'none';
     usuarioParaDesativar = null;
 }
+
+// Reativação de usuário
+function confirmarReativacao(id) {
+    if (confirm('Deseja reativar este usuário? Ele voltará a ter acesso ao sistema.')) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.style.display = 'none';
+        form.innerHTML = `
+            <input type="hidden" name="acao" value="reativar">
+            <input type="hidden" name="id" value="${id}">
+        `;
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+// Inicialização ao carregar a página
 document.addEventListener('DOMContentLoaded', function () {
+    // Botão de confirmação de desativação
     const confirmBtn = document.getElementById('confirmar-exclusao');
     if (confirmBtn) {
         confirmBtn.textContent = 'Desativar';
@@ -66,13 +84,13 @@ document.addEventListener('DOMContentLoaded', function () {
         master.addEventListener('change', function() {
             if (this.checked) {
                 content.style.display = 'block';
-                // Marca todas
+                // Marca todas as permissões do módulo
                 document.querySelectorAll(`input[name="permissoes[]"][value^="${prefix}."]`).forEach(cb => {
                     cb.checked = true;
                 });
             } else {
                 content.style.display = 'none';
-                // Desmarca todas
+                // Desmarca todas as permissões do módulo
                 document.querySelectorAll(`input[name="permissoes[]"][value^="${prefix}."]`).forEach(cb => {
                     cb.checked = false;
                 });
@@ -107,11 +125,13 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 
-// Fecha modal
+// Fecha modal ao clicar fora
 document.addEventListener('click', e => {
     const modal = document.getElementById('modal-exclusao');
     if (modal && e.target === modal) fecharModal();
 });
+
+// Fecha modal com tecla ESC
 document.addEventListener('keydown', e => {
     if (e.key === 'Escape') fecharModal();
 });

@@ -42,6 +42,14 @@ HTML;
     {
         $nome = htmlspecialchars($_SESSION['data_user']['nm_usuario'] ?? '');
 
+        // Mensagem de sucesso/erro via GET (para reativação)
+        if (isset($_GET['msg']) && $_GET['msg'] == 'reativado') {
+            $resultado = [
+                'sucesso' => true,
+                'mensagem' => 'Usuário reativado com sucesso!'
+            ];
+        }
+
         $resultado = null;
         if ($_POST && isset($_POST['acao'])) {
             switch ($_POST['acao']) {
@@ -50,6 +58,9 @@ HTML;
                     break;
                 case 'desativar':
                     $resultado = $this->usuario->desativar($_POST['id']);
+                    break;
+                case 'reativar':
+                    $resultado = $this->usuario->reativar($_POST['id']);
                     break;
                 case 'atualizar':
                     if (isset($_POST['id']) && is_numeric($_POST['id'])) {
@@ -96,6 +107,9 @@ HTML;
         } elseif ($id_perfil) {
             $tabAtiva = 'perfis';
             $subTabAtiva = 'edicao';
+        } elseif (isset($_GET['sub']) && $_GET['sub'] === 'inativos') {
+            $tabAtiva = 'usuarios';
+            $subTabAtiva = 'inativos';
         }
 
         $usuariosClass = $tabAtiva === 'usuarios' ? 'tab-btn active' : 'tab-btn';
@@ -106,6 +120,7 @@ HTML;
 
         $usuariosCadastroStyle = ($tabAtiva === 'usuarios' && $subTabAtiva === 'cadastro') ? 'display:block;' : 'display:none;';
         $usuariosListagemStyle = ($tabAtiva === 'usuarios' && $subTabAtiva === 'documentos') ? 'display:block;' : 'display:none;';
+        $usuariosInativosStyle = ($tabAtiva === 'usuarios' && $subTabAtiva === 'inativos') ? 'display:block;' : 'display:none;';
         $usuariosEdicaoStyle = ($tabAtiva === 'usuarios' && $subTabAtiva === 'edicao') ? 'display:block;' : 'display:none;';
         $perfisListagemStyle = ($tabAtiva === 'perfis' && $subTabAtiva === 'listagem') ? 'display:block;' : 'display:none;';
         $perfisCadastroStyle = ($tabAtiva === 'perfis' && $subTabAtiva === 'cadastro') ? 'display:block;' : 'display:none;';
@@ -139,7 +154,8 @@ HTML;
                 <div id="sub-tabs">
                     <div class="sub-tabs" id="sub-usuarios" style="{$usuariosSubStyle}">
                         <button class="tab-btn" onclick="showSubTab('usuarios', 'cadastro', this)">Cadastro</button>
-                        <button class="tab-btn active" onclick="showSubTab('usuarios', 'documentos', this)">Listagem</button>
+                        <button class="tab-btn" onclick="showSubTab('usuarios', 'documentos', this)">Ativos</button>
+                        <button class="tab-btn" onclick="showSubTab('usuarios', 'inativos', this)">Inativos</button>
                     </div>
                     <div class="sub-tabs" id="sub-perfis" style="{$perfisSubStyle}">
                         <button class="tab-btn" onclick="showSubTab('perfis', 'listagem', this)">Listagem</button>
@@ -153,6 +169,9 @@ HTML;
                     </div>
                     <div id="usuarios-documentos" class="tab-content" style="{$usuariosListagemStyle}">
                         {$this->getListagemUsuarios($resultado)}
+                    </div>
+                    <div id="usuarios-inativos" class="tab-content" style="{$usuariosInativosStyle}">
+                        {$this->getListagemUsuariosInativos($resultado)}
                     </div>
                     <div id="usuarios-edicao" class="tab-content" style="{$usuariosEdicaoStyle}">
                         {$this->getFormularioEdicao($resultado)}
@@ -298,7 +317,53 @@ HTML;
         </table>' : '<div class="no-data">Nenhum usuário ativo.</div>';
 
         return '<div class="listagem-container">' . $mensagens . '
-            <div class="table-header"><h3>Usuários (' . $total . ' ativo' . ($total != 1 ? 's' : '') . ')</h3></div>
+            <div class="table-header"><h3>Usuários Ativos (' . $total . ')</h3></div>
+            <div class="table-container">' . $tabela . '</div>
+        </div>';
+    }
+
+    private function getListagemUsuariosInativos($resultado = null)
+    {
+        $mensagens = '';
+        if ($resultado && isset($_POST['acao']) && $_POST['acao'] == 'reativar') {
+            if (isset($resultado['sucesso']) && $resultado['sucesso']) {
+                $mensagens = '<div class="form-message success">' . $resultado['mensagem'] . '</div>';
+            } elseif (isset($resultado['erros'])) {
+                $mensagens = '<div class="form-message error">';
+                foreach ($resultado['erros'] as $erro) {
+                    $mensagens .= '<p>' . htmlspecialchars($erro) . '</p>';
+                }
+                $mensagens .= '</div>';
+            }
+        }
+
+        $usuarios = $this->usuario->listarInativos();
+        $total = count($usuarios);
+        $rows = '';
+        foreach ($usuarios as $u) {
+            $rows .= '<tr>
+                <td>' . htmlspecialchars($u['id']) . '</td>
+                <td>' . htmlspecialchars($u['cpf']) . '</td>
+                <td>' . htmlspecialchars($u['login']) . '</td>
+                <td>' . htmlspecialchars($u['nm_usuario']) . '</td>
+                <td>' . htmlspecialchars($u['perfil_nome'] ?? '—') . '</td>
+                <td>
+                    <div class="table-actions">
+                        <button type="button" class="btn-action btn-add" onclick="confirmarReativacao(' . $u['id'] . ')">
+                            <i class="fas fa-redo"></i> Reativar
+                        </button>
+                    </div>
+                </td>
+            </tr>';
+        }
+
+        $tabela = $rows ? '<table class="pacientes-table">
+            <thead><tr><th>ID</th><th>CPF</th><th>Login</th><th>Nome</th><th>Perfil</th><th>Ações</th></tr></thead>
+            <tbody>' . $rows . '</tbody>
+        </table>' : '<div class="no-data">Nenhum usuário inativo.</div>';
+
+        return '<div class="listagem-container">' . $mensagens . '
+            <div class="table-header"><h3>Usuários Inativos (' . $total . ')</h3></div>
             <div class="table-container">' . $tabela . '</div>
         </div>';
     }
@@ -371,7 +436,7 @@ HTML;
                     </div>
                 </div>
                 <button type="submit" class="btn-add">Atualizar Usuário</button>
-                <a href="index.php" class="btn-back">
+                <a href="?tab=usuarios&sub=documentos" class="btn-back">
                     <i class="fas fa-arrow-left"></i> Voltar à Listagem
                 </a>
             </form>
@@ -398,12 +463,10 @@ HTML;
         $total = count($perfis);
         $rows = '';
         foreach ($perfis as $p) {
-
             $rows .= '<tr>
                 <td>' . htmlspecialchars($p['id']) . '</td>
                 <td>' . htmlspecialchars($p['nome']) . '</td>
                 <td>' . htmlspecialchars($p['descricao'] ?? '') . '</td>
-
                 <td>
                     <div class="table-actions">
                         <a href="?tab=perfis&sub=edicao&id_perfil=' . $p['id'] . '" class="btn-action btn-edit">

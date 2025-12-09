@@ -50,6 +50,25 @@ if (isset($_GET['sair'])) {
     Index::logOut();
 }
 
+// ================================
+// ✅ NOVA LÓGICA: Reativação via POST com redirecionamento limpo
+// ================================
+
+if ($_POST && isset($_POST['acao']) && $_POST['acao'] === 'reativar' && isset($_POST['id'])) {
+    $gestor = new GestUser();
+    $resultado = $gestor->reativar($_POST['id']);
+    if ($resultado['sucesso']) {
+        // Redireciona para a aba "Ativos" com mensagem via GET
+        header('Location: index.php?tab=usuarios&sub=documentos&msg=reativado');
+        exit;
+    } else {
+        // Em caso de erro, redireciona para "Inativos" com mensagem de erro
+        $_SESSION['msg'] = $resultado['erros'][0] ?? 'Erro ao reativar usuário.';
+        header('Location: index.php?tab=usuarios&sub=inativos');
+        exit;
+    }
+}
+
 // 6. Renderiza
 $pagina = new ConteudoPainelUser();
 echo $pagina->render();
