@@ -312,6 +312,36 @@ nav ul li a:hover {
 .btn-delete { color: var(--cor-erro); } .btn-delete:hover { background: var(--cor-erro); color: white; }
 .btn-view { color: var(--cor-sucesso); } .btn-view:hover { background: var(--cor-sucesso); color: white; }
 
+/* Botão de alternância de status (Ativar/Desativar) */
+.btn-toggle {
+    background: var(--cor-erro);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transicao);
+    margin: 0 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.btn-toggle:hover {
+    background: #c82333;
+    transform: translateY(-1px);
+}
+
+.btn-toggle.active {
+    background: var(--cor-sucesso);
+}
+
+.btn-toggle i {
+    font-size: 12px;
+}
+
 /* Modal */
 .modal {
     position: fixed;
@@ -441,7 +471,8 @@ nav ul li a:hover {
 
     .btn-edit,
     .btn-delete,
-    .btn-view {
+    .btn-view,
+    .btn-toggle {
         padding: 6px 10px;
         font-size: 12px;
         margin: 0 2px;

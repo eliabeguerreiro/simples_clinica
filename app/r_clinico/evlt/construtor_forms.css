@@ -252,7 +252,24 @@ h3 {
 .btn-delete-small i {
     font-size: 10px;
 }
+.form-group textarea {
+    padding: 12px 15px;
+    border: 2px solid #e1e1ff;
+    border-radius: 10px;
+    font-size: 15px;
+    background: #fafaff;
+    font-family: inherit;
+    transition: var(--transicao);
+    width: 100%;
+    box-sizing: border-box;
+}
 
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--cor-primaria);
+    box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.15);
+    background: white;
+}
 /* Responsividade */
 @media (max-width: 768px) {
     body {

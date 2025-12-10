@@ -1,6 +1,7 @@
 <?php
 
-include_once "evolucao.class.php"; // nome do arquivo em minúsculas
+include_once "../../../classes/db.class.php";
+include_once "evolucao.class.php";
 
 class ConteudoRClinicoEvlt
 {
@@ -15,7 +16,7 @@ class ConteudoRClinicoEvlt
 
     public function render()
     {
-$html = <<<HTML
+        $html = <<<HTML
             <!DOCTYPE html>
             <html lang="pt-BR">
             <head>
@@ -25,16 +26,16 @@ $html = <<<HTML
                 <link rel="stylesheet" href="./src/style.css">
                 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
             </head>
-HTML;
+        HTML;
         $body = $this->renderBody();
         $html .= $body;
-$html .= <<<HTML
+        $html .= <<<HTML
             <script src="./src/script.js"></script>
             <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
             <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
         </body>
         </html>
-HTML;
+        HTML;
         return $html;
     }
 
@@ -44,15 +45,27 @@ HTML;
 
         // Processa formulário de criação (se submetido)
         $resultado = null;
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao']) && $_POST['acao'] === 'cadastrar') {
-            $resultado = $this->evolucao->criarFormulario($_POST);
-            if ($resultado['sucesso']) {
-                header("Location: construtor_forms.php?form_id=" . $resultado['id']);
-                exit;
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
+            switch ($_POST['acao']) {
+                case 'cadastrar':
+                    $resultado = $this->evolucao->criarFormulario($_POST);
+                    if ($resultado['sucesso']) {
+                        header("Location: construtor_forms.php?form_id=" . $resultado['id']);
+                        exit;
+                    }
+                    break;
+                case 'alternar_status':
+                    $form_id = (int)($_POST['form_id'] ?? 0);
+                    if ($form_id > 0) {
+                        $resultado = $this->evolucao->alternarStatusFormulario($form_id);
+                    } else {
+                        $resultado = ['sucesso' => false, 'erros' => ['ID de formulário inválido.']];
+                    }
+                    break;
             }
         }
 
-$html = <<<HTML
+        $html = <<<HTML
             <body>
                 <header>
                     <div class="logo">
@@ -78,7 +91,8 @@ $html = <<<HTML
                     <div id="sub-tabs">
                         <div class="sub-tabs" id="sub-pacientes">
                             <button class="tab-btn" data-main="pacientes" data-sub="cadastro" onclick="showSubTab('pacientes', 'cadastro', this)">Cadastro de Formulário</button>
-                            <button class="tab-btn active" data-main="pacientes" data-sub="documentos" onclick="showSubTab('pacientes', 'documentos', this)">Listagem de Formulários</button>
+                            <button class="tab-btn active" data-main="pacientes" data-sub="ativos" onclick="showSubTab('pacientes', 'ativos', this)">Formulários Ativos</button>
+                            <button class="tab-btn" data-main="pacientes" data-sub="inativos" onclick="showSubTab('pacientes', 'inativos', this)">Formulários Inativos</button>
                         </div>
                     </div>
                     <!-- Conteúdo -->
@@ -86,8 +100,11 @@ $html = <<<HTML
                         <div id="pacientes-cadastro" class="tab-content" style="display:none;">
                             {$this->getFormularioCadastro($resultado)}
                         </div>
-                        <div id="pacientes-documentos" class="tab-content active">
-                            {$this->getListagemFormularios()}
+                        <div id="pacientes-ativos" class="tab-content active">
+                            {$this->getListagemFormularios($resultado, true)}
+                        </div>
+                        <div id="pacientes-inativos" class="tab-content" style="display:none;">
+                            {$this->getListagemFormularios($resultado, false)}
                         </div>
                     </div>
                 </section>
@@ -109,7 +126,7 @@ $html = <<<HTML
                     </div>
                 </div>
             </body>
-HTML;
+        HTML;
         return $html;
     }
 
@@ -142,12 +159,12 @@ HTML;
                 <input type="hidden" name="acao" value="cadastrar">
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="nome">Nome do Formulário padrão de evolução*</label>
-                        <input required type="text" id="nome" name="nome" maxlength="100" placeholder="Ex: Evolução Diária"
+                        <label for="nome">Nome do Formulário*</label>
+                        <input required type="text" id="nome" name="nome" maxlength="100" placeholder="Ex: Avaliação Fisioterapêutica"
                                value="' . (isset($dadosForm['nome']) ? htmlspecialchars($dadosForm['nome']) : '') . '">
                     </div>
                     <div class="form-group">
-                        <label for="s_n_anexo">Formulário recebe anexos de arquivos*</label>
+                        <label for="s_n_anexo">Recebe anexos?*</label>
                         <select required id="s_n_anexo" name="s_n_anexo">
                             <option value="N" ' . (isset($dadosForm['s_n_anexo']) && $dadosForm['s_n_anexo'] == 'N' ? 'selected' : '') . '>Não</option>
                             <option value="S" ' . (isset($dadosForm['s_n_anexo']) && $dadosForm['s_n_anexo'] == 'S' ? 'selected' : '') . '>Sim</option>
@@ -157,9 +174,9 @@ HTML;
                         <label for="especialidade">Especialidade*</label>
                         <select required id="especialidade" name="especialidade">
                             <option value="">Selecionar</option>
-                            <option value="FISIO" ' . (isset($dadosForm['especialidade']) && $dadosForm['especialidade'] == 'FISIO' ? 'selected' : '') . '>Fisio</option>
-                            <option value="FONO" ' . (isset($dadosForm['especialidade']) && $dadosForm['especialidade'] == 'FONO' ? 'selected' : '') . '>T. Ocupacional</option>
-                            <option value="TEOC" ' . (isset($dadosForm['especialidade']) && $dadosForm['especialidade'] == 'TEOC' ? 'selected' : '') . '>Fono</option>
+                            <option value="FISIO" ' . (isset($dadosForm['especialidade']) && $dadosForm['especialidade'] == 'FISIO' ? 'selected' : '') . '>Fisioterapia</option>
+                            <option value="FONO" ' . (isset($dadosForm['especialidade']) && $dadosForm['especialidade'] == 'FONO' ? 'selected' : '') . '>Fonoaudiologia</option>
+                            <option value="TEOC" ' . (isset($dadosForm['especialidade']) && $dadosForm['especialidade'] == 'TEOC' ? 'selected' : '') . '>Terapia Ocupacional</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -171,7 +188,7 @@ HTML;
                     </div>
                     <div class="form-group">
                         <label for="descricao">Descrição</label>
-                        <input type="text" id="descricao" name="descricao" maxlength="255" placeholder="Ex: Formulário para evolução diária de fisioterapia"
+                        <input type="text" id="descricao" name="descricao" maxlength="255" placeholder="Ex: Formulário para avaliação inicial"
                             value="' . (isset($dadosForm['descricao']) ? htmlspecialchars($dadosForm['descricao']) : '') . '">
                     </div>
                 </div>
@@ -182,7 +199,7 @@ HTML;
         </div>';
     }
 
-    private function getListagemFormularios($resultado = null)
+    private function getListagemFormularios($resultado = null, $ativos = true)
     {
         $mensagens = '';
         if ($resultado && isset($resultado['sucesso'])) {
@@ -198,7 +215,7 @@ HTML;
         }
 
         try {
-            $formularios = $this->evolucao->listarFormularios();
+            $formularios = $this->evolucao->listarFormularios($ativos);
         } catch (Exception $e) {
             $formularios = [];
             $mensagens = '<div class="form-message error">Erro ao carregar formulários: ' . htmlspecialchars($e->getMessage()) . '</div>';
@@ -220,7 +237,6 @@ HTML;
                     </thead>
                     <tbody>';
             foreach ($formularios as $form) {
-               
                 $descricao = !empty($form['descricao']) ? htmlspecialchars($form['descricao']) : '-';
                 $tabelaFormularios .= '
                     <tr>
@@ -228,7 +244,6 @@ HTML;
                         <td>' . htmlspecialchars($form['nome']) . '</td>
                         <td>' . htmlspecialchars($form['especialidade']) . '</td>
                         <td>' . $descricao . '</td>
-                        
                         <td>
                             <a href="construtor_forms.php?form_id=' . (int)$form['id'] . '" class="btn-view" title="Gerenciar Perguntas">
                                 <i class="fas fa-list"></i> Perguntas
@@ -239,6 +254,13 @@ HTML;
                             <a href="render_forms.php?form_id=' . (int)$form['id'] . '" class="btn-view" title="Visualizar Formulário" style="margin-left:8px;">
                                 <i class="fas fa-eye"></i> Visualizar
                             </a>
+                            <form method="POST" style="display:inline; margin-left:8px;">
+                                <input type="hidden" name="acao" value="alternar_status">
+                                <input type="hidden" name="form_id" value="' . (int)$form['id'] . '">
+                                <button type="submit" class="btn-toggle" title="' . ($ativos ? 'Desativar' : 'Reativar') . '">
+                                    <i class="fas fa-' . ($ativos ? 'toggle-off' : 'toggle-on') . '"></i> ' . ($ativos ? 'Desativar' : 'Reativar') . '
+                                </button>
+                            </form>
                         </td>
                     </tr>';
             }
@@ -247,16 +269,18 @@ HTML;
                 </table>
             </div>';
         } else {
-            $tabelaFormularios = '<div class="no-data">Nenhum formulário encontrado.</div>';
+            $msg = $ativos ? 'Nenhum formulário ativo encontrado.' : 'Nenhum formulário inativo encontrado.';
+            $tabelaFormularios = '<div class="no-data">' . $msg . '</div>';
         }
 
         return '
         <div class="listagem-container">
             ' . $mensagens . '
             <div class="table-header">
-                <h3>Listagem de Formulários (' . $total . ' cadastrado' . ($total != 1 ? 's' : '') . ')</h3>
+                <h3>Listagem de Formulários ' . ($ativos ? 'Ativos' : 'Inativos') . ' (' . $total . ')</h3>
             </div>
             ' . $tabelaFormularios . '
         </div>';
     }
 }
+?>

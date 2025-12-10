@@ -120,8 +120,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
                 <div class="form-group">
                     <label for="descricao">Descrição</label>
-                    <input type="text" id="descricao" name="descricao" maxlength="255"
-                           value="<?= htmlspecialchars($formulario['descricao'] ?? '') ?>">
+                    <textarea id="descricao" name="descricao"maxlength="255" rows="3"><?= htmlspecialchars($formulario['descricao'] ?? '') ?></textarea>
                 </div>
             </div>
             <button type="submit" class="btn">Salvar Alterações</button>
