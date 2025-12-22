@@ -10,6 +10,11 @@ class ConteudoPainelUser
         $this->usuario = new GestUser();
     }
 
+    private function usuarioTemPermissao($permissao)
+    {
+        return isset($_SESSION['data_user']['permissoes']) && in_array($permissao, $_SESSION['data_user']['permissoes']);
+    }
+
     public function render()
     {
         $html = <<<HTML
@@ -43,6 +48,7 @@ HTML;
         $nome = htmlspecialchars($_SESSION['data_user']['nm_usuario'] ?? '');
 
         // Mensagem de sucesso/erro via GET (para reativação)
+        $resultado = null;
         if (isset($_GET['msg']) && $_GET['msg'] == 'reativado') {
             $resultado = [
                 'sucesso' => true,
@@ -50,7 +56,6 @@ HTML;
             ];
         }
 
-        $resultado = null;
         if ($_POST && isset($_POST['acao'])) {
             switch ($_POST['acao']) {
                 case 'cadastrar':
@@ -212,6 +217,10 @@ HTML;
     // =========== USUÁRIOS ===========
     private function getFormularioCadastro($resultado = null)
     {
+        if (!$this->usuarioTemPermissao('cadmin.usuarios.criar')) {
+            return '<div class="form-message error">Você não tem permissão para criar usuários.</div>';
+        }
+
         $dadosForm = [];
         if ($resultado && isset($resultado['dados'])) {
             $dadosForm = $resultado['dados'];
@@ -299,14 +308,16 @@ HTML;
                 <td>' . htmlspecialchars($u['nm_usuario']) . '</td>
                 <td>' . htmlspecialchars($u['perfil_nome'] ?? '—') . '</td>
                 <td>
-                    <div class="table-actions">
-                        <a href="?tab=usuarios&sub=edicao&id=' . $u['id'] . '" class="btn-action btn-edit">
+                    <div class="table-actions">';
+            if ($this->usuarioTemPermissao('cadmin.usuarios.editar')) {
+                $rows .= '<a href="?tab=usuarios&sub=edicao&id=' . $u['id'] . '" class="btn-action btn-edit">
                             <i class="fas fa-edit"></i> Editar
-                        </a>
-                        <button type="button" class="btn-action btn-delete" onclick="confirmarDesativacao(' . $u['id'] . ')">
+                          </a>
+                          <button type="button" class="btn-action btn-delete" onclick="confirmarDesativacao(' . $u['id'] . ')">
                             <i class="fas fa-trash"></i> Desativar
-                        </button>
-                    </div>
+                          </button>';
+            }
+            $rows .= '</div>
                 </td>
             </tr>';
         }
@@ -348,11 +359,13 @@ HTML;
                 <td>' . htmlspecialchars($u['nm_usuario']) . '</td>
                 <td>' . htmlspecialchars($u['perfil_nome'] ?? '—') . '</td>
                 <td>
-                    <div class="table-actions">
-                        <button type="button" class="btn-action btn-add" onclick="confirmarReativacao(' . $u['id'] . ')">
+                    <div class="table-actions">';
+            if ($this->usuarioTemPermissao('cadmin.usuarios.editar')) {
+                $rows .= '<button type="button" class="btn-action btn-add" onclick="confirmarReativacao(' . $u['id'] . ')">
                             <i class="fas fa-redo"></i> Reativar
-                        </button>
-                    </div>
+                          </button>';
+            }
+            $rows .= '</div>
                 </td>
             </tr>';
         }
@@ -373,6 +386,10 @@ HTML;
         $id = $_GET['id'] ?? 0;
         if (!$id) {
             return '<div class="form-message error">ID do usuário não informado.</div>';
+        }
+
+        if (!$this->usuarioTemPermissao('cadmin.usuarios.editar')) {
+            return '<div class="form-message error">Você não tem permissão para editar usuários.</div>';
         }
 
         $usuario = $this->usuario->buscarPorId($id);
@@ -468,18 +485,20 @@ HTML;
                 <td>' . htmlspecialchars($p['nome']) . '</td>
                 <td>' . htmlspecialchars($p['descricao'] ?? '') . '</td>
                 <td>
-                    <div class="table-actions">
-                        <a href="?tab=perfis&sub=edicao&id_perfil=' . $p['id'] . '" class="btn-action btn-edit">
+                    <div class="table-actions">';
+            if ($this->usuarioTemPermissao('cadmin.perfis.editar')) {
+                $rows .= '<a href="?tab=perfis&sub=edicao&id_perfil=' . $p['id'] . '" class="btn-action btn-edit">
                             <i class="fas fa-edit"></i> Editar
-                        </a>
-                        <form method="POST" style="display:inline;" onsubmit="return confirm(\'Excluir perfil? Usuários vinculados perderão acesso.\');">
+                          </a>
+                          <form method="POST" style="display:inline;" onsubmit="return confirm(\'Excluir perfil? Usuários vinculados perderão acesso.\');">
                             <input type="hidden" name="acao" value="excluir_perfil">
                             <input type="hidden" name="id" value="' . $p['id'] . '">
                             <button type="submit" class="btn-action btn-delete">
                                 <i class="fas fa-trash"></i> Excluir
                             </button>
-                        </form>
-                    </div>
+                          </form>';
+            }
+            $rows .= '</div>
                 </td>
             </tr>';
         }
@@ -497,6 +516,10 @@ HTML;
 
     private function getFormularioCadastroPerfil($resultado = null)
     {
+        if (!$this->usuarioTemPermissao('cadmin.perfis.criar')) {
+            return '<div class="form-message error">Você não tem permissão para criar perfis.</div>';
+        }
+
         $dadosForm = [];
         if ($resultado && isset($resultado['dados'])) {
             $dadosForm = $resultado['dados'];
@@ -549,6 +572,11 @@ HTML;
     {
         $id = $_GET['id_perfil'] ?? 0;
         if (!$id) return '<div class="form-message error">ID do perfil não informado.</div>';
+
+        if (!$this->usuarioTemPermissao('cadmin.perfis.editar')) {
+            return '<div class="form-message error">Você não tem permissão para editar perfis.</div>';
+        }
+
         $perfil = $this->usuario->buscarPerfilPorId($id);
         if (!$perfil) return '<div class="form-message error">Perfil não encontrado.</div>';
 
@@ -605,26 +633,12 @@ HTML;
 
     private function gerarHtmlPermissoes($todasPermissoes, $idsSelecionados)
     {
-        // Agrupar permissões por módulo
         $grupos = [
-            'cadmin' => [
-                'nome' => 'Painel Administrativo',
-                'icon' => 'fa-cogs',
-                'permissoes' => []
-            ],
-            'atendimento' => [
-                'nome' => 'Atendimentos',
-                'icon' => 'fa-stethoscope',
-                'permissoes' => []
-            ],
-            'formularios' => [
-                'nome' => 'Evoluções',
-                'icon' => 'fa-file-medical',
-                'permissoes' => []
-            ]
+            'cadmin' => ['nome' => 'Painel Administrativo', 'icon' => 'fa-cogs'],
+            'atendimento' => ['nome' => 'Atendimentos', 'icon' => 'fa-stethoscope'],
+            'formularios' => ['nome' => 'Evoluções', 'icon' => 'fa-file-medical']
         ];
 
-        // Distribuir permissões nos grupos
         foreach ($todasPermissoes as $p) {
             if (strpos($p['chave'], 'cadmin.') === 0) {
                 $grupos['cadmin']['permissoes'][] = $p;
@@ -637,9 +651,8 @@ HTML;
 
         $html = '';
         foreach ($grupos as $prefixo => $info) {
-            if (empty($info['permissoes'])) continue;
+            if (!isset($info['permissoes']) || empty($info['permissoes'])) continue;
 
-            // Verifica se pelo menos uma permissão do grupo está marcada
             $temPermissaoMarcada = false;
             foreach ($info['permissoes'] as $p) {
                 if (in_array($p['id'], $idsSelecionados)) {
@@ -649,16 +662,12 @@ HTML;
             }
 
             $checkedMaster = $temPermissaoMarcada;
-
             $html .= '<div class="accordion-item">
                 <div class="accordion-header">
                     <i class="fas ' . $info['icon'] . '"></i>
                     <strong>' . htmlspecialchars($info['nome']) . '</strong>
                     <label class="switch">
-                        <input type="checkbox" 
-                            class="master-toggle" 
-                            data-prefix="' . $prefixo . '"
-                            ' . ($checkedMaster ? 'checked' : '') . '>
+                        <input type="checkbox" class="master-toggle" data-prefix="' . $prefixo . '" ' . ($checkedMaster ? 'checked' : '') . '>
                         <span class="slider"></span>
                     </label>
                 </div>
@@ -678,3 +687,4 @@ HTML;
         return $html;
     }
 }
+?>

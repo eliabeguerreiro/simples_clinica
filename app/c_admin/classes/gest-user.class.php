@@ -14,6 +14,15 @@ class GestUser
         }
     }
 
+    // Método para verificar permissões do usuário logado
+    private function temPermissao($permissaoChave)
+    {
+        if (!isset($_SESSION['data_user']['permissoes']) || !is_array($_SESSION['data_user']['permissoes'])) {
+            return false;
+        }
+        return in_array($permissaoChave, $_SESSION['data_user']['permissoes']);
+    }
+
     // =========== USUÁRIOS ===========
     public function listar()
     {
@@ -30,21 +39,20 @@ class GestUser
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-
     public function listarInativos()
-{
-    $sql = "
-        SELECT u.id, u.cpf, u.login, u.nm_usuario,
-               p.nome AS perfil_nome
-        FROM usuarios u
-        LEFT JOIN perfis p ON u.perfil_id = p.id
-        WHERE u.ativo = 0
-        ORDER BY u.nm_usuario
-    ";
-    $stmt = $this->db->prepare($sql);
-    $stmt->execute();
-    return $stmt->fetchAll(PDO::FETCH_ASSOC);
-}
+    {
+        $sql = "
+            SELECT u.id, u.cpf, u.login, u.nm_usuario,
+                   p.nome AS perfil_nome
+            FROM usuarios u
+            LEFT JOIN perfis p ON u.perfil_id = p.id
+            WHERE u.ativo = 0
+            ORDER BY u.nm_usuario
+        ";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 
     public function buscarPorId($id)
     {
@@ -56,6 +64,10 @@ class GestUser
 
     public function cadastrar($dados)
     {
+        if (!$this->temPermissao('cadmin.usuarios.criar')) {
+            return ['sucesso' => false, 'erros' => ['Você não tem permissão para criar usuários.'], 'dados' => $dados];
+        }
+
         if (empty(trim($dados['cpf'])) || strlen(trim($dados['cpf'])) !== 11) {
             return ['sucesso' => false, 'erros' => ['CPF inválido ou vazio.'], 'dados' => $dados];
         }
@@ -103,6 +115,10 @@ class GestUser
 
     public function atualizar($id, $dados)
     {
+        if (!$this->temPermissao('cadmin.usuarios.editar')) {
+            return ['sucesso' => false, 'erros' => ['Você não tem permissão para editar usuários.'], 'dados' => $dados];
+        }
+
         if (empty(trim($dados['cpf'])) || strlen(trim($dados['cpf'])) !== 11) {
             return ['sucesso' => false, 'erros' => ['CPF inválido ou vazio.'], 'dados' => $dados];
         }
@@ -151,6 +167,10 @@ class GestUser
 
     public function desativar($id)
     {
+        if (!$this->temPermissao('cadmin.usuarios.editar')) {
+            return ['sucesso' => false, 'erros' => ['Você não tem permissão para desativar usuários.']];
+        }
+
         $stmt = $this->db->prepare("UPDATE usuarios SET ativo = 0 WHERE id = ?");
         $resultado = $stmt->execute([$id]);
         if ($resultado) {
@@ -162,10 +182,13 @@ class GestUser
 
     public function reativar($id)
     {
+        if (!$this->temPermissao('cadmin.usuarios.editar')) {
+            return ['sucesso' => false, 'erros' => ['Você não tem permissão para reativar usuários.']];
+        }
+
         $stmt = $this->db->prepare("UPDATE usuarios SET ativo = 1 WHERE id = ?");
         $resultado = $stmt->execute([$id]);
         if ($resultado) {
-            // Redireciona para a lista de ativos com mensagem
             return [
                 'sucesso' => true,
                 'mensagem' => 'Usuário reativado com sucesso!',
@@ -193,6 +216,10 @@ class GestUser
 
     public function cadastrarPerfil($dados)
     {
+        if (!$this->temPermissao('cadmin.perfis.criar')) {
+            return ['sucesso' => false, 'erros' => ['Você não tem permissão para criar perfis.'], 'dados' => $dados];
+        }
+
         $nome = trim($dados['nome'] ?? '');
         $descricao = trim($dados['descricao'] ?? '');
 
@@ -217,6 +244,10 @@ class GestUser
 
     public function atualizarPerfil($id, $dados)
     {
+        if (!$this->temPermissao('cadmin.perfis.editar')) {
+            return ['sucesso' => false, 'erros' => ['Você não tem permissão para editar perfis.'], 'dados' => $dados];
+        }
+
         $nome = trim($dados['nome'] ?? '');
         $descricao = trim($dados['descricao'] ?? '');
         $permissoesIds = is_array($dados['permissoes'] ?? null) ? array_map('intval', $dados['permissoes']) : [];
@@ -251,6 +282,10 @@ class GestUser
 
     public function excluirPerfil($id)
     {
+        if (!$this->temPermissao('cadmin.perfis.editar')) {
+            return ['sucesso' => false, 'erros' => ['Você não tem permissão para excluir perfis.']];
+        }
+
         $stmt = $this->db->prepare("SELECT COUNT(*) AS total FROM usuarios WHERE perfil_id = ?");
         $stmt->execute([$id]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -268,13 +303,12 @@ class GestUser
     }
 
     // =========== PERMISSÕES ===========
-
     public function listarPerfisDetalhado()
-{
-    $stmt = $this->db->prepare("SELECT id, nome, descricao FROM perfis ORDER BY id DESC");
-    $stmt->execute();
-    return $stmt->fetchAll(PDO::FETCH_ASSOC);
-}
+    {
+        $stmt = $this->db->prepare("SELECT id, nome, descricao FROM perfis ORDER BY id DESC");
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 
     public function listarTodasPermissoes()
     {
@@ -304,8 +338,8 @@ class GestUser
     }
 
     /**
- * Retorna as chaves das permissões do perfil (ex: ['cadmin.acessar', 'atendimento.visualizar'])
- */
+     * Retorna as chaves das permissões do perfil (ex: ['cadmin.acessar', 'atendimento.visualizar'])
+     */
     public function getPermissoesChavesDoPerfil($perfilId)
     {
         try {
@@ -336,7 +370,7 @@ class GestUser
         }
         $_SESSION['data_user']['permissoes'] = $chaves;
         return true;
-}
+    }
 
     // =========== AUXILIARES ===========
     private function existeCpf($cpf, $idExcluir = null)
@@ -378,4 +412,3 @@ class GestUser
         return $stmt->rowCount() > 0;
     }
 }
-?>
