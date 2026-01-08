@@ -631,60 +631,75 @@ HTML;
         </div>';
     }
 
-    private function gerarHtmlPermissoes($todasPermissoes, $idsSelecionados)
-    {
-        $grupos = [
-            'cadmin' => ['nome' => 'Painel Administrativo', 'icon' => 'fa-cogs'],
-            'atendimento' => ['nome' => 'Atendimentos', 'icon' => 'fa-stethoscope'],
-            'formularios' => ['nome' => 'Evoluções', 'icon' => 'fa-file-medical']
-        ];
+ private function gerarHtmlPermissoes($todasPermissoes, $idsSelecionados)
+{
+    // Agrupar permissões por módulo
+    $grupos = [
+        'cadmin' => ['nome' => 'Painel Administrativo', 'icon' => 'fa-cogs'],
+        'pacientes' => ['nome' => 'Pacientes', 'icon' => 'fa-user-injured'],
+        'atendimentos' => ['nome' => 'Atendimentos', 'icon' => 'fa-procedures'],
+        'evolucoes' => ['nome' => 'Evoluções', 'icon' => 'fa-file-medical'],
+        'formularios' => ['nome' => 'Formulários', 'icon' => 'fa-list-alt']
+    ];
 
-        foreach ($todasPermissoes as $p) {
-            if (strpos($p['chave'], 'cadmin.') === 0) {
-                $grupos['cadmin']['permissoes'][] = $p;
-            } elseif (strpos($p['chave'], 'atendimento.') === 0) {
-                $grupos['atendimento']['permissoes'][] = $p;
-            } elseif (strpos($p['chave'], 'formularios.') === 0) {
-                $grupos['formularios']['permissoes'][] = $p;
+    // Distribuir permissões nos grupos
+    foreach ($todasPermissoes as $p) {
+        $adicionado = false;
+        foreach (array_keys($grupos) as $prefixo) {
+            if (strpos($p['chave'], $prefixo . '.') === 0) {
+                $grupos[$prefixo]['permissoes'][] = $p;
+                $adicionado = true;
+                break;
             }
         }
-
-        $html = '';
-        foreach ($grupos as $prefixo => $info) {
-            if (!isset($info['permissoes']) || empty($info['permissoes'])) continue;
-
-            $temPermissaoMarcada = false;
-            foreach ($info['permissoes'] as $p) {
-                if (in_array($p['id'], $idsSelecionados)) {
-                    $temPermissaoMarcada = true;
-                    break;
-                }
+        // Se não corresponder a nenhum grupo, coloca em "Outros"
+        if (!$adicionado) {
+            if (!isset($grupos['outros'])) {
+                $grupos['outros'] = ['nome' => 'Outras Permissões', 'icon' => 'fa-exclamation-triangle', 'permissoes' => []];
             }
-
-            $checkedMaster = $temPermissaoMarcada;
-            $html .= '<div class="accordion-item">
-                <div class="accordion-header">
-                    <i class="fas ' . $info['icon'] . '"></i>
-                    <strong>' . htmlspecialchars($info['nome']) . '</strong>
-                    <label class="switch">
-                        <input type="checkbox" class="master-toggle" data-prefix="' . $prefixo . '" ' . ($checkedMaster ? 'checked' : '') . '>
-                        <span class="slider"></span>
-                    </label>
-                </div>
-                <div class="accordion-content" ' . ($checkedMaster ? '' : 'style="display:none;"') . '>';
-
-            foreach ($info['permissoes'] as $p) {
-                $checked = in_array($p['id'], $idsSelecionados) ? 'checked' : '';
-                $html .= '<label class="permission-item">
-                    <input type="checkbox" name="permissoes[]" value="' . $p['id'] . '" ' . $checked . '>
-                    ' . htmlspecialchars($p['chave']) . ' — ' . htmlspecialchars($p['descricao']) . '
-                </label>';
-            }
-
-            $html .= '</div></div>';
+            $grupos['outros']['permissoes'][] = $p;
         }
-
-        return $html;
     }
+
+    $html = '';
+    foreach ($grupos as $prefixo => $info) {
+        if (!isset($info['permissoes']) || empty($info['permissoes'])) continue;
+
+        // Verifica se pelo menos uma permissão do grupo está marcada
+        $temPermissaoMarcada = false;
+        foreach ($info['permissoes'] as $p) {
+            if (in_array($p['id'], $idsSelecionados)) {
+                $temPermissaoMarcada = true;
+                break;
+            }
+        }
+
+        $checkedMaster = $temPermissaoMarcada;
+        $html .= '<div class="accordion-item">
+            <div class="accordion-header">
+                <i class="fas ' . $info['icon'] . '"></i>
+                <strong>' . htmlspecialchars($info['nome']) . '</strong>
+                <label class="switch">
+                    <input type="checkbox" 
+                           class="master-toggle" 
+                           data-prefix="' . $prefixo . '"
+                           ' . ($checkedMaster ? 'checked' : '') . '>
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="accordion-content" ' . ($checkedMaster ? '' : 'style="display:none;"') . '>';
+
+        foreach ($info['permissoes'] as $p) {
+            $checked = in_array($p['id'], $idsSelecionados) ? 'checked' : '';
+            $html .= '<label class="permission-item">
+                <input type="checkbox" name="permissoes[]" value="' . $p['id'] . '" ' . $checked . '>
+                ' . htmlspecialchars($p['chave']) . ' — ' . htmlspecialchars($p['descricao']) . '
+            </label>';
+        }
+
+        $html .= '</div></div>';
+    }
+
+    return $html;
 }
-?>
+}
