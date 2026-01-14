@@ -1,5 +1,6 @@
 <?php
 include_once "paciente.class.php";
+//include "../../c_admin/classes/gest-user.class.php";
 
 class ConteudoRClinicoPCNT
 {
@@ -12,35 +13,53 @@ class ConteudoRClinicoPCNT
         $this->paciente_id = $paciente_id;
     }
 
+    private function usuarioTemPermissao($permissao)
+    {
+        return isset($_SESSION['data_user']['permissoes']) && in_array($permissao, $_SESSION['data_user']['permissoes']);
+    }
+
     public function render()
     {
         $html = <<<HTML
-            <!DOCTYPE html>
-            <html lang="pt-BR">
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Registro Clínico - Pacientes</title>
-                <link rel="stylesheet" href="./src/style.css">
-                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css  ">
-            </head>
-        HTML;
+        <!DOCTYPE html>
+        <html lang="pt-BR">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Registro Clínico - Pacientes</title>
+            <link rel="stylesheet" href="./src/style.css">
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+        </head>
+HTML;
         $body = $this->renderBody();
         $html .= $body;
         $html .= <<<HTML
-            <script src="./src/script.js"></script>
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js  "></script>
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js  "></script>
+        <script src="./src/script.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
         </body>
         </html>
-        HTML;
+HTML;
         return $html;
     }
 
     private function renderBody()
     {
+        // Verifica se o usuário tem ao menos uma permissão relacionada a pacientes
+        $temPermissaoPacientes = (
+            $this->usuarioTemPermissao('pacientes.visualizar') ||
+            $this->usuarioTemPermissao('pacientes.criar') ||
+            $this->usuarioTemPermissao('pacientes.editar') ||
+            $this->usuarioTemPermissao('pacientes.excluir')
+        );
+
+        if (!$temPermissaoPacientes) {
+            return '<div class="form-message error">Você não tem permissão para acessar o módulo de Pacientes.</div>';
+        }
+
         $nome = htmlspecialchars($_SESSION['data_user']['nm_usuario']);
         $resultado = null;
+
         if ($_POST && isset($_POST['acao'])) {
             switch ($_POST['acao']) {
                 case 'cadastrar':
@@ -72,32 +91,32 @@ class ConteudoRClinicoPCNT
         }
 
         $html = <<<HTML
-            <body>
-                <header>
-                    <div class="logo">
-                        <img src="#" alt="Logo">
-                    </div>
-                    <nav>
-                        <ul>
-                            <li><a href="../../">INICIO</a></li>
-                            <li><a href="#">SUPORTE</a></li>
-                            <li><a href="?sair">SAIR</a></li>
-                        </ul>
-                    </nav>
-                </header>
-                <section class="simple-box">
-                    <h2>Registro Clínico</h2>
-                    <!-- Abas principais -->
-                    <div class="tabs" id="main-tabs">
-                        <button class="tab-btn active" onclick="redirectToTab('pacientes')">Pacientes</button>
-                        <button class="tab-btn" onclick="redirectToTab('atendimentos')">Atendimentos</button>
-                        <button class="tab-btn" onclick="redirectToTab('evolucoes')">Evoluções</button>
-                    </div>
-                    <!-- Sub-abas -->
-                    <div id="sub-tabs">
-                        <div class="sub-tabs" id="sub-pacientes">
-                            <button class="tab-btn" data-main="pacientes" data-sub="cadastro" onclick="showSubTab('pacientes', 'cadastro', this)">Cadastro</button>
-                            <button class="tab-btn active" data-main="pacientes" data-sub="documentos" onclick="showSubTab('pacientes', 'documentos', this)">Listagem</button>
+        <body>
+            <header>
+                <div class="logo">
+                    <img src="#" alt="Logo">
+                </div>
+                <nav>
+                    <ul>
+                        <li><a href="../../">INICIO</a></li>
+                        <li><a href="#">SUPORTE</a></li>
+                        <li><a href="?sair">SAIR</a></li>
+                    </ul>
+                </nav>
+            </header>
+            <section class="simple-box">
+                <h2>Registro Clínico</h2>
+                <!-- Abas principais -->
+                <div class="tabs" id="main-tabs">
+                    <button class="tab-btn active" onclick="redirectToTab('pacientes')">Pacientes</button>
+                    <button class="tab-btn" onclick="redirectToTab('atendimentos')">Atendimentos</button>
+                    <button class="tab-btn" onclick="redirectToTab('evolucoes')">Evoluções</button>
+                </div>
+                <!-- Sub-abas -->
+                <div id="sub-tabs">
+                    <div class="sub-tabs" id="sub-pacientes">
+                        <button class="tab-btn" data-main="pacientes" data-sub="cadastro" onclick="showSubTab('pacientes', 'cadastro', this)">Cadastro</button>
+                        <button class="tab-btn active" data-main="pacientes" data-sub="documentos" onclick="showSubTab('pacientes', 'documentos', this)">Listagem</button>
 HTML;
 
         if ($this->paciente_id) {
@@ -105,17 +124,17 @@ HTML;
         }
 
         $html .= <<<HTML
-                            </div>
-                        </div>
-                        <!-- Conteúdo das abas -->
-                        <div id="tab-content">
-                            <div id="pacientes-cadastro" class="tab-content" style="display:none;">
-                                {$this->getFormularioCadastro($resultado)}
-                            </div>
-                            <div id="pacientes-documentos" class="tab-content active">
-                                {$this->getListagemPacientes($resultado, $pacienteBuscado)}
-                            </div>
-                            <div id="pacientes-historico" class="tab-content" style="display:none;">
+                    </div>
+                </div>
+                <!-- Conteúdo das abas -->
+                <div id="tab-content">
+                    <div id="pacientes-cadastro" class="tab-content" style="display:none;">
+                        {$this->getFormularioCadastro($resultado)}
+                    </div>
+                    <div id="pacientes-documentos" class="tab-content active">
+                        {$this->getListagemPacientes($resultado, $pacienteBuscado)}
+                    </div>
+                    <div id="pacientes-historico" class="tab-content" style="display:none;">
 HTML;
 
         if ($this->paciente_id) {
@@ -125,45 +144,47 @@ HTML;
         }
 
         $html .= <<<HTML
-                        </div>
-                        <div id="pacientes-edicao" class="tab-content" style="display:none;">
-                            {$this->getFormularioEdicao($resultado)}
-                        </div>
                     </div>
-                </section>
-                <!-- Modal de exclusão -->
-                <div id="modal-exclusao" class="modal" style="display:none;">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h3>Confirmar Exclusão</h3>
-                            <span class="close-modal" onclick="fecharModal()">&times;</span>
-                        </div>
-                        <div class="modal-body">
-                            <p>Tem certeza que deseja excluir este paciente?</p>
-                            <p><strong>Esta ação não pode ser desfeita.</strong></p>
-                        </div>
-                        <div class="modal-footer">
-                            <button class="btn-cancel" onclick="fecharModal()">Cancelar</button>
-                            <button class="btn-delete" id="confirmar-exclusao">Excluir</button>
-                        </div>
+                    <div id="pacientes-edicao" class="tab-content" style="display:none;">
+                        {$this->getFormularioEdicao($resultado)}
                     </div>
                 </div>
-                <script src="./src/script.js"></script>
-                <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js  "></script>
-                <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js  "></script>
-            </body>
-        HTML;
+            </section>
+            <!-- Modal de exclusão -->
+            <div id="modal-exclusao" class="modal" style="display:none;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>Confirmar Exclusão</h3>
+                        <span class="close-modal" onclick="fecharModal()">&times;</span>
+                    </div>
+                    <div class="modal-body">
+                        <p>Tem certeza que deseja excluir este paciente?</p>
+                        <p><strong>Esta ação não pode ser desfeita.</strong></p>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn-cancel" onclick="fecharModal()">Cancelar</button>
+                        <button class="btn-delete" id="confirmar-exclusao">Excluir</button>
+                    </div>
+                </div>
+            </div>
+        </body>
+HTML;
         return $html;
     }
 
     private function getFormularioCadastro($resultado = null)
     {
+        if (!$this->usuarioTemPermissao('pacientes.criar')) {
+            return '<div class="form-message error">Você não tem permissão para cadastrar pacientes.</div>';
+        }
+
         $dadosForm = [];
         if ($resultado && isset($resultado['dados'])) {
             $dadosForm = $resultado['dados'];
         } elseif (isset($_POST) && (!isset($_POST['acao']) || $_POST['acao'] == 'cadastrar')) {
             $dadosForm = $_POST;
         }
+
         $mensagens = '';
         if ($resultado && (!isset($_POST['acao']) || $_POST['acao'] == 'cadastrar')) {
             if (isset($resultado['sucesso']) && $resultado['sucesso']) {
@@ -176,9 +197,9 @@ HTML;
                 $mensagens .= '</div>';
             }
         }
+
         return '
-        <div class="form-container">
-            ' . $mensagens . '
+        <div class="form-container">' . $mensagens . '
             <form action="" method="POST">
                 <input type="hidden" name="acao" value="cadastrar">
                 <div class="form-row">
@@ -350,19 +371,28 @@ HTML;
                         <p><strong>Nacionalidade:</strong> ' . $this->getDescricaoNacionalidade($pacienteBuscado['nacionalidade']) . '</p>
                         <p><strong>Situação de Rua:</strong> ' . ($pacienteBuscado['situacao_rua'] == 'S' ? 'Sim' : 'Não') . '</p>
                     </div>
-                    <div class="paciente-actions">
-                        <button class="btn-edit" onclick="editarPaciente(' . $pacienteBuscado['id'] . ')">
-                            <i class="fas fa-edit"></i> Editar
-                        </button>
-                        <button class="btn-delete" onclick="confirmarExclusao(' . $pacienteBuscado['id'] . ')">
-                            <i class="fas fa-trash"></i> Excluir
-                        </button>
-                        <button class="btn-evolucao" onclick="abrirEvolucao(' . $pacienteBuscado['id'] . ')">
-                            <i class="fas fa-file-medical"></i> Evolução
-                        </button>
-                        <a href="?sub=documentos" class="btn-clear">
-                            <i class="fas fa-arrow-left"></i> Voltar
-                        </a>
+                    <div class="paciente-actions">';
+            
+            if ($this->usuarioTemPermissao('pacientes.editar')) {
+                $tabelaPacientes .= '<button class="btn-edit" onclick="editarPaciente(' . $pacienteBuscado['id'] . ')">
+                    <i class="fas fa-edit"></i> Editar
+                </button>';
+            }
+            if ($this->usuarioTemPermissao('pacientes.excluir')) {
+                $tabelaPacientes .= '<button class="btn-delete" onclick="confirmarExclusao(' . $pacienteBuscado['id'] . ')">
+                    <i class="fas fa-trash"></i> Excluir
+                </button>';
+            }
+            if ($this->usuarioTemPermissao('evolucoes.fisio.criar') || 
+                $this->usuarioTemPermissao('evolucoes.fono.criar') || 
+                $this->usuarioTemPermissao('evolucoes.teoc.criar')) {
+                $tabelaPacientes .= '<button class="btn-evolucao" onclick="abrirEvolucao(' . $pacienteBuscado['id'] . ')">
+                    <i class="fas fa-file-medical"></i> Evolução
+                </button>';
+            }
+            $tabelaPacientes .= '<a href="?sub=documentos" class="btn-clear">
+                <i class="fas fa-arrow-left"></i> Voltar
+            </a>
                     </div>
                 </div>
             </div>';
@@ -370,11 +400,9 @@ HTML;
             $pagina = isset($_GET['pagina']) && is_numeric($_GET['pagina']) ? (int)$_GET['pagina'] : 1;
             if ($pagina < 1) $pagina = 1;
             $porPagina = 10;
-
             $pacientes = $this->paciente->buscarPorTermoPaginado($termoBusca, $pagina, $porPagina);
             $totalPacientes = $this->paciente->getTotalPacientes($termoBusca);
             $totalPaginas = ceil($totalPacientes / $porPagina);
-
             $formularioBusca = '
             <div class="search-bar">
                 <form method="GET" class="search-form">
@@ -387,7 +415,6 @@ HTML;
                     <a href="?sub=documentos" class="btn-clear">Limpar Busca</a>
                 </form>
             </div>';
-
             if (!empty($pacientes)) {
                 $tabelaPacientes = '
                 <div class="table-container">
@@ -413,16 +440,23 @@ HTML;
                                 <div class="table-actions">
                                     <a href="?id=' . $paciente['id'] . '&sub=documentos" class="btn-action btn-view">
                                         <i class="fas fa-eye"></i> Detalhes
-                                    </a>
+                                    </a>';
+                    if ($this->usuarioTemPermissao('pacientes.editar')) {
+                        $tabelaPacientes .= '<a href="?id=' . $paciente['id'] . '&sub=edicao" class="btn-action btn-edit">
+                            <i class="fas fa-edit"></i> Editar
+                        </a>';
+                    }
+                    if ($this->usuarioTemPermissao('pacientes.excluir')) {
+                        $tabelaPacientes .= '<button type="button" class="btn-action btn-delete" onclick="confirmarExclusao(' . $paciente['id'] . ')">
+                            <i class="fas fa-trash"></i> Excluir
+                        </button>';
+                    }
+                    $tabelaPacientes .= '
                                 </div>
                             </td>
                         </tr>';
                 }
-                $tabelaPacientes .= '
-                        </tbody>
-                    </table>
-                </div>';
-
+                $tabelaPacientes .= '</tbody></table></div>';
                 if ($totalPaginas > 1) {
                     $controls = '<div class="pagination-controls">';
                     if ($pagina > 1) {
@@ -446,17 +480,13 @@ HTML;
                 $tabelaPacientes = '<div class="no-data">Nenhum paciente encontrado.</div>';
             }
         }
-
         $total = $pacienteBuscado ? 1 : $totalPacientes ?? 0;
         return '
-        <div class="listagem-container">
-            ' . $mensagens . '
-            ' . $formularioBusca . '
+        <div class="listagem-container">' . $mensagens . $formularioBusca . '
             <div class="table-header">
                 <h3>' . ($pacienteBuscado ? 'Detalhes do Paciente' : 'Listagem de Pacientes (' . $total . ' cadastrado' . ($total != 1 ? 's' : '') . ')') . '</h3>
             </div>
-            ' . $tabelaPacientes . '
-            ' . $controls . '
+            ' . $tabelaPacientes . $controls . '
         </div>';
     }
 
@@ -486,10 +516,7 @@ HTML;
     private function excluirMultiplos($ids)
     {
         if (empty($ids) || !is_array($ids)) {
-            return [
-                'sucesso' => false,
-                'erros' => ['Nenhum paciente selecionado para exclusão.']
-            ];
+            return ['sucesso' => false, 'erros' => ['Nenhum paciente selecionado para exclusão.']];
         }
         $sucessos = 0;
         $erros = [];
@@ -502,16 +529,9 @@ HTML;
             }
         }
         if (empty($erros)) {
-            return [
-                'sucesso' => true,
-                'mensagem' => "$sucessos paciente(s) excluído(s) com sucesso!"
-            ];
+            return ['sucesso' => true, 'mensagem' => "$sucessos paciente(s) excluído(s) com sucesso!"];
         } else {
-            return [
-                'sucesso' => $sucessos > 0,
-                'mensagem' => "$sucessos paciente(s) excluído(s) com sucesso.",
-                'erros' => $erros
-            ];
+            return ['sucesso' => $sucessos > 0, 'mensagem' => "$sucessos paciente(s) excluído(s) com sucesso.", 'erros' => $erros];
         }
     }
 
@@ -521,6 +541,11 @@ HTML;
         if ($id <= 0) {
             return '<div class="form-message error">ID do paciente não informado.</div>';
         }
+
+        if (!$this->usuarioTemPermissao('pacientes.editar')) {
+            return '<div class="form-message error">Você não tem permissão para editar pacientes.</div>';
+        }
+
         $paciente = $this->paciente->buscarPorId($id);
         if (!$paciente) {
             return '<div class="form-message error">Paciente não encontrado.</div>';
@@ -541,8 +566,7 @@ HTML;
         }
 
         return '
-        <div class="form-container">
-            ' . $mensagens . '
+        <div class="form-container">' . $mensagens . '
             <form action="" method="POST">
                 <input type="hidden" name="acao" value="atualizar">
                 <input type="hidden" name="id" value="' . $id . '">
@@ -682,6 +706,10 @@ HTML;
             return '<div class="form-message error">Paciente não especificado para exibir histórico.</div>';
         }
 
+        if (!$this->usuarioTemPermissao('evolucoes.visualizar')) {
+            return '<div class="form-message error">Você não tem permissão para visualizar evoluções.</div>';
+        }
+
         $evolucoes = $this->paciente->listarEvolucoesDetalhadas($pacienteId);
         if (empty($evolucoes)) {
             return '<div class="no-data">Nenhuma evolução registrada para este paciente.</div>';
@@ -708,7 +736,7 @@ HTML;
                 <td>' . htmlspecialchars($ev['especialidade']) . '</td>
                 <td>' . (!empty($ev['criado_por']) ? htmlspecialchars($ev['criado_por']) : '-') . '</td>
                 <td>
-                    <a href="visualizar_evolucao.php?id=' . $ev['id'] . '" class="btn-view" title="Visualizar">
+                    <a href="../evlt/visualizar_evolucao.php?id=' . $ev['id'] . '" class="btn-view" title="Visualizar">
                         <i class="fas fa-eye"></i> Ver
                     </a>
                 </td>
