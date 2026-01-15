@@ -199,7 +199,7 @@ $html = <<<HTML
                     <div class="tabs" id="main-tabs">
                         <button class="tab-btn" onclick="window.location.href='../pcnt/'">Pacientes</button>
                         <button class="tab-btn active">Atendimentos</button>
-                        <button class="tab-btn" onclick="window.location.href='../evlt/'">Evoluções</button>
+                        <button class="tab-btn" onclick="window.location.href='../evlt/'">Formulários</button>
                     </div>
                     
                     <!-- Sub-abas do módulo atual -->

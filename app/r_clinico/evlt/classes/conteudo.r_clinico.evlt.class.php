@@ -62,7 +62,7 @@ class ConteudoRClinicoEvlt
             <head>
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Registro Clínico - Evolução</title>
+                <title>Registro Clínico - Formulários de Evolução</title>
                 <link rel="stylesheet" href="./src/style.css">
                 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
             </head>
@@ -145,12 +145,12 @@ class ConteudoRClinicoEvlt
                     </nav>
                 </header>
                 <section class="simple-box">
-                    <h2>Registro Clínico - Evolução</h2>
+                    <h2>Registro Clínico - Formulários de Evolução</h2>
                     <!-- Abas principais -->
                     <div class="tabs" id="main-tabs">
                         <button class="tab-btn" onclick="redirectToTab('pacientes')">Pacientes</button>
                         <button class="tab-btn" onclick="redirectToTab('atendimentos')">Atendimentos</button>
-                        <button class="tab-btn active" onclick="redirectToTab('evolucoes')">Evoluções</button>
+                        <button class="tab-btn active" onclick="redirectToTab('evolucoes')">Formulários</button>
                     </div>
                     <!-- Sub-abas -->
                     <div id="sub-tabs">

@@ -631,15 +631,15 @@ HTML;
         </div>';
     }
 
- private function gerarHtmlPermissoes($todasPermissoes, $idsSelecionados)
+private function gerarHtmlPermissoes($todasPermissoes, $idsSelecionados)
 {
     // Agrupar permissões por módulo
     $grupos = [
         'cadmin' => ['nome' => 'Painel Administrativo', 'icon' => 'fa-cogs'],
         'pacientes' => ['nome' => 'Pacientes', 'icon' => 'fa-user-injured'],
         'atendimentos' => ['nome' => 'Atendimentos', 'icon' => 'fa-procedures'],
-        'evolucoes' => ['nome' => 'Evoluções', 'icon' => 'fa-file-medical'],
-        'formularios' => ['nome' => 'Formulários', 'icon' => 'fa-list-alt']
+        'evolucoes' => ['nome' => 'Evoluções Clínicas', 'icon' => 'fa-file-medical'],
+        'formularios' => ['nome' => 'Construção de Formulários', 'icon' => 'fa-list-alt']
     ];
 
     // Distribuir permissões nos grupos
@@ -652,7 +652,6 @@ HTML;
                 break;
             }
         }
-        // Se não corresponder a nenhum grupo, coloca em "Outros"
         if (!$adicionado) {
             if (!isset($grupos['outros'])) {
                 $grupos['outros'] = ['nome' => 'Outras Permissões', 'icon' => 'fa-exclamation-triangle', 'permissoes' => []];
@@ -665,7 +664,6 @@ HTML;
     foreach ($grupos as $prefixo => $info) {
         if (!isset($info['permissoes']) || empty($info['permissoes'])) continue;
 
-        // Verifica se pelo menos uma permissão do grupo está marcada
         $temPermissaoMarcada = false;
         foreach ($info['permissoes'] as $p) {
             if (in_array($p['id'], $idsSelecionados)) {
@@ -682,7 +680,7 @@ HTML;
                 <label class="switch">
                     <input type="checkbox" 
                            class="master-toggle" 
-                           data-prefix="' . $prefixo . '"
+                           data-prefix="' . $prefixo . '" 
                            ' . ($checkedMaster ? 'checked' : '') . '>
                     <span class="slider"></span>
                 </label>

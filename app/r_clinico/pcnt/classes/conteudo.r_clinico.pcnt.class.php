@@ -110,7 +110,7 @@ HTML;
                 <div class="tabs" id="main-tabs">
                     <button class="tab-btn active" onclick="redirectToTab('pacientes')">Pacientes</button>
                     <button class="tab-btn" onclick="redirectToTab('atendimentos')">Atendimentos</button>
-                    <button class="tab-btn" onclick="redirectToTab('evolucoes')">Evoluções</button>
+                    <button class="tab-btn" onclick="redirectToTab('evolucoes')">Formulários</button>
                 </div>
                 <!-- Sub-abas -->
                 <div id="sub-tabs">
@@ -383,14 +383,14 @@ HTML;
                     <i class="fas fa-trash"></i> Excluir
                 </button>';
             }
-            if ($this->usuarioTemPermissao('evolucoes.fisio.criar') || 
-                $this->usuarioTemPermissao('evolucoes.fono.criar') || 
+            if ($this->usuarioTemPermissao('evolucoes.fisio.criar') ||
+                $this->usuarioTemPermissao('evolucoes.fono.criar') ||
                 $this->usuarioTemPermissao('evolucoes.teoc.criar')) {
                 $tabelaPacientes .= '<button class="btn-evolucao" onclick="abrirEvolucao(' . $pacienteBuscado['id'] . ')">
                     <i class="fas fa-file-medical"></i> Evolução
                 </button>';
             }
-            $tabelaPacientes .= '<a href="?sub=documentos" class="btn-clear">
+                        $tabelaPacientes .= '<a href="?sub=documentos" class="btn-clear">
                 <i class="fas fa-arrow-left"></i> Voltar
             </a>
                     </div>
@@ -702,12 +702,12 @@ HTML;
 
     private function getHistoricoEvolucoesPorPaciente($pacienteId)
     {
-        if (!$pacienteId || $pacienteId <= 0) {
-            return '<div class="form-message error">Paciente não especificado para exibir histórico.</div>';
-        }
-
         if (!$this->usuarioTemPermissao('evolucoes.visualizar')) {
             return '<div class="form-message error">Você não tem permissão para visualizar evoluções.</div>';
+        }
+
+        if (!$pacienteId || $pacienteId <= 0) {
+            return '<div class="form-message error">Paciente não especificado para exibir histórico.</div>';
         }
 
         $evolucoes = $this->paciente->listarEvolucoesDetalhadas($pacienteId);
