@@ -54,6 +54,10 @@ if (!$temAcesso) {
     exit;
 }
 
+if (isset($_GET['sair'])) {
+    Index::logOut();
+}
+
 // 5. Se chegou aqui, tudo ok — instancia e renderiza
 $paciente_id = isset($_GET['id']) ? (int)$_GET['id'] : null;
 $pagina = new ConteudoRClinicoPCNT($paciente_id);

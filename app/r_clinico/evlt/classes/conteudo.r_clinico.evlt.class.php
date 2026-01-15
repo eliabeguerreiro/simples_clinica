@@ -14,6 +14,46 @@ class ConteudoRClinicoEvlt
         $this->paciente_id = $paciente_id;
     }
 
+    private function usuarioTemPermissao($permissao)
+    {
+        return isset($_SESSION['data_user']['permissoes']) && in_array($permissao, $_SESSION['data_user']['permissoes']);
+    }
+
+    private function temQualquerPermissaoDeEvolucao()
+    {
+        $permissoes = $_SESSION['data_user']['permissoes'] ?? [];
+        foreach ($permissoes as $p) {
+            if (
+                strpos($p, 'evolucoes.') === 0 ||
+                strpos($p, 'formularios.fisio.') === 0 ||
+                strpos($p, 'formularios.fono.') === 0 ||
+                strpos($p, 'formularios.teoc.') === 0
+            ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private function carregarPermissoesDoPerfil($perfilId)
+    {
+        try {
+            include "../../../classes/db.class.php";
+            $db = DB::connect();
+            $stmt = $db->prepare("
+                SELECT p.chave
+                FROM perfil_permissao pp
+                JOIN permissoes p ON pp.permissao_id = p.id
+                WHERE pp.perfil_id = ?
+            ");
+            $stmt->execute([$perfilId]);
+            return $stmt->fetchAll(PDO::FETCH_COLUMN);
+        } catch (Exception $e) {
+            error_log("Erro ao carregar permissões: " . $e->getMessage());
+            return [];
+        }
+    }
+
     public function render()
     {
         $html = <<<HTML
@@ -41,6 +81,31 @@ class ConteudoRClinicoEvlt
 
     private function renderBody()
     {
+        // 1. Valida login
+        if (!isset($_SESSION['data_user']) || !isset($_SESSION['login_time'])) {
+            $_SESSION['msg'] = 'Realize o login para acessar o Registro Clínico.';
+            header('Location: ../../');
+            exit;
+        }
+
+        // 2. Verifica se perfil foi carregado
+        if (!isset($_SESSION['data_user']['perfil_id'])) {
+            $_SESSION['msg'] = 'Seu usuário não possui perfil definido.';
+            header('Location: ../../');
+            exit;
+        }
+
+        // 3. Carrega permissões na sessão (se necessário)
+        if (!isset($_SESSION['data_user']['permissoes'])) {
+            $permissoes = $this->carregarPermissoesDoPerfil($_SESSION['data_user']['perfil_id']);
+            $_SESSION['data_user']['permissoes'] = $permissoes;
+        }
+
+        // 4. Verifica acesso mínimo a evoluções
+        if (!$this->temQualquerPermissaoDeEvolucao()) {
+            return '<div class="form-message error">Você não tem permissão para acessar o módulo de Evoluções.</div>';
+        }
+
         $nome = htmlspecialchars($_SESSION['data_user']['nm_usuario'] ?? 'Usuário');
 
         // Processa formulário de criação (se submetido)
@@ -132,6 +197,13 @@ class ConteudoRClinicoEvlt
 
     private function getFormularioCadastro($resultado = null)
     {
+        // Verifica permissão para criar formulários
+        if (!$this->usuarioTemPermissao('evolucoes.fisio.criar') &&
+            !$this->usuarioTemPermissao('evolucoes.fono.criar') &&
+            !$this->usuarioTemPermissao('evolucoes.teoc.criar')) {
+            return '<div class="form-message error">Você não tem permissão para criar formulários de evolução.</div>';
+        }
+
         $dadosForm = [];
         if ($resultado && isset($resultado['dados'])) {
             $dadosForm = $resultado['dados'];
@@ -253,14 +325,23 @@ class ConteudoRClinicoEvlt
                             </a>
                             <a href="render_forms.php?form_id=' . (int)$form['id'] . '" class="btn-view" title="Visualizar Formulário" style="margin-left:8px;">
                                 <i class="fas fa-eye"></i> Visualizar
-                            </a>
+                            </a>';
+
+                // Botão de alternar status só aparece se tiver permissão
+                if ($this->usuarioTemPermissao('evolucoes.fisio.criar') ||
+                    $this->usuarioTemPermissao('evolucoes.fono.criar') ||
+                    $this->usuarioTemPermissao('evolucoes.teoc.criar')) {
+                    $tabelaFormularios .= '
                             <form method="POST" style="display:inline; margin-left:8px;">
                                 <input type="hidden" name="acao" value="alternar_status">
                                 <input type="hidden" name="form_id" value="' . (int)$form['id'] . '">
                                 <button type="submit" class="btn-toggle" title="' . ($ativos ? 'Desativar' : 'Reativar') . '">
                                     <i class="fas fa-' . ($ativos ? 'toggle-off' : 'toggle-on') . '"></i> ' . ($ativos ? 'Desativar' : 'Reativar') . '
                                 </button>
-                            </form>
+                            </form>';
+                }
+
+                $tabelaFormularios .= '
                         </td>
                     </tr>';
             }
