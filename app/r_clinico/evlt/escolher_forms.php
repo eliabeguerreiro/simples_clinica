@@ -1,5 +1,11 @@
 <?php
 session_start();
+
+function usuarioTemPermissao($permissao)
+{
+    return isset($_SESSION['data_user']['permissoes']) && in_array($permissao, $_SESSION['data_user']['permissoes']);
+}
+
 include "../../../classes/db.class.php";
 
 if (!isset($_GET['paciente_id']) || !is_numeric($_GET['paciente_id'])) {
@@ -24,6 +30,17 @@ try {
 
 if (!$nomePaciente) {
     die("<h2>Paciente não encontrado</h2><p>O paciente com ID <strong>{$paciente_id}</strong> não existe.</p>");
+}
+
+// Verifica se o usuário tem permissão para acessar esta página
+$temAcesso = (
+    usuarioTemPermissao('evolucoes.fisio.criar') ||
+    usuarioTemPermissao('evolucoes.fono.criar') ||
+    usuarioTemPermissao('evolucoes.teoc.criar')
+);
+
+if (!$temAcesso) {
+    die("<h2>Acesso Negado</h2><p>Você não tem permissão para visualizar formulários de evolução.</p>");
 }
 
 // Agrupar por especialidade
@@ -107,9 +124,25 @@ $icones = [
                                 <p class="desc"><?= htmlspecialchars($form['descricao']) ?></p>
                             <?php endif; ?>
                             <div class="form-actions">
-                                <a href="render_forms.php?form_id=<?= (int)$form['id'] ?>&paciente_id=<?= $paciente_id ?>" class="btn btn-usar">
-                                    <i class="fas fa-file-medical"></i> Usar este formulário
-                                </a>
+                                <?php
+                                $mostrarBotao = false;
+                                if ($esp === 'FISIO' && usuarioTemPermissao('evolucoes.fisio.criar')) {
+                                    $mostrarBotao = true;
+                                } elseif ($esp === 'FONO' && usuarioTemPermissao('evolucoes.fono.criar')) {
+                                    $mostrarBotao = true;
+                                } elseif ($esp === 'TEOC' && usuarioTemPermissao('evolucoes.teoc.criar')) {
+                                    $mostrarBotao = true;
+                                }
+
+                                if ($mostrarBotao): ?>
+                                    <a href="render_forms.php?form_id=<?= (int)$form['id'] ?>&paciente_id=<?= $paciente_id ?>" class="btn btn-usar">
+                                        <i class="fas fa-file-medical"></i> Usar este formulário
+                                    </a>
+                                <?php else: ?>
+                                    <span class="btn btn-disabled" title="Você não tem permissão para usar este formulário">
+                                        <i class="fas fa-lock"></i> Sem permissão
+                                    </span>
+                                <?php endif; ?>
                             </div>
                         </div>
                     <?php endforeach; ?>

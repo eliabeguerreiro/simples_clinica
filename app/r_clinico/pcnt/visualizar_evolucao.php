@@ -1,9 +1,16 @@
 <?php
 // Valida ID da evolução
+session_start();
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
     die("<h2>Erro</h2><p>ID da evolução não especificado.</p>");
 }
 $evolucao_id = (int)$_GET['id'];
+
+// Função para verificar permissões
+function usuarioTemPermissao($permissao)
+{
+    return isset($_SESSION['data_user']['permissoes']) && in_array($permissao, $_SESSION['data_user']['permissoes']);
+}
 
 // Conexão com o banco
 function getDbConnection() {
@@ -36,6 +43,67 @@ try {
         die("<h2>Evolução não encontrada</h2>");
     }
 
+    // Mapeia especialidade do formulário para permissão de edição
+    $especialidade = $evolucao['especialidade'] ?? '';
+    $permissaoEditar = null;
+    switch ($especialidade) {
+        case 'FISIO':
+            $permissaoEditar = 'evolucoes.fisio.editar';
+            break;
+        case 'FONO':
+            $permissaoEditar = 'evolucoes.fono.editar';
+            break;
+        case 'TEOC':
+            $permissaoEditar = 'evolucoes.teoc.editar';
+            break;
+        default:
+            $permissaoEditar = null;
+    }
+
+    // Processa atualização (se o formulário for submetido)
+    $mensagem = '';
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao']) && $_POST['acao'] === 'atualizar') {
+        if (!$permissaoEditar || !usuarioTemPermissao($permissaoEditar)) {
+            die("<h2>Acesso Negado</h2><p>Você não tem permissão para editar esta evolução.</p>");
+        }
+
+        try {
+            $observacoes = trim($_POST['observacoes'] ?? '');
+            $criado_por = $_SESSION['data_user']['nm_usuario'] ?? 'Usuário Anônimo';
+
+            // Coleta respostas
+            $dados = [];
+            foreach ($_POST as $key => $value) {
+                if (in_array($key, ['acao', 'observacoes'])) continue;
+                if (is_array($value)) {
+                    $dados[$key] = array_map('trim', $value);
+                } else {
+                    $dados[$key] = trim($value);
+                }
+            }
+
+            $stmt = $db->prepare("
+                UPDATE evolucao_clinica 
+                SET dados = ?, observacoes = ?, criado_por = ?
+                WHERE id = ?
+            ");
+            $stmt->execute([
+                json_encode($dados, JSON_UNESCAPED_UNICODE),
+                $observacoes,
+                $criado_por,
+                $evolucao_id
+            ]);
+
+            // Atualiza os dados locais
+            $respostas = $dados;
+            $evolucao['observacoes'] = $observacoes;
+            $mensagem = '<div class="form-message success">Evolução atualizada com sucesso!</div>';
+
+        } catch (Exception $e) {
+            $mensagem = '<div class="form-message error">Erro ao atualizar: ' . htmlspecialchars($e->getMessage()) . '</div>';
+        }
+    }
+
     // Decodifica as respostas
     $respostas = json_decode($evolucao['dados'], true);
     if (json_last_error() !== JSON_ERROR_NONE) {
@@ -58,45 +126,6 @@ try {
     $arquivos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (Exception $e) {
     die("<h2>Erro ao carregar evolução</h2><p>" . htmlspecialchars($e->getMessage()) . "</p>");
-}
-
-// Processa atualização (se o formulário for submetido)
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao']) && $_POST['acao'] === 'atualizar') {
-    try {
-        $observacoes = trim($_POST['observacoes'] ?? '');
-        $criado_por = $_SESSION['data_user']['nm_usuario'] ?? 'Usuário Anônimo';
-
-        // Coleta respostas
-        $dados = [];
-        foreach ($_POST as $key => $value) {
-            if (in_array($key, ['acao', 'observacoes'])) continue;
-            if (is_array($value)) {
-                $dados[$key] = array_map('trim', $value);
-            } else {
-                $dados[$key] = trim($value);
-            }
-        }
-
-        $stmt = $db->prepare("
-            UPDATE evolucao_clinica 
-            SET dados = ?, observacoes = ?, criado_por = ?
-            WHERE id = ?
-        ");
-        $stmt->execute([
-            json_encode($dados, JSON_UNESCAPED_UNICODE),
-            $observacoes,
-            $criado_por,
-            $evolucao_id
-        ]);
-
-        // Atualiza os dados locais
-        $respostas = $dados;
-        $evolucao['observacoes'] = $observacoes;
-        $mensagem = '<div class="form-message success">Evolução atualizada com sucesso!</div>';
-
-    } catch (Exception $e) {
-        $mensagem = '<div class="form-message error">Erro ao atualizar: ' . htmlspecialchars($e->getMessage()) . '</div>';
-    }
 }
 ?>
 
@@ -122,98 +151,96 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao']) && $_POST['ac
             </p>
         </div>
 
-        <?php if (isset($mensagem)): ?>
-            <?= $mensagem ?>
-        <?php endif; ?>
+        <?= $mensagem ?>
 
         <form method="POST" id="form-edicao">
             <input type="hidden" name="acao" value="atualizar">
 
-            <?php foreach ($perguntas as $p): 
-            ?>
-            <?php
-            $nomeCampo = $p['nome_unico'] ?? 'campo_' . $p['id'];
-            $valor = $respostas[$nomeCampo] ?? null;
-            $justificativa = $respostas[$nomeCampo . '_justificativa'] ?? '';
+            <?php foreach ($perguntas as $p): ?>
+                <?php
+                $nomeCampo = $p['nome_unico'] ?? 'campo_' . $p['id'];
+                $valor = $respostas[$nomeCampo] ?? null;
+                $justificativa = $respostas[$nomeCampo . '_justificativa'] ?? '';
 
-            // Ignorar perguntas do tipo 'file' — elas são exibidas na seção de anexos
-            if ($p['tipo_input'] === 'file') {
-                continue; // Pula para a próxima pergunta
-            }
-            ?>
+                // Ignorar perguntas do tipo 'file'
+                if ($p['tipo_input'] === 'file') {
+                    continue;
+                }
+                ?>
 
-            <div class="form-group">
-                <label><?= htmlspecialchars($p['titulo']) ?></label>
-                <?php if (!empty($p['descricao'])): ?>
-                    <small><?= htmlspecialchars($p['descricao']) ?></small>
-                <?php endif; ?>
-
-                <?php if ($p['tipo_input'] === 'texto' || $p['tipo_input'] === 'number' || $p['tipo_input'] === 'date'): ?>
-                    <div class="resposta-readonly"><?= $valor ? htmlspecialchars($valor) : '<em>Não respondido</em>' ?></div>
-
-                <?php elseif ($p['tipo_input'] === 'textarea'): ?>
-                    <div class="resposta-readonly"><?= $valor ? nl2br(htmlspecialchars($valor)) : '<em>Não respondido</em>' ?></div>
-
-                <?php elseif (in_array($p['tipo_input'], ['radio', 'select'])): ?>
-                    <div class="resposta-readonly"><?= $valor ? htmlspecialchars($valor) : '<em>Não respondido</em>' ?></div>
-
-                <?php elseif ($p['tipo_input'] === 'checkbox'): ?>
-                    <?php if (!empty($valor) && is_array($valor)): ?>
-                        <ul class="resposta-lista">
-                            <?php foreach ($valor as $v): ?>
-                                <li><?= htmlspecialchars($v) ?></li>
-                            <?php endforeach; ?>
-                        </ul>
-                    <?php else: ?>
-                        <div class="resposta-readonly"><em>Não respondido</em></div>
+                <div class="form-group">
+                    <label><?= htmlspecialchars($p['titulo']) ?></label>
+                    <?php if (!empty($p['descricao'])): ?>
+                        <small><?= htmlspecialchars($p['descricao']) ?></small>
                     <?php endif; ?>
 
-                <?php elseif ($p['tipo_input'] === 'sim_nao_justificativa'): ?>
-                    <div class="resposta-readonly">
-                        <strong>Resposta:</strong> <?= $valor ? htmlspecialchars($valor) : '<em>Não respondido</em>' ?><br>
-                        <?php if ($justificativa): ?>
-                            <strong>Justificativa:</strong> <?= htmlspecialchars($justificativa) ?>
-                        <?php endif; ?>
-                    </div>
+                    <?php if ($p['tipo_input'] === 'texto' || $p['tipo_input'] === 'number' || $p['tipo_input'] === 'date'): ?>
+                        <div class="resposta-readonly"><?= $valor ? htmlspecialchars($valor) : '<em>Não respondido</em>' ?></div>
 
-                <?php elseif ($p['tipo_input'] === 'tabela'): ?>
-                    <?php
-                    $config = json_decode($p['opcoes'], true);
-                    $linhas = $config['linhas'] ?? [];
-                    $colunas = $config['colunas'] ?? [];
-                    ?>
-                    <?php if (!empty($linhas) && !empty($colunas) && is_array($valor)): ?>
-                        <table class="tabela-resposta">
-                            <thead>
-                                <tr>
-                                    <th>Item</th>
-                                    <?php foreach ($colunas as $col): ?>
-                                        <th><?= htmlspecialchars($col) ?></th>
-                                    <?php endforeach; ?>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($linhas as $linha): ?>
+                    <?php elseif ($p['tipo_input'] === 'textarea'): ?>
+                        <div class="resposta-readonly"><?= $valor ? nl2br(htmlspecialchars($valor)) : '<em>Não respondido</em>' ?></div>
+
+                    <?php elseif (in_array($p['tipo_input'], ['radio', 'select'])): ?>
+                        <div class="resposta-readonly"><?= $valor ? htmlspecialchars($valor) : '<em>Não respondido</em>' ?></div>
+
+                    <?php elseif ($p['tipo_input'] === 'checkbox'): ?>
+                        <?php if (!empty($valor) && is_array($valor)): ?>
+                            <ul class="resposta-lista">
+                                <?php foreach ($valor as $v): ?>
+                                    <li><?= htmlspecialchars($v) ?></li>
+                                <?php endforeach; ?>
+                            </ul>
+                        <?php else: ?>
+                            <div class="resposta-readonly"><em>Não respondido</em></div>
+                        <?php endif; ?>
+
+                    <?php elseif ($p['tipo_input'] === 'sim_nao_justificativa'): ?>
+                        <div class="resposta-readonly">
+                            <strong>Resposta:</strong> <?= $valor ? htmlspecialchars($valor) : '<em>Não respondido</em>' ?><br>
+                            <?php if ($justificativa): ?>
+                                <strong>Justificativa:</strong> <?= htmlspecialchars($justificativa) ?>
+                            <?php endif; ?>
+                        </div>
+
+                    <?php elseif ($p['tipo_input'] === 'tabela'): ?>
+                        <?php
+                        $config = json_decode($p['opcoes'], true);
+                        $linhas = $config['linhas'] ?? [];
+                        $colunas = $config['colunas'] ?? [];
+                        ?>
+                        <?php if (!empty($linhas) && !empty($colunas) && is_array($valor)): ?>
+                            <table class="tabela-resposta">
+                                <thead>
                                     <tr>
-                                        <td><?= htmlspecialchars($linha) ?></td>
+                                        <th>Item</th>
                                         <?php foreach ($colunas as $col): ?>
-                                            <td style="text-align: center;">
-                                                <?= isset($valor[urlencode($linha)]) && $valor[urlencode($linha)] === $col ? '✅' : '' ?>
-                                            </td>
+                                            <th><?= htmlspecialchars($col) ?></th>
                                         <?php endforeach; ?>
                                     </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    <?php else: ?>
-                        <div class="resposta-readonly"><em>Não respondido</em></div>
-                    <?php endif; ?>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($linhas as $linha): ?>
+                                        <tr>
+                                            <td><?= htmlspecialchars($linha) ?></td>
+                                            <?php foreach ($colunas as $col): ?>
+                                                <td style="text-align: center;">
+                                                    <?= isset($valor[urlencode($linha)]) && $valor[urlencode($linha)] === $col ? '✅' : '' ?>
+                                                </td>
+                                            <?php endforeach; ?>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        <?php else: ?>
+                            <div class="resposta-readonly"><em>Não respondido</em></div>
+                        <?php endif; ?>
 
-                <?php else: ?>
-                    <div class="resposta-readonly"><?= $valor ? htmlspecialchars($valor) : '<em>Não respondido</em>' ?></div>
-                <?php endif; ?>
-            </div>
-        <?php endforeach; ?>
+                    <?php else: ?>
+                        <div class="resposta-readonly"><?= $valor ? htmlspecialchars($valor) : '<em>Não respondido</em>' ?></div>
+                    <?php endif; ?>
+                </div>
+            <?php endforeach; ?>
+
             <!-- Observações -->
             <div class="form-group">
                 <label>Observações</label>
@@ -230,7 +257,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao']) && $_POST['ac
                         <?php foreach ($arquivos as $a):
                             $mime = $a['mime'] ?? '';
                             $ext = pathinfo($a['nome_salvo'] ?? ($a['nome_original'] ?? ''), PATHINFO_EXTENSION);
-                            // escolher ícone pelo mime/ext
                             if (preg_match('#^image/#', $mime)) { $icon = 'fa-file-image'; }
                             elseif (strpos($mime, 'pdf') !== false) { $icon = 'fa-file-pdf'; }
                             elseif (strpos($mime, 'word') !== false || in_array(strtolower($ext), ['doc','docx'])) { $icon = 'fa-file-word'; }
@@ -244,7 +270,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao']) && $_POST['ac
                             $urlOpen = $urlBase . '&download=0';
                             $urlDownload = $urlBase . '&download=1';
 
-                            // tamanho legível
                             $size = (int)($a['tamanho'] ?? 0);
                             if ($size >= 1048576) $sizeLabel = round($size/1048576,2).' MB';
                             elseif ($size >= 1024) $sizeLabel = round($size/1024,1).' KB';
@@ -273,10 +298,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao']) && $_POST['ac
             <?php endif; ?>
 
             <!-- Botões -->
-           <div class="botoes">
-                <button type="button" onclick="toggleEdicao()" class="btn-editar">Editar Respostas</button>
-                <button type="submit" class="btn-salvar" style="display:none;">Salvar Alterações</button>
-                
+            <div class="botoes">
+                <?php if ($permissaoEditar && usuarioTemPermissao($permissaoEditar)): ?>
+                    <button type="button" onclick="toggleEdicao()" class="btn-editar">Editar Respostas</button>
+                    <button type="submit" class="btn-salvar" style="display:none;">Salvar Alterações</button>
+                <?php endif; ?>
+
                 <a href="exportar_evolucao.php?formato=pdf&id=<?= $evolucao_id ?>" target="_blank" class="btn-exportar">
                     <i class="fas fa-file-pdf"></i> PDF
                 </a>

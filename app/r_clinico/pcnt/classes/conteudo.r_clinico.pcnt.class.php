@@ -736,7 +736,7 @@ HTML;
                 <td>' . htmlspecialchars($ev['especialidade']) . '</td>
                 <td>' . (!empty($ev['criado_por']) ? htmlspecialchars($ev['criado_por']) : '-') . '</td>
                 <td>
-                    <a href="../evlt/visualizar_evolucao.php?id=' . $ev['id'] . '" class="btn-view" title="Visualizar">
+                    <a href="visualizar_evolucao.php?id=' . $ev['id'] . '" class="btn-view" title="Visualizar">
                         <i class="fas fa-eye"></i> Ver
                     </a>
                 </td>
