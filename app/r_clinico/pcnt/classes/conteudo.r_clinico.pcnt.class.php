@@ -115,7 +115,7 @@ HTML;
                 <!-- Sub-abas -->
                 <div id="sub-tabs">
                     <div class="sub-tabs" id="sub-pacientes">
-                        <button class="tab-btn" data-main="pacientes" data-sub="cadastro" onclick="showSubTab('pacientes', 'cadastro', this)">Cadastro</button>
+                        <button class="tab-btn" data-main="pacientes" data-sub="cadastro" onclick="showSubTab('pacientes', 'cadastro', this)">Cadastrar Paciente</button>
                         <button class="tab-btn active" data-main="pacientes" data-sub="documentos" onclick="showSubTab('pacientes', 'documentos', this)">Listagem</button>
 HTML;
 
