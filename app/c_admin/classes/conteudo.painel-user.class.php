@@ -323,7 +323,7 @@ HTML;
         }
 
         $tabela = $rows ? '<table class="pacientes-table">
-            <thead><tr><th>ID</th><th>CPF</th><th>Login</th><th>Nome</th><th>Perfil</th><th>Ações</th></tr></thead>
+            <thead><tr><th>Codigo</th><th>CPF</th><th>Login</th><th>Nome</th><th>Perfil</th><th>Ações</th></tr></thead>
             <tbody>' . $rows . '</tbody>
         </table>' : '<div class="no-data">Nenhum usuário ativo.</div>';
 
@@ -371,7 +371,7 @@ HTML;
         }
 
         $tabela = $rows ? '<table class="pacientes-table">
-            <thead><tr><th>ID</th><th>CPF</th><th>Login</th><th>Nome</th><th>Perfil</th><th>Ações</th></tr></thead>
+            <thead><tr><th>Codigo</th><th>CPF</th><th>Login</th><th>Nome</th><th>Perfil</th><th>Ações</th></tr></thead>
             <tbody>' . $rows . '</tbody>
         </table>' : '<div class="no-data">Nenhum usuário inativo.</div>';
 
@@ -504,7 +504,7 @@ HTML;
         }
 
         $tabela = $rows ? '<table class="pacientes-table">
-            <thead><tr><th>ID</th><th>Nome</th><th>Descrição</th><th>Ações</th></tr></thead>
+            <thead><tr><th>Codigo</th><th>Nome</th><th>Descrição</th><th>Ações</th></tr></thead>
             <tbody>' . $rows . '</tbody>
         </table>' : '<div class="no-data">Nenhum perfil cadastrado.</div>';
 

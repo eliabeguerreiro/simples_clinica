@@ -300,7 +300,7 @@ class ConteudoRClinicoEvlt
                 <table class="pacientes-table">
                     <thead>
                         <tr>
-                            <th>ID</th>
+                            <th>Codigo</th>
                             <th>Nome do Formulário</th>
                             <th>Especialidade</th>
                             <th>Descrição</th>
