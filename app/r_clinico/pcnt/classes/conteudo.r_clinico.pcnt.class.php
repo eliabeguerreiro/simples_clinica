@@ -441,16 +441,6 @@ HTML;
                                     <a href="?id=' . $paciente['id'] . '&sub=documentos" class="btn-action btn-view">
                                         <i class="fas fa-eye"></i> Detalhes
                                     </a>';
-                    if ($this->usuarioTemPermissao('pacientes.editar')) {
-                        $tabelaPacientes .= '<a href="?id=' . $paciente['id'] . '&sub=edicao" class="btn-action btn-edit">
-                            <i class="fas fa-edit"></i> Editar
-                        </a>';
-                    }
-                    if ($this->usuarioTemPermissao('pacientes.excluir')) {
-                        $tabelaPacientes .= '<button type="button" class="btn-action btn-delete" onclick="confirmarExclusao(' . $paciente['id'] . ')">
-                            <i class="fas fa-trash"></i> Excluir
-                        </button>';
-                    }
                     $tabelaPacientes .= '
                                 </div>
                             </td>
