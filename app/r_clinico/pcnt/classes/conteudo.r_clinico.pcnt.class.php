@@ -64,22 +64,57 @@ HTML;
             switch ($_POST['acao']) {
                 case 'cadastrar':
                     $resultado = $this->paciente->cadastrar($_POST);
+                    if ($resultado['sucesso']) {
+                        $_SESSION['mensagem'] = [
+                            'texto' => $resultado['mensagem'],
+                            'tipo' => 'sucesso'
+                        ];
+                        header("Location: ?sub=documentos");
+                        exit;
+                    }
                     break;
-                case 'excluir':
-                    $resultado = $this->paciente->excluir($_POST['id']);
-                    break;
-                case 'excluir_multiplos':
-                    $resultado = $this->excluirMultiplos($_POST['ids']);
-                    break;
+
                 case 'atualizar':
                     if (isset($_POST['id']) && is_numeric($_POST['id'])) {
                         $resultado = $this->paciente->atualizar($_POST['id'], $_POST);
+                        if ($resultado['sucesso']) {
+                            $_SESSION['mensagem'] = [
+                                'texto' => $resultado['mensagem'],
+                                'tipo' => 'sucesso'
+                            ];
+                            header("Location: ?sub=documentos");
+                            exit;
+                        }
                     } else {
                         $resultado = [
                             'sucesso' => false,
                             'erros' => ['ID do paciente inválido.'],
                             'dados' => $_POST
                         ];
+                    }
+                break;
+
+                case 'excluir':
+                    $resultado = $this->paciente->excluir($_POST['id']);
+                    if ($resultado['sucesso']) {
+                        $_SESSION['mensagem'] = [
+                            'texto' => $resultado['mensagem'],
+                            'tipo' => 'sucesso'
+                        ];
+                        header("Location: ?sub=documentos");
+                        exit;
+                    }
+                    break;
+
+                case 'excluir_multiplos':
+                    $resultado = $this->excluirMultiplos($_POST['ids']);
+                    if ($resultado['sucesso']) {
+                        $_SESSION['mensagem'] = [
+                            'texto' => $resultado['mensagem'],
+                            'tipo' => 'sucesso'
+                        ];
+                        header("Location: ?sub=documentos");
+                        exit;
                     }
                     break;
             }
@@ -332,6 +367,15 @@ HTML;
     private function getListagemPacientes($resultado = null, $pacienteBuscado = null)
     {
         $mensagens = '';
+
+        // Mensagem de sessão (ex: após cadastro ou exclusão)
+        if (isset($_SESSION['mensagem'])) {
+            $mensagens = '<div class="form-message ' . ($_SESSION['mensagem']['tipo'] === 'erro' ? 'error' : 'success') . '">' .
+                         htmlspecialchars($_SESSION['mensagem']['texto']) . '</div>';
+            unset($_SESSION['mensagem']);
+        }
+
+        // Mensagens locais (ex: erro ao excluir sem JS)
         if ($resultado && isset($_POST['acao']) && ($_POST['acao'] == 'excluir' || $_POST['acao'] == 'excluir_multiplos')) {
             if (isset($resultado['sucesso']) && $resultado['sucesso']) {
                 $mensagens = '<div class="form-message success">' . $resultado['mensagem'] . '</div>';
@@ -683,8 +727,8 @@ HTML;
                 <button type="submit" class="btn-add">
                     <i class="fas fa-save"></i> Atualizar Paciente
                 </button>
-                <a href="?id=' . $id . '&sub=documentos" class="btn-clear" style="display:inline-block; margin-left:10px;">
-                    <i class="fas fa-arrow-left"></i> Cancelar
+                <a href="?sub=documentos" class="btn-clear" style="display:inline-block; margin-left:10px;">
+                    <i class="fas fa-arrow-left"></i> Voltar para Listagem
                 </a>
             </form>
         </div>';
