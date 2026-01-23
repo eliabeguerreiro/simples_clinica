@@ -112,7 +112,8 @@ try {
                         <input type="date" name="<?= $nomeCampo ?>" class="form-control"<?= $obrigatorio ?>>
 
                     <?php elseif ($p['tipo_input'] === 'file'): ?>
-                        <input type="file" name="<?= $nomeCampo ?>" class="form-control"<?= $obrigatorio ?>>
+                        <input type="file" name="<?= $nomeCampo ?>"class="form-control" accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.txt,.odt,.rtf,.xls,.xlsx,.ppt,.pptx,.zip,.rar"
+                            <?= $obrigatorio ?>
 
                     <?php elseif (in_array($p['tipo_input'], ['radio', 'checkbox', 'select'])):
                         $opcoes = [];
