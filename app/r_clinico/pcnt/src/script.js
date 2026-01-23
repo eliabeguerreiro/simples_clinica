@@ -37,8 +37,6 @@ $(document).ready(function(){
     $('#cns').mask('000 0000 0000 0000');
 });
 
-
-
 // Editar paciente (implementação básica)
 function editarPaciente(id) {
     // Mostra a aba de edição
@@ -50,6 +48,13 @@ function editarPaciente(id) {
     window.history.pushState({}, '', url);
 }
 
+// Função para fechar o modal de exclusão
+function fecharModal() {
+    const modal = document.getElementById('modal-exclusao');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
 
 // Fechar modal ao clicar fora
 document.addEventListener('click', function(e) {
@@ -73,7 +78,6 @@ function abrirEvolucao(pacienteId) {
 
 // Função para redirecionar para o módulo de evoluções
 function redirectToEvolucoes(pacienteId) {
-    // Implementação do redirecionamento para evoluções
     window.location.href = '../evlt/?paciente=' + pacienteId;
 }
 
@@ -86,3 +90,42 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 });
+
+// ✅ Nova função: confirmar exclusão de paciente
+// Função para abrir o modal de exclusão
+function confirmarExclusao(pacienteId) {
+    const modal = document.getElementById('modal-exclusao');
+    if (!modal) return;
+
+    // Armazena o ID do paciente no botão de confirmação
+    const btnConfirmar = document.getElementById('confirmar-exclusao');
+    if (btnConfirmar) {
+        // Remove evento anterior (evita duplicação)
+        const novoBotao = btnConfirmar.cloneNode(true);
+        btnConfirmar.parentNode.replaceChild(novoBotao, btnConfirmar);
+        novoBotao.addEventListener('click', function() {
+            // Cria e envia formulário de exclusão
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.style.display = 'none';
+
+            const inputAcao = document.createElement('input');
+            inputAcao.type = 'hidden';
+            inputAcao.name = 'acao';
+            inputAcao.value = 'excluir';
+
+            const inputId = document.createElement('input');
+            inputId.type = 'hidden';
+            inputId.name = 'id';
+            inputId.value = pacienteId;
+
+            form.appendChild(inputAcao);
+            form.appendChild(inputId);
+            document.body.appendChild(form);
+            form.submit();
+        });
+    }
+
+    // Exibe o modal
+    modal.style.display = 'flex';
+}
