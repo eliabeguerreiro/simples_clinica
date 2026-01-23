@@ -134,7 +134,7 @@ class ConteudoRClinicoEvlt
             <body>
                 <header>
                     <div class="logo">
-                        <img src="#" alt="Logo">
+                        <img src="src/vivenciar_logov2.png" alt="Logo">
                     </div>
                     <nav>
                         <ul>

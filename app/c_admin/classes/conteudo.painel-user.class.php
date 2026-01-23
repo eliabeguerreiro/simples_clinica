@@ -139,7 +139,9 @@ HTML;
         return <<<HTML
         <body>
             <header>
-                <div class="logo"><img src="#" alt="Logo"></div>
+                <div class="logo">
+                    <img src="src/vivenciar_logov2.png" alt="Logo">
+                </div>
                 <nav>
                     <ul>
                         <li><a href="../">INICIO</a></li>
