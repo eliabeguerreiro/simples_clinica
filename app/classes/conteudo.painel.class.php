@@ -11,6 +11,9 @@ $html = <<<HTML
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <title>Clínica - Home</title>
                 <link rel="stylesheet" href="./src/style.css">
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
             </head>
 HTML;
         return $html;
@@ -19,6 +22,7 @@ HTML;
     public function renderBody()
     {
         $nome = htmlspecialchars($_SESSION['data_user']['nm_usuario']);
+        $perfil = htmlspecialchars($_SESSION['data_user']['perfil_nome'] ?? 'Usuário');
 
         // Definição dos módulos com ícones e descrições
         $modules = [
@@ -61,10 +65,18 @@ $html = <<<HTML
                     </div>
                     <nav>
                         <ul>
-                            <li><small>{$nome}</small></li>
                             <li><a href="../../">INICIO</a></li>
                             <li><a href="#">SUPORTE</a></li>
-                            <li><a href="?sair">SAIR</a></li>
+                            <li class="user-info">
+                                <span class="user-icon"><i class="fas fa-user"></i></span>
+                                <div class="user-details">
+                                    <span class="user-name">{$nome}</span>
+                                    <span class="user-role">{$perfil}</span>
+                                </div>
+                                <a href="?sair" class="btn-logout" title="Sair">
+                                    <i class="fas fa-sign-out-alt"></i>
+                                </a>
+                            </li>
                         </ul>
                     </nav>
                 </header>

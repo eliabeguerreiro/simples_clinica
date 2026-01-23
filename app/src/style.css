@@ -35,7 +35,48 @@ header {
     top: 0;
     z-index: 100;
 }
+/* Estilo do usuário logado no header */
+header .user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(108, 99, 255, 0.1);
+    padding: 6px 12px;
+    border-radius: 20px;
+    color: var(--cor-primaria);
+    font-weight: 600;
+    font-size: 14px;
+}
 
+header .user-icon {
+    color: var(--cor-primaria);
+    font-size: 16px;
+}
+
+header .user-details {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    min-width: 0; /* permite truncar texto */
+}
+
+header .user-name {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--cor-texto);
+    max-width: 120px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+header .user-role {
+    font-size: 11px;
+    color: var(--cor-secundaria);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
 .logo img {
     width: 120px;
     height: auto;

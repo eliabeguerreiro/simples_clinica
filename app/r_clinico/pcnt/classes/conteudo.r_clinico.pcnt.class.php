@@ -57,6 +57,7 @@ HTML;
         }
 
         $nome = htmlspecialchars($_SESSION['data_user']['nm_usuario']);
+        $perfil = htmlspecialchars($_SESSION['data_user']['perfil_nome'] ?? 'Usuário');
         $resultado = null;
         $abaAtiva = 'documentos'; // padrão
 
@@ -137,10 +138,18 @@ HTML;
         </div>
         <nav>
             <ul>
-                <li><small>{$nome}</small></li>
                 <li><a href="../../">INICIO</a></li>
                 <li><a href="#">SUPORTE</a></li>
-                <li><a href="?sair">SAIR</a></li>
+                <li class="user-info">
+                    <span class="user-icon"><i class="fas fa-user"></i></span>
+                    <div class="user-details">
+                        <span class="user-name">{$nome}</span>
+                        <span class="user-role">{$perfil}</span>
+                    </div>
+                    <a href="?sair" class="btn-logout" title="Sair">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </a>
+                </li>
             </ul>
         </nav>
     </header>
