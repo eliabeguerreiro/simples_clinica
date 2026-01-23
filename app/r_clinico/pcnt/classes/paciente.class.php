@@ -300,11 +300,11 @@ class Paciente
             'nacionalidade' => $dados['nacionalidade'] ?? '',
             'codigo_logradouro' => $dados['codigo_logradouro'] ?? '',
             'endereco' => trim(htmlspecialchars($dados['endereco'] ?? '')),
-            'numero' => trim(htmlspecialchars($dados['numero'] ?? '')),
+            'numero' => preg_replace('/[^0-9]/', '', trim($dados['numero'] ?? '')), // ← só números
             'complemento' => !empty($dados['complemento']) ? trim(htmlspecialchars($dados['complemento'])) : null,
             'bairro' => trim(htmlspecialchars($dados['bairro'] ?? '')),
-            'cep' => preg_replace('/[^0-9]/', '', trim($dados['cep'] ?? '')),
-            'telefone' => preg_replace('/[^0-9]/', '', trim($dados['telefone'] ?? '')),
+            'cep' => preg_replace('/[^0-9]/', '', trim($dados['cep'] ?? '')), // ← só números
+            'telefone' => preg_replace('/[^0-9]/', '', trim($dados['telefone'] ?? '')), // ← só números
             'email' => !empty($dados['email']) ? trim(htmlspecialchars($dados['email'])) : null,
             'situacao_rua' => $dados['situacao_rua'] ?? ''
         ];

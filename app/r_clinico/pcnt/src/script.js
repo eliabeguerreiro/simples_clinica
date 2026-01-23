@@ -31,24 +31,31 @@ function showSubTab(mainId, subId, clickedButton) {
     }
 }
 
+// Máscaras e validações em tempo real
 $(document).ready(function(){
+    // Máscaras
     $('#telefone').mask('(00) 00000-0000');
     $('#cep').mask('00000-000');
     $('#cns').mask('000 0000 0000 0000');
+
+    // Impedir letras em campos numéricos
+    $('#numero, #cep, #telefone, #cns').on('input', function() {
+        this.value = this.value.replace(/[^0-9\s]/g, '');
+    });
+
+    // Garantir teclado numérico em dispositivos móveis
+    $('#numero, #cep, #telefone').attr('inputmode', 'numeric').attr('pattern', '[0-9]*');
 });
 
-// Editar paciente (implementação básica)
+// Editar paciente
 function editarPaciente(id) {
-    // Mostra a aba de edição
     showSubTab('pacientes', 'edicao', document.querySelector(`[data-main="pacientes"][data-sub="edicao"]`));
-    
-    // Atualiza a URL para manter o estado (opcional, mas útil)
     const url = new URL(window.location.href);
     url.searchParams.set('id', id);
     window.history.pushState({}, '', url);
 }
 
-// Função para fechar o modal de exclusão
+// Fechar modal
 function fecharModal() {
     const modal = document.getElementById('modal-exclusao');
     if (modal) {
@@ -71,40 +78,22 @@ document.addEventListener('keydown', function(e) {
     }
 });
 
-// Função para abrir evolução do paciente
+// Abrir evolução
 function abrirEvolucao(pacienteId) {
     window.location.href = '../evlt/escolher_forms.php?paciente_id=' + pacienteId;
 }
 
-// Função para redirecionar para o módulo de evoluções
-function redirectToEvolucoes(pacienteId) {
-    window.location.href = '../evlt/?paciente=' + pacienteId;
-}
-
-// Atualiza o texto da sub-aba "Listagem" para "Detalhes do Paciente", se estiver visualizando um paciente
-document.addEventListener('DOMContentLoaded', function() {
-    if (document.getElementById('titulo-paciente')) {
-        const botaoListagem = document.querySelector('#sub-pacientes .tab-btn[data-sub="documentos"]');
-        if (botaoListagem) {
-            botaoListagem.textContent = 'Detalhes do Paciente';
-        }
-    }
-});
-
-// ✅ Nova função: confirmar exclusão de paciente
-// Função para abrir o modal de exclusão
+// Modal de exclusão personalizado (sem confirm() nativo)
 function confirmarExclusao(pacienteId) {
     const modal = document.getElementById('modal-exclusao');
     if (!modal) return;
 
-    // Armazena o ID do paciente no botão de confirmação
     const btnConfirmar = document.getElementById('confirmar-exclusao');
     if (btnConfirmar) {
-        // Remove evento anterior (evita duplicação)
+        // Remove evento anterior para evitar duplicação
         const novoBotao = btnConfirmar.cloneNode(true);
         btnConfirmar.parentNode.replaceChild(novoBotao, btnConfirmar);
         novoBotao.addEventListener('click', function() {
-            // Cria e envia formulário de exclusão
             const form = document.createElement('form');
             form.method = 'POST';
             form.style.display = 'none';
@@ -126,6 +115,15 @@ function confirmarExclusao(pacienteId) {
         });
     }
 
-    // Exibe o modal
     modal.style.display = 'flex';
 }
+
+// Atualiza o texto da sub-aba "Listagem" para "Detalhes do Paciente"
+document.addEventListener('DOMContentLoaded', function() {
+    if (document.getElementById('titulo-paciente')) {
+        const botaoListagem = document.querySelector('#sub-pacientes .tab-btn[data-sub="documentos"]');
+        if (botaoListagem) {
+            botaoListagem.textContent = 'Detalhes do Paciente';
+        }
+    }
+});
