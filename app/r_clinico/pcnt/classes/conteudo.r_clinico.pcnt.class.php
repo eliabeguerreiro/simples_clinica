@@ -1,10 +1,11 @@
 <?php
 include_once "paciente.class.php";
-//include "../../c_admin/classes/gest-user.class.php";
+
 class ConteudoRClinicoPCNT
 {
     private $paciente;
     private $paciente_id;
+
     public function __construct($paciente_id = null)
     {
         $this->paciente = new Paciente();
@@ -19,43 +20,46 @@ class ConteudoRClinicoPCNT
     public function render()
     {
         $html = <<<HTML
-            <!DOCTYPE html>
-            <html lang="pt-BR">
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Registro Clínico - Pacientes</title>
-                <link rel="stylesheet" href="./src/style.css">
-                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
-            </head>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro Clínico - Pacientes</title>
+    <link rel="stylesheet" href="./src/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+</head>
 HTML;
         $body = $this->renderBody();
         $html .= $body;
         $html .= <<<HTML
-            <script src="./src/script.js"></script>
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
-            </body>
-            </html>
+<script src="./src/script.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+</body>
+</html>
 HTML;
         return $html;
     }
 
     private function renderBody()
     {
-        // Verifica se o usuário tem ao menos uma permissão relacionada a pacientes
+        // Verifica se o usuário tem permissão
         $temPermissaoPacientes = (
             $this->usuarioTemPermissao('pacientes.visualizar') ||
             $this->usuarioTemPermissao('pacientes.criar') ||
             $this->usuarioTemPermissao('pacientes.editar') ||
             $this->usuarioTemPermissao('pacientes.excluir')
         );
+
         if (!$temPermissaoPacientes) {
             return '<div class="form-message error">Você não tem permissão para acessar o módulo de Pacientes.</div>';
         }
 
         $nome = htmlspecialchars($_SESSION['data_user']['nm_usuario']);
         $resultado = null;
+        $abaAtiva = 'documentos'; // padrão
+
         if ($_POST && isset($_POST['acao'])) {
             switch ($_POST['acao']) {
                 case 'cadastrar':
@@ -68,11 +72,10 @@ HTML;
                         header("Location: ?sub=documentos");
                         exit;
                     } else {
-                        // Em caso de erro, mantém o usuário na tela de cadastro com os dados preenchidos
-                        $this->paciente_id = null; // força a exibição da aba de cadastro
-                        // Não redireciona — o formulário será renderizado com $resultado
+                        $abaAtiva = 'cadastro';
                     }
-                break;
+                    break;
+
                 case 'atualizar':
                     if (isset($_POST['id']) && is_numeric($_POST['id'])) {
                         $resultado = $this->paciente->atualizar($_POST['id'], $_POST);
@@ -83,6 +86,8 @@ HTML;
                             ];
                             header("Location: ?sub=documentos");
                             exit;
+                        } else {
+                            $abaAtiva = 'edicao';
                         }
                     } else {
                         $resultado = [
@@ -92,6 +97,7 @@ HTML;
                         ];
                     }
                     break;
+
                 case 'excluir':
                     $resultado = $this->paciente->excluir($_POST['id']);
                     if ($resultado['sucesso']) {
@@ -103,6 +109,7 @@ HTML;
                         exit;
                     }
                     break;
+
                 case 'excluir_multiplos':
                     $resultado = $this->excluirMultiplos($_POST['ids']);
                     if ($resultado['sucesso']) {
@@ -116,87 +123,111 @@ HTML;
                     break;
             }
         }
+
         $pacienteBuscado = null;
         if (isset($_GET['id']) && is_numeric($_GET['id']) && (int)$_GET['id'] > 0) {
             $pacienteBuscado = $this->paciente->buscarPorId((int)$_GET['id']);
         }
+
         $html = <<<HTML
-            <body>
-                <header>
-                    <div class="logo">
-                        <img src="src/vivenciar_logov2.png" alt="Logo">
-                    </div>
-                    <nav>
-                        <ul>
-                            <li><small>{$nome}</small></li>
-                            <li><a href="../../">INICIO</a></li>
-                            <li><a href="#">SUPORTE</a></li>
-                            <li><a href="?sair">SAIR</a></li>
-                        </ul>
-                    </nav>
-                </header>
-                <section class="simple-box">
-                    <h2>Registro Clínico</h2>
-                    <!-- Abas principais -->
-                    <div class="tabs" id="main-tabs">
-                        <button class="tab-btn active" onclick="redirectToTab('pacientes')">Pacientes</button>
-                        <button class="tab-btn" onclick="redirectToTab('atendimentos')">Atendimentos</button>
-                        <button class="tab-btn" onclick="redirectToTab('evolucoes')">Formulários</button>
-                    </div>
-                    <!-- Sub-abas -->
-                    <div id="sub-tabs">
-                        <div class="sub-tabs" id="sub-pacientes">
-                            <button class="tab-btn" data-main="pacientes" data-sub="cadastro" onclick="showSubTab('pacientes', 'cadastro', this)">Cadastrar Paciente</button>
-                            <button class="tab-btn active" data-main="pacientes" data-sub="documentos" onclick="showSubTab('pacientes', 'documentos', this)">Listagem</button>
+<body>
+    <header>
+        <div class="logo">
+            <img src="src/vivenciar_logov2.png" alt="Logo">
+        </div>
+        <nav>
+            <ul>
+                <li><small>{$nome}</small></li>
+                <li><a href="../../">INICIO</a></li>
+                <li><a href="#">SUPORTE</a></li>
+                <li><a href="?sair">SAIR</a></li>
+            </ul>
+        </nav>
+    </header>
+    <section class="simple-box">
+        <h2>Registro Clínico</h2>
+        <!-- Abas principais -->
+        <div class="tabs" id="main-tabs">
+            <button class="tab-btn active" onclick="redirectToTab('pacientes')">Pacientes</button>
+            <button class="tab-btn" onclick="redirectToTab('atendimentos')">Atendimentos</button>
+            <button class="tab-btn" onclick="redirectToTab('evolucoes')">Formulários</button>
+        </div>
+        <!-- Sub-abas -->
+        <div id="sub-tabs">
+            <div class="sub-tabs" id="sub-pacientes">
+                <button class="tab-btn {$this->getActiveClass($abaAtiva, 'cadastro')}" 
+                        data-main="pacientes" data-sub="cadastro" 
+                        onclick="showSubTab('pacientes', 'cadastro', this)">
+                    Cadastrar Paciente
+                </button>
+                <button class="tab-btn {$this->getActiveClass($abaAtiva, 'documentos')}" 
+                        data-main="pacientes" data-sub="documentos" 
+                        onclick="showSubTab('pacientes', 'documentos', this)">
+                    Listagem
+                </button>
 HTML;
+
         if ($this->paciente_id) {
             $html .= '<button class="tab-btn" data-main="pacientes" data-sub="historico" onclick="showSubTab(\'pacientes\', \'historico\', this)">Histórico de Evoluções</button>';
         }
+
         $html .= <<<HTML
-                            </div>
-                        </div>
-                        <!-- Conteúdo das abas -->
-                        <div id="tab-content">
-                            <div id="pacientes-cadastro" class="tab-content" style="display:none;">
-                                {$this->getFormularioCadastro($resultado)}
-                            </div>
-                            <div id="pacientes-documentos" class="tab-content active">
-                                {$this->getListagemPacientes($resultado, $pacienteBuscado)}
-                            </div>
-                            <div id="pacientes-historico" class="tab-content" style="display:none;">
+            </div>
+        </div>
+        <!-- Conteúdo das abas -->
+        <div id="tab-content">
+            <div id="pacientes-cadastro" class="tab-content" style="{$this->getDisplayStyle($abaAtiva, 'cadastro')}">
+                {$this->getFormularioCadastro($resultado)}
+            </div>
+            <div id="pacientes-documentos" class="tab-content" style="{$this->getDisplayStyle($abaAtiva, 'documentos')}">
+                {$this->getListagemPacientes($resultado, $pacienteBuscado)}
+            </div>
+            <div id="pacientes-historico" class="tab-content" style="display:none;">
 HTML;
+
         if ($this->paciente_id) {
             $html .= $this->getHistoricoEvolucoesPorPaciente($this->paciente_id);
         } else {
             $html .= '<div class="form-message error">Paciente não especificado para exibir histórico.</div>';
         }
+
         $html .= <<<HTML
-                            </div>
-                            <div id="pacientes-edicao" class="tab-content" style="display:none;">
-                                {$this->getFormularioEdicao($resultado)}
-                            </div>
-                        </div>
-                    </section>
-                    <!-- Modal de exclusão -->
-                    <div id="modal-exclusao" class="modal" style="display:none;">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h3>Confirmar Exclusão</h3>
-                                <span class="close-modal" onclick="fecharModal()">&times;</span>
-                            </div>
-                            <div class="modal-body">
-                                <p>Tem certeza que deseja excluir este paciente?</p>
-                                <p><strong>Esta ação não pode ser desfeita.</strong></p>
-                            </div>
-                            <div class="modal-footer">
-                                <button class="btn-cancel" onclick="fecharModal()">Cancelar</button>
-                                <button class="btn-delete" id="confirmar-exclusao">Excluir</button>
-                            </div>
-                        </div>
-                    </div>
-                </body>
+            </div>
+            <div id="pacientes-edicao" class="tab-content" style="{$this->getDisplayStyle($abaAtiva, 'edicao')}">
+                {$this->getFormularioEdicao($resultado)}
+            </div>
+        </div>
+    </section>
+    <!-- Modal de exclusão -->
+    <div id="modal-exclusao" class="modal" style="display:none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Confirmar Exclusão</h3>
+                <span class="close-modal" onclick="fecharModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja excluir este paciente?</p>
+                <p><strong>Esta ação não pode ser desfeita.</strong></p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="fecharModal()">Cancelar</button>
+                <button class="btn-delete" id="confirmar-exclusao">Excluir</button>
+            </div>
+        </div>
+    </div>
+</body>
 HTML;
         return $html;
+    }
+
+    private function getActiveClass($current, $target)
+    {
+        return $current === $target ? 'active' : '';
+    }
+
+    private function getDisplayStyle($current, $target)
+    {
+        return $current === $target ? 'display:block;' : 'display:none;';
     }
 
     private function getFormularioCadastro($resultado = null)
@@ -204,15 +235,14 @@ HTML;
         if (!$this->usuarioTemPermissao('pacientes.criar')) {
             return '<div class="form-message error">Você não tem permissão para cadastrar pacientes.</div>';
         }
-        if ($_POST && isset($_POST['acao']) && $_POST['acao'] === 'cadastrar') {
-            error_log("Formulário enviado com erros: " . print_r($resultado, true));
-        }
+
         $dadosForm = [];
         if ($resultado && isset($resultado['dados'])) {
             $dadosForm = $resultado['dados'];
         } elseif (isset($_POST) && (!isset($_POST['acao']) || $_POST['acao'] == 'cadastrar')) {
             $dadosForm = $_POST;
         }
+
         $mensagens = '';
         if ($resultado && (!isset($_POST['acao']) || $_POST['acao'] == 'cadastrar')) {
             if (isset($resultado['sucesso']) && $resultado['sucesso']) {
@@ -225,6 +255,7 @@ HTML;
                 $mensagens .= '</div>';
             }
         }
+
         return '
         <div class="form-container">' . $mensagens . '
         <form action="" method="POST">
@@ -280,8 +311,8 @@ HTML;
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="etnia">Etnia</label>
-                    <input type="text" id="etnia" name="etnia" maxlength="4" placeholder="Ex: Tupi"
+                    <!--label for="etnia">Etnia</label-->
+                    <input  type="hidden" id="etnia" name="etnia" maxlength="4" placeholder="Ex: Tupi"
                            value="' . (isset($dadosForm['etnia']) ? htmlspecialchars($dadosForm['etnia']) : '') . '"
                            oninput="this.value = this.value.replace(/[^a-zA-ZÀ-ÿ\s\-\.]/g, \'\');">
                 </div>
@@ -342,7 +373,7 @@ HTML;
                 </div>
                 <div class="form-group">
                     <label for="telefone" class="required">Telefone</label>
-                    <input required type="text" id="telefone" name="telefone" maxlength="15" placeholder="(00) 00000-0000"
+                    <input required type="text" id="telefone" name="telefone" maxlength="11" placeholder="81 9 0000-0000"
                            value="' . (isset($dadosForm['telefone']) ? htmlspecialchars($dadosForm['telefone']) : '') . '"
                            inputmode="numeric" pattern="[0-9]*"
                            oninput="this.value = this.value.replace(/[^0-9]/g, \'\');">
@@ -372,13 +403,12 @@ HTML;
     private function getListagemPacientes($resultado = null, $pacienteBuscado = null)
     {
         $mensagens = '';
-        // Mensagem de sessão (ex: após cadastro ou exclusão)
         if (isset($_SESSION['mensagem'])) {
             $mensagens = '<div class="form-message ' . ($_SESSION['mensagem']['tipo'] === 'erro' ? 'error' : 'success') . '">' .
                          htmlspecialchars($_SESSION['mensagem']['texto']) . '</div>';
             unset($_SESSION['mensagem']);
         }
-        // Mensagens locais (ex: erro ao excluir sem JS)
+
         if ($resultado && isset($_POST['acao']) && ($_POST['acao'] == 'excluir' || $_POST['acao'] == 'excluir_multiplos')) {
             if (isset($resultado['sucesso']) && $resultado['sucesso']) {
                 $mensagens = '<div class="form-message success">' . $resultado['mensagem'] . '</div>';
@@ -390,10 +420,12 @@ HTML;
                 $mensagens .= '</div>';
             }
         }
+
         $termoBusca = $_GET['busca'] ?? '';
         $formularioBusca = '';
         $tabelaPacientes = '';
         $controls = '';
+
         if ($pacienteBuscado) {
             $dataNasc = date('d/m/Y', strtotime($pacienteBuscado['data_nascimento']));
             $tabelaPacientes = '
@@ -447,6 +479,7 @@ HTML;
             $pacientes = $this->paciente->buscarPorTermoPaginado($termoBusca, $pagina, $porPagina);
             $totalPacientes = $this->paciente->getTotalPacientes($termoBusca);
             $totalPaginas = ceil($totalPacientes / $porPagina);
+
             $formularioBusca = '
             <div class="search-bar">
                 <form method="GET" class="search-form">
@@ -459,6 +492,7 @@ HTML;
                     <a href="?sub=documentos" class="btn-clear">Limpar Busca</a>
                 </form>
             </div>';
+
             if (!empty($pacientes)) {
                 $tabelaPacientes = '
                 <div class="table-container">
@@ -484,13 +518,13 @@ HTML;
                             <div class="table-actions">
                                 <a href="?id=' . $paciente['id'] . '&sub=documentos" class="btn-action btn-view">
                                     <i class="fas fa-eye"></i> Detalhes
-                                </a>';
-                    $tabelaPacientes .= '
+                                </a>
                             </div>
                         </td>
                     </tr>';
                 }
                 $tabelaPacientes .= '</tbody></table></div>';
+
                 if ($totalPaginas > 1) {
                     $controls = '<div class="pagination-controls">';
                     if ($pagina > 1) {
@@ -514,6 +548,7 @@ HTML;
                 $tabelaPacientes = '<div class="no-data">Nenhum paciente encontrado.</div>';
             }
         }
+
         $total = $pacienteBuscado ? 1 : $totalPacientes ?? 0;
         return '
         <div class="listagem-container">' . $mensagens . $formularioBusca . '
@@ -582,6 +617,7 @@ HTML;
         if (!$paciente) {
             return '<div class="form-message error">Paciente não encontrado.</div>';
         }
+
         $dadosForm = $resultado && isset($resultado['dados']) ? $resultado['dados'] : $paciente;
         $mensagens = '';
         if ($resultado && (!isset($_POST['acao']) || $_POST['acao'] == 'atualizar')) {
@@ -595,6 +631,7 @@ HTML;
                 $mensagens .= '</div>';
             }
         }
+
         return '
         <div class="form-container">' . $mensagens . '
         <form action="" method="POST">
@@ -618,7 +655,7 @@ HTML;
                 </div>
                 <div class="form-group">
                     <label for="cns">CNS</label>
-                    <input type="text" id="cns" name="cns" maxlength="100" placeholder="Digite o CNS (obrigatório se SUS)"
+                    <input type="text" id="cns" name="cns" maxlength="15" placeholder="Digite o CNS (obrigatório se SUS)"
                            value="' . (isset($dadosForm['cns']) ? htmlspecialchars($dadosForm['cns']) : '') . '"
                            inputmode="numeric" pattern="[0-9]*"
                            oninput="this.value = this.value.replace(/[^0-9]/g, \'\');">
