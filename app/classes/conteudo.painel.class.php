@@ -61,6 +61,7 @@ $html = <<<HTML
                     </div>
                     <nav>
                         <ul>
+                            <li><small>{$nome}</small></li>
                             <li><a href="../../">INICIO</a></li>
                             <li><a href="#">SUPORTE</a></li>
                             <li><a href="?sair">SAIR</a></li>
