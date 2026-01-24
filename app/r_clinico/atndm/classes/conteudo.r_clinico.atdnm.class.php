@@ -36,7 +36,7 @@ class ContentRClinicoAtdnm
         $nome = htmlspecialchars($_SESSION['data_user']['nm_usuario']);
         $perfil = htmlspecialchars($_SESSION['data_user']['perfil_nome'] ?? 'Usuário');
 
-        $html = <<<HTML
+$html = <<<HTML
             <body>
                 <header>
                     <div class="logo">
@@ -118,9 +118,9 @@ class ContentRClinicoAtdnm
                 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
                 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
             </body>
-        HTML;
+HTML;
 
-        return $html;
+return $html;
     }
 }
 ?>
