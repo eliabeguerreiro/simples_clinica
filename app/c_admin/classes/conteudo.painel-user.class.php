@@ -145,8 +145,6 @@ HTML;
                 </div>
                 <nav>
                     <ul>
-                        <li><a href="../../">INICIO</a></li>
-                        <li><a href="#">SUPORTE</a></li>
                         <li class="user-info">
                             <span class="user-icon"><i class="fas fa-user"></i></span>
                             <div class="user-details">

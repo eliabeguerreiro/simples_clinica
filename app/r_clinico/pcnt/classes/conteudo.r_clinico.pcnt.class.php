@@ -131,15 +131,16 @@ HTML;
         }
 
         $html = <<<HTML
-<body>
+    <body>
     <header>
         <div class="logo">
             <img src="src/vivenciar_logov2.png" alt="Logo">
         </div>
         <nav>
             <ul>
-                <li><a href="../../">INICIO</a></li>
-                <li><a href="#">SUPORTE</a></li>
+                <!-- Botão de volta ao menu principal (ícone de casa) -->
+                <li><a href="../../" title="Voltar ao Menu Principal"><i class="fas fa-home"></i></a></li>
+                <!-- Informações do usuário -->
                 <li class="user-info">
                     <span class="user-icon"><i class="fas fa-user"></i></span>
                     <div class="user-details">

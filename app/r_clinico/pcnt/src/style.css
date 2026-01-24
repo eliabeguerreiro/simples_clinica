@@ -32,9 +32,12 @@ body {
     background-position: center;
     background-attachment: fixed;
     background-repeat: no-repeat;
+    margin: 0;
 }
 
-/* Header */
+/* === HEADER RESPONSIVO === */
+
+/* Header - versão desktop */
 header {
     display: flex;
     justify-content: space-between;
@@ -48,20 +51,24 @@ header {
     z-index: 100;
 }
 
+/* Logo */
 .logo img {
     width: 120px;
     height: auto;
     filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
 }
 
+/* Navegação */
 nav ul {
     list-style: none;
     display: flex;
     gap: 24px;
     padding: 0;
     margin: 0;
+    align-items: center;
 }
 
+/* Ícone de casa (voltar ao menu) */
 nav ul li a {
     text-decoration: none;
     color: var(--cor-primaria);
@@ -70,6 +77,14 @@ nav ul li a {
     transition: var(--transicao);
     padding: 6px 12px;
     border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: #f5f5f7;
+    border: 1px solid #ddd;
+    color: var(--cor-primaria);
 }
 
 nav ul li a:hover {
@@ -77,6 +92,7 @@ nav ul li a:hover {
     background-color: #f0f0ff;
     transform: scale(1.02);
 }
+
 /* Estilo do usuário logado no header */
 header .user-info {
     display: flex;
@@ -99,7 +115,7 @@ header .user-details {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    min-width: 0; /* permite truncar texto */
+    min-width: 0;
 }
 
 header .user-name {
@@ -118,6 +134,21 @@ header .user-role {
     font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+}
+
+header .btn-logout {
+    background: transparent;
+    color: var(--cor-primaria);
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 0 8px;
+    transition: all 0.2s ease;
+}
+
+header .btn-logout:hover {
+    color: var(--cor-erro);
+    transform: scale(1.1);
 }
 
 /* Container principal */
@@ -691,14 +722,67 @@ header .user-role {
     font-size: 16px;
 }
 
-/* Responsividade */
+/* === RESPONSIVIDADE === */
+
 @media (max-width: 768px) {
+    /* Header */
+    header {
+        padding: 15px 20px;
+        flex-direction: column;
+        gap: 15px;
+        align-items: stretch;
+    }
+
+    .logo img {
+        width: 100px;
+    }
+
+    nav ul {
+        width: 100%;
+        justify-content: space-between;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    nav ul li a {
+        width: 40px;
+        height: 40px;
+        padding: 6px;
+        font-size: 14px;
+    }
+
+    /* User Info */
+    header .user-info {
+        justify-content: space-between;
+        width: 100%;
+        padding: 8px 12px;
+        gap: 10px;
+    }
+
+    header .user-details {
+        flex-direction: row;
+        align-items: center;
+        gap: 10px;
+    }
+
+    header .user-name {
+        max-width: 80px;
+        font-size: 13px;
+    }
+
+    header .user-role {
+        font-size: 10px;
+        letter-spacing: 0.3px;
+    }
+
+    /* Container principal */
     .simple-box {
         margin: 20px;
         padding: 20px;
         max-width: 95%;
     }
 
+    /* Abas */
     .tabs, .sub-tabs {
         flex-direction: column;
         align-items: center;
@@ -709,13 +793,20 @@ header .user-role {
         max-width: 300px;
     }
 
+    /* Formulários */
     .form-row {
         grid-template-columns: 1fr;
         gap: 15px;
     }
 
+    /* Busca */
+    .search-bar {
+        padding: 12px;
+    }
+
     .search-form {
         flex-direction: column;
+        gap: 10px;
     }
 
     .search-form input {
@@ -723,6 +814,7 @@ header .user-role {
         min-width: auto;
     }
 
+    /* Tabela */
     .table-header {
         flex-direction: column;
         align-items: stretch;
@@ -737,6 +829,7 @@ header .user-role {
         padding: 10px;
     }
 
+    /* Botões na tabela */
     .table-actions {
         flex-direction: column;
         gap: 6px;
@@ -747,12 +840,14 @@ header .user-role {
         justify-content: center;
     }
 
+    /* Detalhes do paciente */
     .paciente-info {
         grid-template-columns: 1fr;
     }
 
     .paciente-actions {
         flex-direction: column;
+        gap: 10px;
     }
 
     .paciente-actions .btn-edit,
@@ -760,5 +855,27 @@ header .user-role {
     .paciente-actions .btn-clear {
         width: 100%;
         justify-content: center;
+    }
+
+    /* Modal */
+    .modal-content {
+        max-width: 90%;
+        width: 95%;
+    }
+
+    /* Paginação */
+    .pagination-controls {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .btn-pagination {
+        padding: 6px 12px;
+        font-size: 13px;
+    }
+
+    .pagination-current {
+        padding: 6px 12px;
+        font-size: 13px;
     }
 }
