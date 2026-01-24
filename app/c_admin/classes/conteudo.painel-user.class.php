@@ -145,6 +145,9 @@ HTML;
                 </div>
                 <nav>
                     <ul>
+                        <!-- Ícone de casa: volta ao menu principal -->
+                        <li><a href="../../" title="Voltar ao Menu Principal"><i class="fas fa-home"></i></a></li>
+                        <!-- Informações do usuário -->
                         <li class="user-info">
                             <span class="user-icon"><i class="fas fa-user"></i></span>
                             <div class="user-details">
