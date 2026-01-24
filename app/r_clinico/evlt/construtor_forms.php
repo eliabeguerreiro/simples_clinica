@@ -28,16 +28,22 @@ if ($form_id <= 0) {
 if (isset($_GET['excluir'])) {
     $perguntaId = (int)$_GET['excluir'];
     try {
-        $stmt = $db->prepare("SELECT id FROM formulario_perguntas WHERE id = ? AND formulario_id = ?");
+        // Verifica se a pergunta existe e pertence ao formulário
+        $stmt = $db->prepare("SELECT titulo FROM formulario_perguntas WHERE id = ? AND formulario_id = ?");
         $stmt->execute([$perguntaId, $form_id]);
-        if (!$stmt->fetch()) {
-            throw new Exception("Pergunta não pertence a este formulário.");
+        $pergunta = $stmt->fetch();
+
+        if (!$pergunta) {
+            throw new Exception("Pergunta não encontrada ou não pertence a este formulário.");
         }
+
+        // Realiza a exclusão
         $stmt = $db->prepare("DELETE FROM formulario_perguntas WHERE id = ?");
         $stmt->execute([$perguntaId]);
-        setMensagem('Pergunta excluída com sucesso!');
+
+        setMensagem('Pergunta "' . htmlspecialchars($pergunta['titulo']) . '" excluída com sucesso!');
     } catch (Exception $e) {
-        setMensagem('Erro ao excluir pergunta: ' . $e->getMessage(), 'erro');
+        setMensagem('Não foi possível excluir a pergunta. ' . $e->getMessage(), 'erro');
     }
     header("Location: construtor_forms.php?form_id=$form_id");
     exit;
@@ -245,10 +251,6 @@ $perguntas = $stmt->fetchAll();
             <!-- Campos comuns -->
             <div class="form-row">
                 <div class="form-group">
-                    <label for="nome_unico">Nome Único (identificador interno)</label>
-                    <input type="text" id="nome_unico" name="nome_unico" maxlength="50" placeholder="Ex: risco_queda">
-                </div>
-                <div class="form-group">
                     <label for="descricao">Descrição / Ajuda</label>
                     <input type="text" id="descricao" name="descricao" maxlength="255" placeholder="Ex: Avalie o risco de queda">
                 </div>
@@ -330,10 +332,10 @@ $perguntas = $stmt->fetchAll();
                         <br><small>Múltipla escolha: Sim</small>
                     <?php endif; ?>
                     <div style="display: flex; justify-content: flex-end; margin-top: 8px; gap: 4px;">
-                        <a href="?form_id=<?= $form_id ?>&excluir=<?= $p['id'] ?>" 
-                           class="btn-delete-small" 
-                           title="Excluir pergunta"
-                           onclick="return confirm('Tem certeza? Esta ação não pode ser desfeita.')">
+                        <a href="javascript:void(0)" 
+                        class="btn-delete-small" 
+                        title="Excluir pergunta"
+                        onclick="abrirModalExclusaoPergunta(<?= $form_id ?>, <?= $p['id'] ?>, '<?= addslashes(htmlspecialchars($p['titulo'])) ?>')">
                             <i class="fas fa-trash"></i>
                         </a>
                     </div>
@@ -341,6 +343,25 @@ $perguntas = $stmt->fetchAll();
             <?php endforeach; ?>
         <?php endif; ?>
     </div>
+    <!-- Modal de confirmação de exclusão -->
+    <div id="modal-exclusao-pergunta" class="modal" style="display:none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Confirmar Exclusão</h3>
+                <span class="close-modal" onclick="fecharModalExclusaoPergunta()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p>Você tem certeza que deseja excluir a pergunta:</p>
+                <p><strong id="titulo-pergunta-excluir"></strong></p>
+                <p><strong>Esta ação não pode ser desfeita.</strong></p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="fecharModalExclusaoPergunta()">Cancelar</button>
+                <a href="#" id="btn-confirmar-exclusao" class="btn-delete">Excluir</a>
+            </div>
+        </div>
+    </div>
     <script src="construtor_forms.js"></script>
+</div>
 </body>
 </html>

@@ -44,3 +44,31 @@ document.addEventListener('DOMContentLoaded', function() {
         atualizarCampos();
     }
 });
+
+// Função para abrir o modal de exclusão de pergunta
+function abrirModalExclusaoPergunta(formId, perguntaId, titulo) {
+    document.getElementById('titulo-pergunta-excluir').textContent = titulo;
+    const url = `?form_id=${formId}&excluir=${perguntaId}`;
+    document.getElementById('btn-confirmar-exclusao').href = url;
+    document.getElementById('modal-exclusao-pergunta').style.display = 'flex';
+}
+
+// Função para fechar o modal
+function fecharModalExclusaoPergunta() {
+    document.getElementById('modal-exclusao-pergunta').style.display = 'none';
+}
+
+// Fechar modal ao clicar fora
+document.addEventListener('click', function(e) {
+    const modal = document.getElementById('modal-exclusao-pergunta');
+    if (modal && e.target === modal) {
+        fecharModalExclusaoPergunta();
+    }
+});
+
+// Fechar com ESC
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        fecharModalExclusaoPergunta();
+    }
+});
