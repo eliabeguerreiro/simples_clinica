@@ -27,7 +27,7 @@ header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 18px 40px;
+    padding: 12px 24px;
     background: white;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
     border-bottom: 3px solid #6c63ff;
@@ -86,9 +86,10 @@ header .user-role {
 nav ul {
     list-style: none;
     display: flex;
-    gap: 24px;
+    gap: 12px;
     padding: 0;
     margin: 0;
+    align-items: center;
 }
 
 nav ul li a {
@@ -99,12 +100,35 @@ nav ul li a {
     transition: color 0.2s ease, transform 0.1s ease;
     padding: 6px 12px;
     border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: #f5f5f7;
+    border: 1px solid #ddd;
+    color: #6c63ff;
 }
 
 nav ul li a:hover {
     color: #333;
     background-color: #f0f0ff;
     transform: scale(1.02);
+}
+
+header .btn-logout {
+    background: transparent;
+    color: #6c63ff;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 0 8px;
+    transition: all 0.2s ease;
+}
+
+header .btn-logout:hover {
+    color: #dc3545;
+    transform: scale(1.1);
 }
 
 /* Container principal */
@@ -212,6 +236,54 @@ nav ul li a:hover {
 
 /* Responsividade */
 @media (max-width: 768px) {
+    header {
+        padding: 10px 16px;
+        flex-direction: column;
+        gap: 15px;
+        align-items: stretch;
+    }
+
+    .logo img {
+        width: 100px;
+    }
+
+    nav ul {
+        width: 100%;
+        justify-content: space-between;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    nav ul li a {
+        width: 40px;
+        height: 40px;
+        padding: 6px;
+        font-size: 14px;
+    }
+
+    header .user-info {
+        justify-content: space-between;
+        width: 100%;
+        padding: 8px 12px;
+        gap: 10px;
+    }
+
+    header .user-details {
+        flex-direction: row;
+        align-items: center;
+        gap: 10px;
+    }
+
+    header .user-name {
+        max-width: 80px;
+        font-size: 13px;
+    }
+
+    header .user-role {
+        font-size: 10px;
+        letter-spacing: 0.3px;
+    }
+
     .simple-box {
         margin: 20px;
         padding: 25px;
@@ -220,18 +292,6 @@ nav ul li a:hover {
     
     .modules-grid {
         grid-template-columns: 1fr;
-    }
-    
-    header {
-        padding: 15px 20px;
-        flex-direction: column;
-        gap: 15px;
-    }
-    
-    nav ul {
-        gap: 15px;
-        flex-wrap: wrap;
-        justify-content: center;
     }
     
     .module-card h3 {
