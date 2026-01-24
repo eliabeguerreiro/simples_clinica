@@ -39,7 +39,7 @@ header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 18px 40px;
+    padding: 12px 24px;
     background: white;
     box-shadow: var(--sombra-suave);
     border-bottom: 3px solid var(--cor-primaria);
@@ -57,9 +57,10 @@ header {
 nav ul {
     list-style: none;
     display: flex;
-    gap: 24px;
+    gap: 12px;
     padding: 0;
     margin: 0;
+    align-items: center;
 }
 
 nav ul li a {
@@ -70,12 +71,35 @@ nav ul li a {
     transition: var(--transicao);
     padding: 6px 12px;
     border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: #f5f5f7;
+    border: 1px solid #ddd;
+    color: var(--cor-primaria);
 }
 
 nav ul li a:hover {
     color: #333;
     background-color: #f0f0ff;
     transform: scale(1.02);
+}
+
+header .btn-logout {
+    background: transparent;
+    color: var(--cor-primaria);
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 0 8px;
+    transition: all 0.2s ease;
+}
+
+header .btn-logout:hover {
+    color: var(--cor-erro);
+    transform: scale(1.1);
 }
 
 /* Container principal */
@@ -493,6 +517,31 @@ header .user-role {
 
 /* Responsividade */
 @media (max-width: 768px) {
+    header {
+        padding: 10px 16px;
+        flex-direction: column;
+        gap: 15px;
+        align-items: stretch;
+    }
+
+    .logo img {
+        width: 100px;
+    }
+
+    nav ul {
+        width: 100%;
+        justify-content: space-between;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    nav ul li a {
+        width: 40px;
+        height: 40px;
+        padding: 6px;
+        font-size: 14px;
+    }
+
     .simple-box {
         margin: 20px;
         padding: 20px;
