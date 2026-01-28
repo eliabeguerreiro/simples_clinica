@@ -48,20 +48,28 @@ HTML;
         $nome = htmlspecialchars($_SESSION['data_user']['nm_usuario']);
         $perfil = htmlspecialchars($_SESSION['data_user']['perfil_nome'] ?? 'Usuário');
 
-        // Mensagem de sucesso/erro via GET (para reativação)
+        // Exibe mensagem da sessão (se houver)
+        $mensagemSessao = '';
+        if (isset($_SESSION['msg'])) {
+            $mensagemSessao = '<div class="form-message success">' . htmlspecialchars($_SESSION['msg']) . '</div>';
+            unset($_SESSION['msg']);
+        }
+
         $resultado = null;
         if ($_POST && isset($_POST['acao'])) {
             switch ($_POST['acao']) {
                 case 'cadastrar':
                     $resultado = $this->usuario->cadastrar($_POST);
                     if ($resultado['sucesso']) {
-                        header("Location: ?tab=perfis&sub=listagem");
+                        $_SESSION['msg'] = 'Usuário cadastrado com sucesso!';
+                        header("Location: ?tab=usuarios&sub=documentos");
                         exit;
                     }
                     break;
                 case 'desativar':
                     $resultado = $this->usuario->desativar($_POST['id']);
                     if ($resultado['sucesso']) {
+                        $_SESSION['msg'] = 'Usuário desativado com sucesso!';
                         header("Location: ?tab=usuarios&sub=documentos");
                         exit;
                     }
@@ -69,6 +77,7 @@ HTML;
                 case 'reativar':
                     $resultado = $this->usuario->reativar($_POST['id']);
                     if ($resultado['sucesso']) {
+                        $_SESSION['msg'] = 'Usuário reativado com sucesso!';
                         header("Location: ?tab=usuarios&sub=inativos");
                         exit;
                     }
@@ -77,6 +86,7 @@ HTML;
                     if (isset($_POST['id']) && is_numeric($_POST['id'])) {
                         $resultado = $this->usuario->atualizar($_POST['id'], $_POST);
                         if ($resultado['sucesso']) {
+                            $_SESSION['msg'] = 'Usuário atualizado com sucesso!';
                             header("Location: ?tab=usuarios&sub=documentos");
                             exit;
                         }
@@ -91,6 +101,7 @@ HTML;
                 case 'cadastrar_perfil':
                     $resultado = $this->usuario->cadastrarPerfil($_POST);
                     if ($resultado['sucesso']) {
+                        $_SESSION['msg'] = 'Perfil criado com sucesso!';
                         header("Location: ?tab=perfis&sub=listagem");
                         exit;
                     }
@@ -99,6 +110,7 @@ HTML;
                     if (isset($_POST['id']) && is_numeric($_POST['id'])) {
                         $resultado = $this->usuario->atualizarPerfil($_POST['id'], $_POST);
                         if ($resultado['sucesso']) {
+                            $_SESSION['msg'] = 'Perfil atualizado com sucesso!';
                             header("Location: ?tab=perfis&sub=listagem");
                             exit;
                         }
@@ -113,6 +125,7 @@ HTML;
                 case 'excluir_perfil':
                     $resultado = $this->usuario->excluirPerfil($_POST['id']);
                     if ($resultado['sucesso']) {
+                        $_SESSION['msg'] = 'Perfil excluído com sucesso!';
                         header("Location: ?tab=perfis&sub=listagem");
                         exit;
                     }
@@ -160,15 +173,14 @@ HTML;
 
         return <<<HTML
         <body>
+         
             <header>
                 <div class="logo">
                     <img src="src/vivenciar_logov2.png" alt="Logo">
                 </div>
                 <nav>
                     <ul>
-                        <!-- Ícone de casa: volta ao menu principal -->
                         <li><a href="../" title="Voltar ao Menu Principal"><i class="fas fa-home"></i></a></li>
-                        <!-- Informações do usuário -->
                         <li class="user-info">
                             <span class="user-icon"><i class="fas fa-user"></i></span>
                             <div class="user-details">
@@ -181,8 +193,9 @@ HTML;
                         </li>
                     </ul>
                 </nav>
-            </header>
+            </header>            
             <section class="simple-box">
+                {$mensagemSessao}
                 <h2>Gestão de Usuários e Perfis</h2>
                 <!-- Abas principais -->
                 <div class="tabs">
@@ -226,23 +239,24 @@ HTML;
                     </div>
                 </div>
             </section>
-            <!-- Modal de desativação -->
+            <!-- Modal de exclusão -->
             <div id="modal-exclusao" class="modal" style="display:none;">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h3>Confirmar Desativação</h3>
+                        <h3>Confirmar Ação</h3>
                         <span class="close-modal" onclick="fecharModal()">&times;</span>
                     </div>
                     <div class="modal-body">
-                        <p>Tem certeza que deseja desativar este usuário?</p>
-                        <p><strong>O usuário perderá acesso ao sistema.</strong></p>
+                        <p>Tem certeza?</p>
+                        <p><strong>Aviso importante.</strong></p>
                     </div>
                     <div class="modal-footer">
                         <button class="btn-cancel" onclick="fecharModal()">Cancelar</button>
-                        <button class="btn-delete" id="confirmar-exclusao">Desativar</button>
+                        <button class="btn-delete" id="confirmar-exclusao">Confirmar</button>
                     </div>
                 </div>
             </div>
+
             {$initScript}
         </body>
 HTML;
@@ -523,10 +537,10 @@ HTML;
             if ($this->usuarioTemPermissao('cadmin.perfis.editar')) {
                 $rows .= '<a href="?tab=perfis&sub=edicao&id_perfil=' . $p['id'] . '" class="btn-action btn-edit">
                             <i class="fas fa-edit"></i> Editar
-                        </a>
-                        <button type="button" class="btn-action btn-delete" onclick="confirmarExclusaoPerfil(' . $p['id'] . ')">
+                          </a>
+                          <button type="button" class="btn-action btn-delete" onclick="confirmarExclusaoPerfil(' . $p['id'] . ')">
                             <i class="fas fa-trash"></i> Excluir
-                        </button>';
+                          </button>';
             }
             $rows .= '</div>
                 </td>
@@ -570,9 +584,7 @@ HTML;
             }
         }
 
-        $permissoes = $this->usuario->listarTodasPermissoes();
-        $checkboxes = $this->gerarHtmlPermissoes($permissoes, $dadosForm['permissoes'] ?? []);
-
+        // ✅ REMOVIDO: campo de permissões no cadastro
         return '
         <div class="form-container">' . $mensagens . '
             <form method="POST">
@@ -586,12 +598,6 @@ HTML;
                 <div class="form-group">
                     <label>Descrição</label>
                     <input name="descricao" maxlength="150" value="' . htmlspecialchars($dadosForm['descricao'] ?? '') . '">
-                </div>
-                <div class="form-group">
-                    <label>Permissões</label>
-                    <div class="accordion-container">
-                        ' . $checkboxes . '
-                    </div>
                 </div>
                 <button type="submit" class="btn-add">Salvar Perfil</button>
             </form>
@@ -661,73 +667,73 @@ HTML;
         </div>';
     }
 
-private function gerarHtmlPermissoes($todasPermissoes, $idsSelecionados)
-{
-    // Agrupar permissões por módulo
-    $grupos = [
-        'cadmin' => ['nome' => 'Painel Administrativo', 'icon' => 'fa-cogs'],
-        'pacientes' => ['nome' => 'Pacientes', 'icon' => 'fa-user-injured'],
-        'atendimentos' => ['nome' => 'Atendimentos', 'icon' => 'fa-procedures'],
-        'evolucoes' => ['nome' => 'Evoluções Clínicas', 'icon' => 'fa-file-medical'],
-        'formularios' => ['nome' => 'Construção de Formulários', 'icon' => 'fa-list-alt']
-    ];
+    private function gerarHtmlPermissoes($todasPermissoes, $idsSelecionados)
+    {
+        // Agrupar permissões por módulo
+        $grupos = [
+            'cadmin' => ['nome' => 'Painel Administrativo', 'icon' => 'fa-cogs'],
+            'pacientes' => ['nome' => 'Pacientes', 'icon' => 'fa-user-injured'],
+            'atendimentos' => ['nome' => 'Atendimentos', 'icon' => 'fa-procedures'],
+            'evolucoes' => ['nome' => 'Evoluções Clínicas', 'icon' => 'fa-file-medical'],
+            'formularios' => ['nome' => 'Construção de Formulários', 'icon' => 'fa-list-alt']
+        ];
 
-    // Distribuir permissões nos grupos
-    foreach ($todasPermissoes as $p) {
-        $adicionado = false;
-        foreach (array_keys($grupos) as $prefixo) {
-            if (strpos($p['chave'], $prefixo . '.') === 0) {
-                $grupos[$prefixo]['permissoes'][] = $p;
-                $adicionado = true;
-                break;
+        foreach ($todasPermissoes as $p) {
+            $adicionado = false;
+            foreach (array_keys($grupos) as $prefixo) {
+                if (strpos($p['chave'], $prefixo . '.') === 0) {
+                    $grupos[$prefixo]['permissoes'][] = $p;
+                    $adicionado = true;
+                    break;
+                }
+            }
+            if (!$adicionado) {
+                if (!isset($grupos['outros'])) {
+                    $grupos['outros'] = ['nome' => 'Outras Permissões', 'icon' => 'fa-exclamation-triangle', 'permissoes' => []];
+                }
+                $grupos['outros']['permissoes'][] = $p;
             }
         }
-        if (!$adicionado) {
-            if (!isset($grupos['outros'])) {
-                $grupos['outros'] = ['nome' => 'Outras Permissões', 'icon' => 'fa-exclamation-triangle', 'permissoes' => []];
+
+        $html = '';
+        foreach ($grupos as $prefixo => $info) {
+            if (!isset($info['permissoes']) || empty($info['permissoes'])) continue;
+
+            $temPermissaoMarcada = false;
+            foreach ($info['permissoes'] as $p) {
+                if (in_array($p['id'], $idsSelecionados)) {
+                    $temPermissaoMarcada = true;
+                    break;
+                }
             }
-            $grupos['outros']['permissoes'][] = $p;
+
+            $checkedMaster = $temPermissaoMarcada;
+            $html .= '<div class="accordion-item">
+                <div class="accordion-header">
+                    <i class="fas ' . $info['icon'] . '"></i>
+                    <strong>' . htmlspecialchars($info['nome']) . '</strong>
+                    <label class="switch">
+                        <input type="checkbox" 
+                               class="master-toggle" 
+                               data-prefix="' . $prefixo . '" 
+                               ' . ($checkedMaster ? 'checked' : '') . '>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="accordion-content" ' . ($checkedMaster ? '' : 'style="display:none;"') . '>';
+
+            foreach ($info['permissoes'] as $p) {
+                $checked = in_array($p['id'], $idsSelecionados) ? 'checked' : '';
+                $html .= '<label class="permission-item">
+                    <input type="checkbox" name="permissoes[]" value="' . $p['id'] . '" ' . $checked . '>
+                    ' . htmlspecialchars($p['chave']) . ' — ' . htmlspecialchars($p['descricao']) . '
+                </label>';
+            }
+
+            $html .= '</div></div>';
         }
+
+        return $html;
     }
-
-    $html = '';
-    foreach ($grupos as $prefixo => $info) {
-        if (!isset($info['permissoes']) || empty($info['permissoes'])) continue;
-
-        $temPermissaoMarcada = false;
-        foreach ($info['permissoes'] as $p) {
-            if (in_array($p['id'], $idsSelecionados)) {
-                $temPermissaoMarcada = true;
-                break;
-            }
-        }
-
-        $checkedMaster = $temPermissaoMarcada;
-        $html .= '<div class="accordion-item">
-            <div class="accordion-header">
-                <i class="fas ' . $info['icon'] . '"></i>
-                <strong>' . htmlspecialchars($info['nome']) . '</strong>
-                <label class="switch">
-                    <input type="checkbox" 
-                           class="master-toggle" 
-                           data-prefix="' . $prefixo . '" 
-                           ' . ($checkedMaster ? 'checked' : '') . '>
-                    <span class="slider"></span>
-                </label>
-            </div>
-            <div class="accordion-content" ' . ($checkedMaster ? '' : 'style="display:none;"') . '>';
-
-        foreach ($info['permissoes'] as $p) {
-            $checked = in_array($p['id'], $idsSelecionados) ? 'checked' : '';
-            $html .= '<label class="permission-item">
-                <input type="checkbox" name="permissoes[]" value="' . $p['id'] . '" ' . $checked . '>
-                ' . htmlspecialchars($p['chave']) . ' — ' . htmlspecialchars($p['descricao']) . '
-            </label>';
-        }
-
-        $html .= '</div></div>';
-    }
-
-    return $html;
 }
-}
+?>
