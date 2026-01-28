@@ -27,11 +27,30 @@ function showSubTab(mainId, subId, clickedButton) {
 let usuarioParaDesativar = null;
 function confirmarDesativacao(id) {
     usuarioParaDesativar = id;
+    // Configura o modal para desativação
+    document.querySelector('#modal-exclusao .modal-header h3').textContent = 'Confirmar Desativação';
+    document.querySelector('#modal-exclusao .modal-body p:first-child').textContent = 'Tem certeza que deseja desativar este usuário?';
+    document.querySelector('#modal-exclusao .modal-body p:last-child').innerHTML = '<strong>O usuário perderá acesso ao sistema.</strong>';
+    document.getElementById('confirmar-exclusao').textContent = 'Desativar';
     document.getElementById('modal-exclusao').style.display = 'flex';
 }
+
+// Exclusão de perfil
+let perfilParaExcluir = null;
+function confirmarExclusaoPerfil(id) {
+    perfilParaExcluir = id;
+    // Configura o modal para exclusão de perfil
+    document.querySelector('#modal-exclusao .modal-header h3').textContent = 'Confirmar Exclusão de Perfil';
+    document.querySelector('#modal-exclusao .modal-body p:first-child').textContent = 'Tem certeza que deseja excluir este perfil?';
+    document.querySelector('#modal-exclusao .modal-body p:last-child').innerHTML = '<strong>Usuários vinculados perderão acesso.</strong>';
+    document.getElementById('confirmar-exclusao').textContent = 'Excluir';
+    document.getElementById('modal-exclusao').style.display = 'flex';
+}
+
 function fecharModal() {
     document.getElementById('modal-exclusao').style.display = 'none';
     usuarioParaDesativar = null;
+    perfilParaExcluir = null;
 }
 
 // Reativação de usuário
@@ -51,10 +70,9 @@ function confirmarReativacao(id) {
 
 // Inicialização ao carregar a página
 document.addEventListener('DOMContentLoaded', function () {
-    // Botão de confirmação de desativação
     const confirmBtn = document.getElementById('confirmar-exclusao');
     if (confirmBtn) {
-        confirmBtn.textContent = 'Desativar';
+        // Evento genérico: verifica qual ação está pendente
         confirmBtn.addEventListener('click', function () {
             if (usuarioParaDesativar) {
                 const form = document.createElement('form');
@@ -62,6 +80,15 @@ document.addEventListener('DOMContentLoaded', function () {
                 form.innerHTML = `
                     <input type="hidden" name="acao" value="desativar">
                     <input type="hidden" name="id" value="${usuarioParaDesativar}">
+                `;
+                document.body.appendChild(form);
+                form.submit();
+            } else if (perfilParaExcluir) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.innerHTML = `
+                    <input type="hidden" name="acao" value="excluir_perfil">
+                    <input type="hidden" name="id" value="${perfilParaExcluir}">
                 `;
                 document.body.appendChild(form);
                 form.submit();

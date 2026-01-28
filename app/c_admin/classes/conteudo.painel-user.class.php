@@ -50,27 +50,36 @@ HTML;
 
         // Mensagem de sucesso/erro via GET (para reativação)
         $resultado = null;
-        if (isset($_GET['msg']) && $_GET['msg'] == 'reativado') {
-            $resultado = [
-                'sucesso' => true,
-                'mensagem' => 'Usuário reativado com sucesso!'
-            ];
-        }
-
         if ($_POST && isset($_POST['acao'])) {
             switch ($_POST['acao']) {
                 case 'cadastrar':
                     $resultado = $this->usuario->cadastrar($_POST);
+                    if ($resultado['sucesso']) {
+                        header("Location: ?tab=perfis&sub=listagem");
+                        exit;
+                    }
                     break;
                 case 'desativar':
                     $resultado = $this->usuario->desativar($_POST['id']);
+                    if ($resultado['sucesso']) {
+                        header("Location: ?tab=usuarios&sub=documentos");
+                        exit;
+                    }
                     break;
                 case 'reativar':
                     $resultado = $this->usuario->reativar($_POST['id']);
+                    if ($resultado['sucesso']) {
+                        header("Location: ?tab=usuarios&sub=inativos");
+                        exit;
+                    }
                     break;
                 case 'atualizar':
                     if (isset($_POST['id']) && is_numeric($_POST['id'])) {
                         $resultado = $this->usuario->atualizar($_POST['id'], $_POST);
+                        if ($resultado['sucesso']) {
+                            header("Location: ?tab=usuarios&sub=documentos");
+                            exit;
+                        }
                     } else {
                         $resultado = [
                             'sucesso' => false,
@@ -81,10 +90,18 @@ HTML;
                     break;
                 case 'cadastrar_perfil':
                     $resultado = $this->usuario->cadastrarPerfil($_POST);
+                    if ($resultado['sucesso']) {
+                        header("Location: ?tab=perfis&sub=listagem");
+                        exit;
+                    }
                     break;
                 case 'atualizar_perfil':
                     if (isset($_POST['id']) && is_numeric($_POST['id'])) {
                         $resultado = $this->usuario->atualizarPerfil($_POST['id'], $_POST);
+                        if ($resultado['sucesso']) {
+                            header("Location: ?tab=perfis&sub=listagem");
+                            exit;
+                        }
                     } else {
                         $resultado = [
                             'sucesso' => false,
@@ -95,6 +112,10 @@ HTML;
                     break;
                 case 'excluir_perfil':
                     $resultado = $this->usuario->excluirPerfil($_POST['id']);
+                    if ($resultado['sucesso']) {
+                        header("Location: ?tab=perfis&sub=listagem");
+                        exit;
+                    }
                     break;
             }
         }
@@ -502,14 +523,10 @@ HTML;
             if ($this->usuarioTemPermissao('cadmin.perfis.editar')) {
                 $rows .= '<a href="?tab=perfis&sub=edicao&id_perfil=' . $p['id'] . '" class="btn-action btn-edit">
                             <i class="fas fa-edit"></i> Editar
-                          </a>
-                          <form method="POST" style="display:inline;" onsubmit="return confirm(\'Excluir perfil? Usuários vinculados perderão acesso.\');">
-                            <input type="hidden" name="acao" value="excluir_perfil">
-                            <input type="hidden" name="id" value="' . $p['id'] . '">
-                            <button type="submit" class="btn-action btn-delete">
-                                <i class="fas fa-trash"></i> Excluir
-                            </button>
-                          </form>';
+                        </a>
+                        <button type="button" class="btn-action btn-delete" onclick="confirmarExclusaoPerfil(' . $p['id'] . ')">
+                            <i class="fas fa-trash"></i> Excluir
+                        </button>';
             }
             $rows .= '</div>
                 </td>
