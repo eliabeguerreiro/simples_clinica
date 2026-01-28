@@ -116,17 +116,28 @@ class Paciente
         }
     }
 
-    public function buscarPorTermoPaginado($termo = '', $pagina = 1, $porPagina = 10)
+    public function buscarPorTermoPaginado($termo = '', $pagina = 1, $porPagina = 10, $ordenar = 'nome', $direcao = 'ASC')
     {
+        // Validar parâmetros de ordenação
+        $colunasPermitidas = ['nome', 'data_cadastro', 'cns'];
+        $direcoes = ['ASC', 'DESC'];
+        
+        if (!in_array($ordenar, $colunasPermitidas)) {
+            $ordenar = 'nome';
+        }
+        if (!in_array(strtoupper($direcao), $direcoes)) {
+            $direcao = 'ASC';
+        }
+        
         $offset = ($pagina - 1) * $porPagina;
         try {
             if (empty(trim($termo))) {
-                $stmt = $this->db->prepare("SELECT * FROM paciente ORDER BY nome LIMIT :limit OFFSET :offset");
+                $stmt = $this->db->prepare("SELECT * FROM paciente ORDER BY $ordenar $direcao LIMIT :limit OFFSET :offset");
                 $stmt->bindValue(':limit', $porPagina, PDO::PARAM_INT);
                 $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
             } else {
                 $termoLike = '%' . trim($termo) . '%';
-                $stmt = $this->db->prepare("SELECT * FROM paciente WHERE nome LIKE :nome OR cns LIKE :cns ORDER BY nome LIMIT :limit OFFSET :offset");
+                $stmt = $this->db->prepare("SELECT * FROM paciente WHERE nome LIKE :nome OR cns LIKE :cns ORDER BY $ordenar $direcao LIMIT :limit OFFSET :offset");
                 $stmt->bindValue(':nome', $termoLike, PDO::PARAM_STR);
                 $stmt->bindValue(':cns', $termoLike, PDO::PARAM_STR);
                 $stmt->bindValue(':limit', $porPagina, PDO::PARAM_INT);

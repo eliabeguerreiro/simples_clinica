@@ -486,7 +486,12 @@ HTML;
             $pagina = isset($_GET['pagina']) && is_numeric($_GET['pagina']) ? (int)$_GET['pagina'] : 1;
             if ($pagina < 1) $pagina = 1;
             $porPagina = 10;
-            $pacientes = $this->paciente->buscarPorTermoPaginado($termoBusca, $pagina, $porPagina);
+            
+            // Parâmetros de ordenação
+            $ordenar = isset($_GET['ordenar']) ? $_GET['ordenar'] : 'nome';
+            $direcao = isset($_GET['direcao']) ? $_GET['direcao'] : 'ASC';
+            
+            $pacientes = $this->paciente->buscarPorTermoPaginado($termoBusca, $pagina, $porPagina, $ordenar, $direcao);
             $totalPacientes = $this->paciente->getTotalPacientes($termoBusca);
             $totalPaginas = ceil($totalPacientes / $porPagina);
 
@@ -500,6 +505,25 @@ HTML;
                         <i class="fas fa-search"></i> Buscar
                     </button>
                     <a href="?sub=documentos" class="btn-clear">Limpar Busca</a>
+                </form>
+            </div>
+            
+            <div class="sort-controls">
+                <form method="GET" class="sort-form">
+                    <input type="hidden" name="sub" value="documentos">
+                    ' . (!empty($termoBusca) ? '<input type="hidden" name="busca" value="' . htmlspecialchars($termoBusca) . '">' : '') . '
+                    <label for="ordenar">Ordenar por:</label>
+                    <select name="ordenar" id="ordenar" onchange="this.form.submit()">
+                        <option value="nome" ' . ($ordenar === 'nome' ? 'selected' : '') . '>Nome (A-Z)</option>
+                        <option value="data_cadastro" ' . ($ordenar === 'data_cadastro' ? 'selected' : '') . '>Data de Cadastro</option>
+                        <option value="cns" ' . ($ordenar === 'cns' ? 'selected' : '') . '>CNS</option>
+                    </select>
+                    
+                    <label for="direcao">Ordem:</label>
+                    <select name="direcao" id="direcao" onchange="this.form.submit()">
+                        <option value="ASC" ' . ($direcao === 'ASC' ? 'selected' : '') . '>Crescente ↑</option>
+                        <option value="DESC" ' . ($direcao === 'DESC' ? 'selected' : '') . '>Decrescente ↓</option>
+                    </select>
                 </form>
             </div>';
 
@@ -537,20 +561,28 @@ HTML;
 
                 if ($totalPaginas > 1) {
                     $controls = '<div class="pagination-controls">';
+                    $paramsUrl = (!empty($termoBusca) ? '&busca=' . urlencode($termoBusca) : '') . '&ordenar=' . urlencode($ordenar) . '&direcao=' . urlencode($direcao);
+                    
+                    if ($pagina > 1) {
+                        $controls .= '<a href="?sub=documentos' . $paramsUrl . '&pagina=1" class="btn-pagination">&laquo;&laquo; Primeiro</a>';
+                    }
                     if ($pagina > 1) {
                         $prev = $pagina - 1;
-                        $controls .= '<a href="?sub=documentos' . (!empty($termoBusca) ? '&busca=' . urlencode($termoBusca) : '') . '&pagina=' . $prev . '" class="btn-pagination">&laquo; Anterior</a>';
+                        $controls .= '<a href="?sub=documentos' . $paramsUrl . '&pagina=' . $prev . '" class="btn-pagination">&laquo; Anterior</a>';
                     }
                     for ($i = max(1, $pagina - 2); $i <= min($totalPaginas, $pagina + 2); $i++) {
                         if ($i == $pagina) {
                             $controls .= '<span class="pagination-current">' . $i . '</span>';
                         } else {
-                            $controls .= '<a href="?sub=documentos' . (!empty($termoBusca) ? '&busca=' . urlencode($termoBusca) : '') . '&pagina=' . $i . '" class="btn-pagination">' . $i . '</a>';
+                            $controls .= '<a href="?sub=documentos' . $paramsUrl . '&pagina=' . $i . '" class="btn-pagination">' . $i . '</a>';
                         }
                     }
                     if ($pagina < $totalPaginas) {
                         $next = $pagina + 1;
-                        $controls .= '<a href="?sub=documentos' . (!empty($termoBusca) ? '&busca=' . urlencode($termoBusca) : '') . '&pagina=' . $next . '" class="btn-pagination">Próximo &raquo;</a>';
+                        $controls .= '<a href="?sub=documentos' . $paramsUrl . '&pagina=' . $next . '" class="btn-pagination">Próximo &raquo;</a>';
+                    }
+                    if ($pagina < $totalPaginas) {
+                        $controls .= '<a href="?sub=documentos' . $paramsUrl . '&pagina=' . $totalPaginas . '" class="btn-pagination">Último &raquo;&raquo;</a>';
                     }
                     $controls .= '</div>';
                 }

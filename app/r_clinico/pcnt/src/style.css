@@ -879,3 +879,48 @@ header .btn-logout:hover {
         font-size: 13px;
     }
 }
+
+/* === CONTROLES DE ORDENAÇÃO === */
+.sort-controls {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: rgba(248, 249, 255, 0.7);
+    border-radius: 12px;
+    border: 1px solid #e1e1ff;
+}
+
+.sort-form {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.sort-form label {
+    font-weight: 600;
+    color: var(--cor-texto);
+    margin: 0;
+    white-space: nowrap;
+}
+
+.sort-form select {
+    padding: 10px 15px;
+    border: 2px solid #e1e1ff;
+    border-radius: 10px;
+    font-size: 15px;
+    background: white;
+    color: var(--cor-texto);
+    cursor: pointer;
+    transition: var(--transicao);
+    min-width: 180px;
+}
+
+.sort-form select:hover {
+    border-color: var(--cor-primaria);
+}
+
+.sort-form select:focus {
+    border-color: var(--cor-primaria);
+    box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.15);
+    outline: none;
+}
