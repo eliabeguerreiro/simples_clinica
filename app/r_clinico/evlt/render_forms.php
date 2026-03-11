@@ -24,7 +24,9 @@ if ($form_id <= 0) {
 
 try {
     $db = getDbConnection();
-    $stmt = $db->prepare("SELECT nome, descricao, especialidade FROM formulario WHERE id = ?");
+    
+    // ✅ Primeiro busca o formulário
+    $stmt = $db->prepare("SELECT * FROM formulario WHERE id = ?");
     $stmt->execute([$form_id]);
     $formulario = $stmt->fetch();
 
@@ -32,7 +34,8 @@ try {
         die("<h2>Formulário não encontrado</h2>");
     }
 
-    $stmt = $db->prepare("SELECT * FROM formulario_perguntas WHERE formulario_id = ? AND ativo = 1 ORDER BY id");
+    // ✅ Depois busca as perguntas ORDENADAS por 'ordem'
+    $stmt = $db->prepare("SELECT * FROM formulario_perguntas WHERE formulario_id = ? AND ativo = 1 ORDER BY ordem ASC");
     $stmt->execute([$form_id]);
     $perguntas = $stmt->fetchAll();
 
@@ -112,8 +115,13 @@ try {
                         <input type="date" name="<?= $nomeCampo ?>" class="form-control"<?= $obrigatorio ?>>
 
                     <?php elseif ($p['tipo_input'] === 'file'): ?>
-                        <input type="file" name="<?= $nomeCampo ?>"class="form-control" accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.txt,.odt,.rtf,.xls,.xlsx,.ppt,.pptx,.zip,.rar"
+                        <input 
+                            type="file" 
+                            name="<?= $nomeCampo ?>" 
+                            class="form-control" 
+                            accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.txt,.odt,.rtf,.xls,.xlsx,.ppt,.pptx"
                             <?= $obrigatorio ?>
+                        >
 
                     <?php elseif (in_array($p['tipo_input'], ['radio', 'checkbox', 'select'])):
                         $opcoes = [];
