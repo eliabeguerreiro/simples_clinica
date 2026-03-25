@@ -43,27 +43,12 @@ try {
         die("<h2>Evolução não encontrada</h2>");
     }
 
-    // Mapeia especialidade do formulário para permissão de edição
-    $especialidade = $evolucao['especialidade'] ?? '';
-    $permissaoEditar = null;
-    switch ($especialidade) {
-        case 'FISIO':
-            $permissaoEditar = 'evolucoes.fisio.editar';
-            break;
-        case 'FONO':
-            $permissaoEditar = 'evolucoes.fono.editar';
-            break;
-        case 'TEOC':
-            $permissaoEditar = 'evolucoes.teoc.editar';
-            break;
-        default:
-            $permissaoEditar = null;
-    }
+    $permissaoEditar = 'evolucoes.editar';
 
     // Processa atualização (se o formulário for submetido)
     $mensagem = '';
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao']) && $_POST['acao'] === 'atualizar') {
-        if (!$permissaoEditar || !usuarioTemPermissao($permissaoEditar)) {
+        if (!usuarioTemPermissao($permissaoEditar)) {
             die("<h2>Acesso Negado</h2><p>Você não tem permissão para editar esta evolução.</p>");
         }
 
@@ -299,7 +284,7 @@ try {
 
             <!-- Botões -->
             <div class="botoes">
-                <?php if ($permissaoEditar && usuarioTemPermissao($permissaoEditar)): ?>
+                <?php if (usuarioTemPermissao($permissaoEditar)): ?>
                     <button type="button" onclick="toggleEdicao()" class="btn-editar">Editar Respostas</button>
                     <button type="submit" class="btn-salvar" style="display:none;">Salvar Alterações</button>
                 <?php endif; ?>
