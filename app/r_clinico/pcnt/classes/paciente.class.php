@@ -358,7 +358,7 @@ class Paciente
         return strlen($telefone) >= 10 && strlen($telefone) <= 11;
     }
 
-    public function listarEvolucoesDetalhadas($pacienteId)
+    public function listarEvolucoesDetalhadas($pacienteId, $especialidade = null, $dataInicio = null, $dataFim = null)
     {
         try {
             $sql = "
@@ -372,16 +372,49 @@ class Paciente
                     ec.dados,
                     ec.observacoes,
                     ec.criado_por,
+                    u.nm_usuario AS criado_por_nome,
                     f.nome AS nome_formulario,
                     f.especialidade
                 FROM evolucao_clinica ec
                 LEFT JOIN formulario f ON ec.formulario_id = f.id
-                WHERE ec.paciente_id = ?
-                ORDER BY ec.data_hora DESC
-            ";
+                LEFT JOIN usuarios u ON ec.criado_por = u.id
+                WHERE ec.paciente_id = ?";
+
+            $params = [$pacienteId];
+
+            if (!empty($especialidade)) {
+                $sql .= " AND f.especialidade = ?";
+                $params[] = $especialidade;
+            }
+
+            if (!empty($dataInicio)) {
+                $dataInicio = date('Y-m-d 00:00:00', strtotime($dataInicio));
+                $sql .= " AND ec.data_hora >= ?";
+                $params[] = $dataInicio;
+            }
+
+            if (!empty($dataFim)) {
+                $dataFim = date('Y-m-d 23:59:59', strtotime($dataFim));
+                $sql .= " AND ec.data_hora <= ?";
+                $params[] = $dataFim;
+            }
+
+            $sql .= " ORDER BY ec.data_hora DESC";
+
             $stmt = $this->db->prepare($sql);
-            $stmt->execute([$pacienteId]);
+            $stmt->execute($params);
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            return [];
+        }
+    }
+
+    public function listarEspecialidadesEvolucoes($pacienteId)
+    {
+        try {
+            $stmt = $this->db->prepare("SELECT DISTINCT f.especialidade FROM evolucao_clinica ec JOIN formulario f ON ec.formulario_id = f.id WHERE ec.paciente_id = ? ORDER BY f.especialidade");
+            $stmt->execute([$pacienteId]);
+            return $stmt->fetchAll(PDO::FETCH_COLUMN);
         } catch (Exception $e) {
             return [];
         }

@@ -327,6 +327,94 @@ header .btn-logout:hover {
     border: 1px solid #e1e1ff;
 }
 
+/* Filtro de histórico de evoluções */
+.filter-form {
+    background: #ffffff;
+    border: 1px solid #dde1f5;
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 20px;
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 12px;
+    align-items: center;
+    overflow-x: auto;
+    white-space: nowrap;
+}
+
+.filter-form > div {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 170px;
+}
+
+.filter-form > div:last-child {
+    min-width: auto;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+}
+
+.filter-form label {
+    font-size: 13px;
+    color: #4b4f6f;
+    font-weight: 600;
+}
+
+.filter-form select,
+.filter-form input[type="date"] {
+    border: 1px solid #e1e2f7;
+    background: #fff;
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 14px;
+    color: #333;
+    min-width: 170px;
+}
+
+.filter-form .btn-add,
+.filter-form .btn-clear {
+    min-width: 100px;
+    text-align: center;
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    font-weight: 600;
+    width: auto; /* mantém em linha */
+    max-width: none;
+}
+
+.filter-form .btn-add {
+    width: auto;
+}
+
+.filter-form .btn-clear {
+    background: #f7f8ff;
+    color: #5b5f88;
+    border-color: #dfe2ff;
+    width: auto;
+}
+
+.filter-form .btn-clear:hover {
+    background: #eef1ff;
+}
+
+@media (max-width: 768px) {
+    .filter-form {
+        gap: 8px;
+        padding: 10px;
+    }
+    .filter-form div {
+        min-width: 100%;
+    }
+    .filter-form select,
+    .filter-form input[type="date"] {
+        min-width: 100%;
+    }
+}
+
 .search-form {
     display: flex;
     gap: 10px;

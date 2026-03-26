@@ -46,7 +46,7 @@ class ConteudoRClinicoPCNT
     
     private function renderBody()
     {
-        // ✅ ALTERAÇÃO: Removido 'pacientes.visualizar' - visualização é livre para todos
+
         $temPermissaoPacientes = (
             $this->usuarioTemPermissao('pacientes.criar') ||
             $this->usuarioTemPermissao('pacientes.editar') ||
@@ -443,7 +443,7 @@ class ConteudoRClinicoPCNT
                 <div class="paciente-detalhe">
                     <h3 id="titulo-paciente">Detalhes do Paciente</h3>
                     <div class="paciente-info">
-                        <p><strong>ID:</strong> ' . htmlspecialchars($pacienteBuscado['id']) . '</p>
+                        <p><strong>Registro:</strong> ' . htmlspecialchars($pacienteBuscado['id']) . '</p>
                         <p><strong>Nome:</strong> ' . htmlspecialchars($pacienteBuscado['nome']) . '</p>
                         <p><strong>Origem:</strong> ' . htmlspecialchars($pacienteBuscado['origem']) . '</p>
                         <p><strong>CNS:</strong> ' . (!empty($pacienteBuscado['cns']) ? htmlspecialchars($pacienteBuscado['cns']) : '-') . '</p>
@@ -842,33 +842,74 @@ class ConteudoRClinicoPCNT
         if (!$pacienteId || $pacienteId <= 0) {
             return '<div class="form-message error">Paciente não especificado para exibir histórico.</div>';
         }
-        
-        $evolucoes = $this->paciente->listarEvolucoesDetalhadas($pacienteId);
-        if (empty($evolucoes)) {
-            return '<div class="no-data">Nenhuma evolução registrada para este paciente.</div>';
+
+        $especialidadeFiltro = $_GET['especialidade'] ?? '';
+        $dataInicioFiltro = $_GET['data_inicio'] ?? '';
+        $dataFimFiltro = $_GET['data_fim'] ?? '';
+
+        $especialidades = $this->paciente->listarEspecialidadesEvolucoes($pacienteId);
+
+        $html = '<form method="GET" class="filter-form" style="margin-bottom:20px; display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">'
+            . '<input type="hidden" name="id" value="' . (int)$pacienteId . '">' 
+            . '<input type="hidden" name="sub" value="historico">'
+            . '<div><label>Especialidade</label><br><select name="especialidade"><option value="">Todas</option>';
+
+        foreach ($especialidades as $especialidade) {
+            if ($especialidade === null || trim($especialidade) === '') {
+                continue;
+            }
+            $selected = $especialidadeFiltro === $especialidade ? ' selected' : '';
+            $html .= '<option value="' . htmlspecialchars($especialidade) . '"' . $selected . '>' . htmlspecialchars($especialidade) . '</option>';
         }
-        
-        $html = '<div class="table-container">
-            <table class="pacientes-table">
-                <thead>
-                    <tr>
-                        <th>Data/Hora</th>
-                        <th>Formulário</th>
-                        <th>Especialidade</th>
-                        <th>Registrado por</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody>';
+
+        $html .= '</select></div>';
+        $html .= '<div><label>Data início</label><br><input type="date" name="data_inicio" value="' . htmlspecialchars($dataInicioFiltro) . '"></div>';
+        $html .= '<div><label>Data fim</label><br><input type="date" name="data_fim" value="' . htmlspecialchars($dataFimFiltro) . '"></div>';
+        $html .= '<div style="display:flex; gap:6px;">'
+            . '<button type="submit" class="btn-add" style="padding:8px 12px; height:40px;">Filtrar</button>'
+            . '<a class="btn-clear" href="?id=' . (int)$pacienteId . '&sub=historico" style="text-decoration:none;padding:8px 12px;height:40px;display:inline-flex;align-items:center;">Limpar</a>'
+            . '</div>';
+        $html .= '</form>';
+
+        $evolucoes = $this->paciente->listarEvolucoesDetalhadas($pacienteId, $especialidadeFiltro, $dataInicioFiltro, $dataFimFiltro);
+
+        if (empty($evolucoes)) {
+            $html .= '<div class="no-data">Nenhuma evolução encontrada para os filtros aplicados.</div>';
+            $html .= '<div style="margin-top: 15px;">'
+                . '<a href="?id=' . $pacienteId . '&sub=documentos" class="btn-clear">'
+                . '<i class="fas fa-arrow-left"></i> Voltar aos Dados do Paciente'
+                . '</a>'
+                . '</div>';
+            return $html;
+        }
+
+        $html .= '<div class="table-container">'
+            . '<table class="pacientes-table">'
+            . '<thead>'
+            . '<tr>'
+            . '<th>Data/Hora</th>'
+            . '<th>Formulário</th>'
+            . '<th>Especialidade</th>'
+            . '<th>Registrado por</th>'
+            . '<th>Ações</th>'
+            . '</tr>'
+            . '</thead>'
+            . '<tbody>';
         
         foreach ($evolucoes as $ev) {
             $dataFormatada = date('d/m/Y H:i', strtotime($ev['created_at']));
+            $registradoPor = '-';
+            if (!empty($ev['criado_por_nome'])) {
+                $registradoPor = $ev['criado_por_nome'];
+            } elseif (!empty($ev['criado_por'])) {
+                $registradoPor = $ev['criado_por'];
+            }
             $html .= '
             <tr>
                 <td>' . htmlspecialchars($dataFormatada) . '</td>
                 <td>' . htmlspecialchars($ev['nome_formulario']) . '</td>
                 <td>' . htmlspecialchars($ev['especialidade']) . '</td>
-                <td>' . (!empty($ev['criado_por']) ? htmlspecialchars($ev['criado_por']) : '-') . '</td>
+                <td>' . htmlspecialchars($registradoPor) . '</td>
                 <td>
                     <a href="visualizar_evolucao.php?id=' . $ev['id'] . '" class="btn-view" title="Visualizar">
                         <i class="fas fa-eye"></i> Ver

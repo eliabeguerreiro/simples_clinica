@@ -129,6 +129,7 @@ try {
         <div class="header">
             <h1>Visualizar Evolução Clínica</h1>
             <p>
+                <strong>Registro:</strong> <?= htmlspecialchars($paciente['paciente_id'] ?? 'Não informado') ?>
                 <strong>Paciente:</strong> <?= htmlspecialchars($paciente['nome'] ?? 'Não informado') ?> (ID: <?= $evolucao['paciente_id'] ?>)<br>
                 <strong>Formulário:</strong> <?= htmlspecialchars($evolucao['nome_formulario']) ?><br>
                 <strong>Especialidade:</strong> <?= htmlspecialchars($evolucao['especialidade'] ?? 'Não informada') ?><br>
