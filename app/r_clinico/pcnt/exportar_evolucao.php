@@ -66,10 +66,19 @@ try {
         define('COR_SECUNDARIA', [87, 75, 144]); // #574b90
 
         // Cabeçalho
+        $logoPath = __DIR__ . '/src/vivenciar_logov2.png';
+        if (!file_exists($logoPath)) {
+            $logoPath = __DIR__ . '/../../../src/vivenciar_logov2.png';
+        }
+        $emitidoPor = htmlspecialchars($_SESSION['data_user']['nm_usuario'] ?? 'Sistema');
+        $dataEmissao = date('d/m/Y H:i');
+
         $html = '
         <style>
-            h1 { color: rgb(' . implode(',', COR_PRIMARIA) . '); text-align: center; margin-bottom: 16px; font-size: 16px; }
-            .cabecalho { border-bottom: 1.5px solid rgb(' . implode(',', COR_PRIMARIA) . '); padding-bottom: 10px; margin-bottom: 16px; }
+            .cabecalho { border-bottom: 1px solid #e2e6ff; padding-bottom: 10px; margin-bottom: 16px; display: grid; grid-template-columns: auto 1fr; gap: 14px; align-items: center; }
+            .cabecalho .logo { max-width: 80px; max-height: 36px; border: 1px solid #e2e0ff; border-radius: 8px; padding: 4px; background: #fff; object-fit: contain; }
+            .cabecalho h1 { color: #3d3f8f; margin: 0; font-size: 16px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; }
+            .cabecalho-info { text-align: right; font-size: 10px; color: #4f5278; line-height: 1.35; }
             .info-linha { margin: 4px 0; font-size: 10px; }
             .grupo { margin: 12px 0; page-break-inside: avoid; }
             .pergunta { font-weight: bold; color: rgb(' . implode(',', COR_SECUNDARIA) . '); margin: 6px 0 4px 0; font-size: 10px; }
@@ -78,16 +87,26 @@ try {
             .tabela-resposta th { background-color: rgb(' . implode(',', COR_PRIMARIA) . '); color: white; padding: 3px; }
             .tabela-resposta td { padding: 3px; text-align: center; border: 1px solid #999; }
             .observacoes { margin-top: 16px; padding-top: 10px; border-top: 1px dashed #aaa; }
-            .rodape { margin-top: 25px; font-size: 8px; color: #777; text-align: right; }
+            .rodape { margin-top: 20px; font-size: 8px; color: #777; text-align: right; }
         </style>
 
         <div class="cabecalho">
-            <h1>Evolução Clínica</h1>
+            <div style="display:flex; align-items:center; gap: 10px;">';
+
+        if (file_exists($logoPath)) {
+            $html .= '<img src="' . $logoPath . '" class="logo" alt="Logo" style="max-width:80px; max-height:36px;">';
+        }
+
+        $html .= '<div><h1>Evolução Clínica</h1></div></div>';
+
+        $html .= '<div class="cabecalho-info">
+            <div class="info-linha"><strong>Emitido por:</strong> ' . $emitidoPor . '</div>
+            <div class="info-linha"><strong>Emissão:</strong> ' . $dataEmissao . '</div>
             <div class="info-linha"><strong>Paciente:</strong> ' . htmlspecialchars($paciente['nome'] ?? 'N/A') . '</div>
             <div class="info-linha"><strong>CNS:</strong> ' . htmlspecialchars($paciente['cns'] ?? '—') . '</div>
             <div class="info-linha"><strong>Formulário:</strong> ' . htmlspecialchars($evolucao['nome_formulario'] ?? 'N/A') . '</div>
             <div class="info-linha"><strong>Especialidade:</strong> ' . htmlspecialchars($evolucao['especialidade'] ?? 'N/A') . '</div>
-            <div class="info-linha"><strong>Data:</strong> ' . date('d/m/Y H:i', strtotime($evolucao['data_hora'])) . '</div>
+            <div class="info-linha"><strong>Data da Evolução:</strong> ' . date('d/m/Y H:i', strtotime($evolucao['data_hora'])) . '</div>
         </div>';
 
         // Corpo: perguntas e respostas
