@@ -26,9 +26,22 @@ try {
 
     // --- Busca dados da evolução ---
     $stmt = $db->prepare("
-        SELECT ec.*, f.nome AS nome_formulario, f.especialidade
+        SELECT 
+            ec.id,
+            ec.formulario_id,
+            ec.paciente_id,
+            ec.atendimento_id,
+            ec.data_referencia,
+            ec.data_hora AS created_at,
+            ec.dados,
+            ec.observacoes,
+            ec.criado_por,
+            u.nm_usuario AS criado_por_nome,
+            f.nome AS nome_formulario,
+            f.especialidade
         FROM evolucao_clinica ec
         LEFT JOIN formulario f ON ec.formulario_id = f.id
+        LEFT JOIN usuarios u ON ec.criado_por = u.id
         WHERE ec.id = ?
     ");
     $stmt->execute([$id]);
@@ -41,7 +54,7 @@ try {
     $pacienteStmt->execute([$evolucao['paciente_id']]);
     $paciente = $pacienteStmt->fetch(PDO::FETCH_ASSOC);
 
-    $stmt = $db->prepare("SELECT * FROM formulario_perguntas WHERE formulario_id = ? AND ativo = 1 ORDER BY id");
+    $stmt = $db->prepare("SELECT * FROM formulario_perguntas WHERE formulario_id = ? AND ativo = 1 ORDER BY ordem ASC");
     $stmt->execute([$evolucao['formulario_id']]);
     $perguntas = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -57,56 +70,148 @@ try {
         $pdf->SetSubject('Exportação de Evolução Clínica');
         $pdf->setPrintHeader(false);
         $pdf->setPrintFooter(false);
-        $pdf->SetMargins(15, 20, 15); // margens em mm
-        $pdf->SetAutoPageBreak(TRUE, 20);
+        $pdf->SetMargins(15, 15, 15);
+        $pdf->SetAutoPageBreak(TRUE, 15);
         $pdf->AddPage();
 
         // Define cores
         define('COR_PRIMARIA', [108, 99, 255]); // #6c63ff
         define('COR_SECUNDARIA', [87, 75, 144]); // #574b90
 
-        // Cabeçalho
+        // Verifica se GD está disponível
+        $temGD = extension_loaded('gd') && function_exists('imagecreatefrompng');
         $logoPath = __DIR__ . '/src/vivenciar_logov2.png';
         if (!file_exists($logoPath)) {
             $logoPath = __DIR__ . '/../../../src/vivenciar_logov2.png';
         }
+        $usarLogo = $temGD && file_exists($logoPath);
+
         $emitidoPor = htmlspecialchars($_SESSION['data_user']['nm_usuario'] ?? 'Sistema');
         $dataEmissao = date('d/m/Y H:i');
 
         $html = '
         <style>
-            .cabecalho { border-bottom: 1px solid #e2e6ff; padding-bottom: 10px; margin-bottom: 16px; display: grid; grid-template-columns: auto 1fr; gap: 14px; align-items: center; }
-            .cabecalho .logo { max-width: 80px; max-height: 36px; border: 1px solid #e2e0ff; border-radius: 8px; padding: 4px; background: #fff; object-fit: contain; }
-            .cabecalho h1 { color: #3d3f8f; margin: 0; font-size: 16px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; }
-            .cabecalho-info { text-align: right; font-size: 10px; color: #4f5278; line-height: 1.35; }
-            .info-linha { margin: 4px 0; font-size: 10px; }
-            .grupo { margin: 12px 0; page-break-inside: avoid; }
-            .pergunta { font-weight: bold; color: rgb(' . implode(',', COR_SECUNDARIA) . '); margin: 6px 0 4px 0; font-size: 10px; }
-            .resposta { margin-left: 8px; font-size: 9.5px; color: #333; line-height: 1.4; }
-            .tabela-resposta { border: 1px solid #999; width: 100%; border-collapse: collapse; margin-top: 4px; font-size: 8.5px; }
-            .tabela-resposta th { background-color: rgb(' . implode(',', COR_PRIMARIA) . '); color: white; padding: 3px; }
-            .tabela-resposta td { padding: 3px; text-align: center; border: 1px solid #999; }
-            .observacoes { margin-top: 16px; padding-top: 10px; border-top: 1px dashed #aaa; }
-            .rodape { margin-top: 20px; font-size: 8px; color: #777; text-align: right; }
+            .cabecalho {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 8px 0 12px 0;
+                border-bottom: 2px solid #e2e6ff;
+                margin-bottom: 15px;
+            }
+            .cabecalho-logo {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            }
+            .cabecalho-logo h1 {
+                color: #3d3f8f;
+                margin: 0;
+                font-size: 18px;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.8px;
+            }
+            .cabecalho-info {
+                text-align: right;
+                font-size: 9px;
+                color: #555;
+                line-height: 1.4;
+            }
+            .info-linha {
+                margin: 3px 0;
+                font-size: 9px;
+            }
+            .grupo {
+                margin: 10px 0;
+                page-break-inside: avoid;
+            }
+            .pergunta {
+                font-weight: bold;
+                color: #574b90;
+                margin: 5px 0 3px 0;
+                font-size: 10px;
+            }
+            .resposta {
+                margin-left: 10px;
+                font-size: 9.5px;
+                color: #333;
+                line-height: 1.45;
+            }
+            .tabela-resposta {
+                border: 1px solid #ccc;
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 4px;
+                font-size: 8.5px;
+            }
+            .tabela-resposta th {
+                background-color: #6c63ff;
+                color: white;
+                padding: 4px;
+                font-weight: bold;
+            }
+            .tabela-resposta td {
+                padding: 4px;
+                text-align: center;
+                border: 1px solid #ddd;
+            }
+            .observacoes {
+                margin-top: 18px;
+                padding-top: 12px;
+                border-top: 1px solid #e0e0ff;
+            }
+            .rodape {
+                position: fixed;
+                bottom: 15px;
+                left: 15px;
+                right: 15px;
+                font-size: 8px;
+                color: #777;
+                text-align: center;
+                border-top: 1px solid #eaeaea;
+                padding-top: 6px;
+                background: #fafaff;
+            }
+            .paciente-info {
+                display: flex;
+                gap: 25px;
+                margin: 10px 0 15px 0;
+                font-size: 10px;
+                color: #444;
+            }
+            .paciente-info div {
+                flex: 1;
+            }
+            .paciente-info strong {
+                color: #574b90;
+                font-weight: 600;
+            }
         </style>
 
         <div class="cabecalho">
-            <div style="display:flex; align-items:center; gap: 10px;">';
+            <div class="cabecalho-logo">';
 
-        if (file_exists($logoPath)) {
-            $html .= '<img src="' . $logoPath . '" class="logo" alt="Logo" style="max-width:80px; max-height:36px;">';
+        // Renderiza logo ou fallback
+        if ($usarLogo) {
+            $logoAbsoluto = realpath($logoPath);
+            $html .= '<img src="' . $logoAbsoluto . '" style="max-width:75px; max-height:32px; border:1px solid #e5e5ff; border-radius:4px; padding:2px; background:#fff;">';
+        } else {
+            $html .= '<div style="width:70px; height:30px; background:linear-gradient(135deg, #6c63ff, #574b90); border-radius:4px; display:flex; align-items:center; justify-content:center; color:white; font-weight:bold; font-size:13px;">CLINIG</div>';
         }
 
-        $html .= '<div><h1>Evolução Clínica</h1></div></div>';
+        $html .= '<h1>' . htmlspecialchars($evolucao['nome_formulario'] ?? 'FORMULÁRIO CLÍNICO') . '</h1>
+            </div>
+            <div class="cabecalho-info">
+                <div class="info-linha"><strong>Especialidade:</strong> ' . htmlspecialchars($evolucao['especialidade'] ?? 'N/A') . '</div>
+                <div class="info-linha"><strong>Data da Evolução:</strong> ' . date('d/m/Y H:i', strtotime($evolucao['data_hora'])) . '</div>
+            </div>
+        </div>';
 
-        $html .= '<div class="cabecalho-info">
-            <div class="info-linha"><strong>Emitido por:</strong> ' . $emitidoPor . '</div>
-            <div class="info-linha"><strong>Emissão:</strong> ' . $dataEmissao . '</div>
-            <div class="info-linha"><strong>Paciente:</strong> ' . htmlspecialchars($paciente['nome'] ?? 'N/A') . '</div>
-            <div class="info-linha"><strong>CNS:</strong> ' . htmlspecialchars($paciente['cns'] ?? '—') . '</div>
-            <div class="info-linha"><strong>Formulário:</strong> ' . htmlspecialchars($evolucao['nome_formulario'] ?? 'N/A') . '</div>
-            <div class="info-linha"><strong>Especialidade:</strong> ' . htmlspecialchars($evolucao['especialidade'] ?? 'N/A') . '</div>
-            <div class="info-linha"><strong>Data da Evolução:</strong> ' . date('d/m/Y H:i', strtotime($evolucao['data_hora'])) . '</div>
+        // Informações do paciente (próximas ao título)
+        $html .= '<div class="paciente-info">
+            <div><strong>Paciente:</strong> ' . htmlspecialchars($paciente['nome'] ?? 'N/A') . '</div>
+            <div><strong>CNS:</strong> ' . htmlspecialchars($paciente['cns'] ?? '—') . '</div>
         </div>';
 
         // Corpo: perguntas e respostas
@@ -118,7 +223,7 @@ try {
             $justificativa = $respostas[$nomeCampo . '_justificativa'] ?? '';
 
             $titulo = htmlspecialchars($p['titulo']);
-            $respostaHtml = '<span style="color:#888;">Não respondido</span>';
+            $respostaHtml = '<span style="color:#999;">Não respondido</span>';
 
             if ($p['tipo_input'] === 'texto' || $p['tipo_input'] === 'number' || $p['tipo_input'] === 'date') {
                 $respostaHtml = htmlspecialchars($valor ?: '—');
@@ -139,7 +244,7 @@ try {
             } elseif ($p['tipo_input'] === 'sim_nao_justificativa') {
                 $respostaHtml = htmlspecialchars($valor ?: '—');
                 if ($justificativa) {
-                    $respostaHtml .= '<br><strong style="color:' . implode(',', COR_SECUNDARIA) . ');">Justificativa:</strong> ' . htmlspecialchars($justificativa);
+                    $respostaHtml .= '<br><strong style="color:#574b90;">Justificativa:</strong> ' . htmlspecialchars($justificativa);
                 }
 
             } elseif ($p['tipo_input'] === 'tabela') {
@@ -152,8 +257,9 @@ try {
                         $tabela .= '<th>' . htmlspecialchars($col) . '</th>';
                     }
                     $tabela .= '</tr></thead><tbody>';
+                    // ✅ CORREÇÃO: Adicionado "as $linha" no foreach
                     foreach ($linhas as $linha) {
-                        $tabela .= '<tr><td style="text-align:left;font-weight:bold;">' . htmlspecialchars($linha) . '</td>';
+                        $tabela .= '<tr><td style="text-align:left;font-weight:bold;padding-left:6px;">' . htmlspecialchars($linha) . '</td>';
                         foreach ($colunas as $col) {
                             $check = (isset($valor[urlencode($linha)]) && $valor[urlencode($linha)] === $col) ? '✓' : '';
                             $tabela .= '<td>' . $check . '</td>';
@@ -183,8 +289,11 @@ try {
             </div>';
         }
 
-        // Rodapé
-        $html .= '<div class="rodape">Documento gerado pelo Sistema CLINIG em ' . date('d/m/Y H:i') . '</div>';
+        // ✅ CORREÇÃO: Tag HTML completa no rodapé
+        $html .= '<div class="rodape">
+            <div class="info-linha"><strong>Emitido por:</strong> ' . htmlspecialchars($evolucao['criado_por_nome'] ?? 'Sistema') . ' | <strong>Emissão:</strong> ' . $dataEmissao . '</div>
+            <div class="info-linha">Documento gerado pelo Sistema CLINIG | Evolução #' . $id . ' | ' . date('d/m/Y H:i') . '</div>
+        </div>';
 
         $pdf->SetFont('helvetica', '', 9);
         $pdf->writeHTML($html, true, false, true, false, '');
@@ -192,7 +301,6 @@ try {
         $pdf->Output($nomeBase . '.pdf', 'I');
 
     } elseif ($formato === 'csv') {
-        // (mantém sua lógica de CSV — já está excelente)
         header('Content-Type: text/csv; charset=utf-8');
         header("Content-Disposition: attachment; filename=\"$nomeBase.csv\"");
 
@@ -233,3 +341,4 @@ try {
 } catch (Exception $e) {
     die("Erro ao exportar: " . htmlspecialchars($e->getMessage()));
 }
+?>
