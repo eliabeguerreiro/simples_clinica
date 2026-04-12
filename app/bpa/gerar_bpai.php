@@ -84,8 +84,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $dataAtendimento = $atendimento['data_atendimento'] ?? date('Y-m-d');
             $cid10 = $atendimento['cid_10'] ?? '';
             $idadePaciente = $atendimento['idade_paciente'] ?? '0';
-            $caracterAtendimento = $atendimento['caracter_atendimento'] ?? '1'; // está fixo o valor de 01 eletivo
-            $numeroAutorizacao = $atendimento['numero_autorizacao'] ?? '';
+            $caracterAtendimento = $atendimento['caracter_atendimento'] ?? '1';
+            $sisregPaciente = trim($paciente['num_autorizacao_sisreg'] ?? '');
+            $numeroAutorizacao = !empty($sisregPaciente) ? $sisregPaciente : ($atendimento['numero_autorizacao'] ?? '');
             $codigoServico = $procedimento['servico'] ?? '@1@';
             $codigoClassificacao = $procedimento['classificacao'] ?? '@2@';
             $codigoSequenciaEquipe = $atendimento['codigo_sequencia_equipe'] ?? '';
@@ -119,8 +120,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $dataAtendimentoFormatada = date('Ymd', strtotime($dataAtendimento));
             $dataNascimentoFormatada = date('Ymd', strtotime($dataNascimento));
 
-            // Calcula campo de controle: somar apenas os dígitos do código do procedimento (se contiver letras)
-            // e a quantidade. Isso evita conversões inválidas.
+            // Calcula campo de controle
             $codigoDigits = preg_replace('/[^0-9]/', '', (string)$codigoProcedimento);
             $codigoInt = $codigoDigits === '' ? 0 : (int)$codigoDigits;
             $quantidadeInt = is_numeric($quantidade) ? (int)$quantidade : 0;
@@ -144,6 +144,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 str_pad($idadePaciente, 3, '0', STR_PAD_LEFT), // prd-idade
                 str_pad($quantidade, 6, '0', STR_PAD_LEFT), // prd-qt
                 str_pad($caracterAtendimento, 2, '0', STR_PAD_LEFT), // prd-caten
+                // ✅ CAMPO prd-naut: 13 caracteres, preenchido à ESQUERDA com espaços (mantido layout original)
                 str_pad($numeroAutorizacao, 13, ' ', STR_PAD_LEFT), // prd-naut
                 'BPA', // prd-org
                 str_pad($nomePaciente, 30, ' ', STR_PAD_RIGHT), // prd-nmppac
@@ -183,14 +184,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Calcula o campo de controle final conforme especificação
     $resto = $somaProcedimentos % 1111;
     $campoControle = 1111 + $resto;
-
-    // Garante que o campo de controle tem 4 dígitos (ou mais se necessário) - pad à esquerda com zeros
     $campoControleStr = str_pad($campoControle, 4, '0', STR_PAD_LEFT);
 
-    // Agora compomos o header completo: prefix + campoControle + suffix + nova linha
+    // Monta header completo
     $header = array_merge($headerPrefix, [$campoControleStr], $headerSuffix);
-    // Substitui o início do conteúdo pelo header completo seguido do restante (que atualmente contém apenas as linhas de atendimento)
-    // Como $conteudo atualmente tem o headerPrefix concatenado seguido das linhas (adicionadas no loop), removemos o prefix atual e inserimos o header completo.
     $conteudo = implode('', $header) . "\r\n" . substr($conteudo, strlen(implode('', $headerPrefix)));
 
         // Força o download do arquivo
