@@ -22,7 +22,7 @@ class Evolucao
     public function listarFormularios($ativos = true)
     {
         $status = $ativos ? 1 : 0;
-        $stmt = $this->db->prepare("SELECT id, nome, especialidade, descricao, ativo FROM formulario WHERE ativo = ? ORDER BY nome ASC");
+        $stmt = $this->db->prepare("SELECT id, nome, especialidade, descricao, ativo FROM formulario WHERE ativo = ? ORDER BY 1 DESC");
         $stmt->execute([$status]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }

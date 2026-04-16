@@ -33,7 +33,7 @@ body {
 }
 
 .form-container {
-    max-width: 1000px;
+    max-width: 1200px; /* Aumentado para acomodar o grid com mais conforto */
     margin: 40px auto;
     padding: 30px;
     background: var(--cor-fundo-card);
@@ -66,8 +66,19 @@ body {
     line-height: 1.5;
 }
 
+/* Estilo base do Grupo de Formulário (Funciona em Lista e Grid) */
 .form-group {
     margin-bottom: 26px;
+    background: white; /* Fundo branco para destacar o campo */
+    padding: 15px;
+    border-radius: 12px;
+    border: 1px solid #eee;
+    transition: var(--transicao);
+}
+
+.form-group:hover {
+    border-color: #d1d1ff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
 .form-group label {
@@ -93,6 +104,7 @@ body {
     color: var(--cor-texto-secundario);
     font-size: 13px;
     font-weight: normal;
+    margin-bottom: 8px;
 }
 
 .form-control {
@@ -223,8 +235,66 @@ table th {
     color: #ffc107;
 }
 
-/* Responsividade */
-@media (max-width: 768px) {
+/* ==========================================================================
+   NOVAS REGRAS PARA O MODO GRID (Médico/Paciente)
+   ========================================================================== */
+
+/* Container que ativa o Grid */
+.fields-grid {
+    display: grid;
+    /* 3 Colunas iguais por padrão */
+    grid-template-columns: repeat(3, 1fr); 
+    gap: 20px; /* Espaço entre os cards */
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+/* Remove margem inferior padrão dos itens dentro do grid para usar o gap */
+.fields-grid > .form-group {
+    margin-bottom: 0;
+    height: 100%; /* Estica o card para preencher a célula */
+    display: flex;
+    flex-direction: column;
+}
+
+/* Classes de Span (Colunas) */
+.col-span-2 { grid-column: span 2; }
+.col-span-3 { grid-column: span 3; }
+
+/* Classes de Span (Linhas) */
+.row-span-2 { grid-row: span 2; }
+.row-span-3 { grid-row: span 3; }
+.row-span-4 { grid-row: span 4; }
+.row-span-5 { grid-row: span 5; }
+
+/* Destaque visual para campos obrigatórios no Grid */
+.fields-grid > .form-group:has(label.required) {
+    border-left: 3px solid var(--cor-primaria);
+}
+
+/* ==========================================================================
+   RESPONSIVIDADE
+   ========================================================================== */
+
+@media (max-width: 900px) {
+    /* Tablets: Grid de 2 colunas */
+    .fields-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    /* Ajuste para spans: max span é 2 */
+    .col-span-3 { grid-column: span 2; }
+}
+
+@media (max-width: 600px) {
+    /* Celulares: Grid de 1 coluna (volta para lista vertical visualmente) */
+    .fields-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    /* Todos os spans viram 1 coluna */
+    .col-span-2, .col-span-3 { grid-column: span 1; }
+    
     body {
         padding: 10px;
     }

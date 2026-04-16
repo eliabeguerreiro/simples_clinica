@@ -37,7 +37,7 @@ body {
 
 /* Container principal */
 .container {
-    max-width: 850px;
+    max-width: 1100px; /* Aumentado para acomodar o grid melhor */
     margin: 40px auto;
     padding: 30px;
     background: var(--cor-fundo-card);
@@ -204,6 +204,7 @@ h3 {
     border-left: 4px solid var(--cor-primaria);
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
     transition: var(--transicao);
+    position: relative;
 }
 
 .question-item:hover {
@@ -224,7 +225,59 @@ h3 {
     margin-bottom: 4px;
 }
 
-/* Botão de excluir pergunta */
+/* Badge de ordem/posição */
+.ordem-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: var(--cor-primaria);
+    color: white;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 13px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* Botões de reordenação */
+.reorder-buttons {
+    display: flex;
+    gap: 6px;
+    margin-top: 12px;
+    border-top: 1px solid #eee;
+    padding-top: 12px;
+}
+
+.btn-reorder {
+    background: #e1e1ff;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    color: var(--cor-primaria);
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+}
+
+.btn-reorder:hover {
+    background: var(--cor-primaria);
+    color: white;
+    transform: scale(1.1);
+}
+
+.btn-reorder:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
 .btn-delete-small {
     background: transparent;
     color: var(--cor-erro);
@@ -240,6 +293,7 @@ h3 {
     width: 28px;
     height: 28px;
     cursor: pointer;
+    margin-left: auto; /* Empurra para a direita */
 }
 
 .btn-delete-small:hover {
@@ -252,6 +306,8 @@ h3 {
 .btn-delete-small i {
     font-size: 10px;
 }
+
+/* Textarea */
 .form-group textarea {
     padding: 12px 15px;
     border: 2px solid #e1e1ff;
@@ -271,7 +327,7 @@ h3 {
     background: white;
 }
 
-/* Modal de exclusão de pergunta */
+/* Modal de exclusão */
 .modal {
     position: fixed;
     top: 0;
@@ -366,7 +422,126 @@ h3 {
     background: #c82333;
     transform: translateY(-1px);
 }
-/* Responsividade */
+
+/* Toggle de Visualização (Lista/Grid) */
+.view-mode-toggle {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    background: #f0f0f5;
+    padding: 5px;
+    border-radius: 20px;
+    width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.btn-view-mode {
+    border: none;
+    background: transparent;
+    padding: 8px 16px;
+    border-radius: 15px;
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--cor-secundaria);
+    transition: all 0.2s;
+    font-size: 13px;
+}
+
+.btn-view-mode.active {
+    background: var(--cor-primaria);
+    color: white;
+    box-shadow: 0 2px 5px rgba(108, 99, 255, 0.3);
+}
+
+.btn-view-mode:hover:not(.active) {
+    background: #e0e0f0;
+}
+
+/* ==========================================================================
+   NOVAS REGRAS PARA O MODO GRID
+   ========================================================================== */
+
+/* Container que vira Grid */
+.questions-grid-container {
+    display: grid;
+    /* 3 Colunas iguais */
+    grid-template-columns: repeat(3, 1fr); 
+    gap: 20px;
+    padding: 20px;
+    background: #f4f4fa; /* Fundo levemente diferente para a área de grid */
+    border-radius: 16px;
+    min-height: 100px;
+}
+
+/* Item de pergunta dentro do Grid */
+.question-item.grid-mode {
+    margin: 0; /* Remove margem externa pois o gap do grid controla */
+    border-left: 4px solid var(--cor-primaria); /* Mantém a identidade visual */
+    cursor: grab; /* Cursor de mãozinha para arrastar */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%; /* Estica para preencher a célula */
+    background: white;
+}
+
+.question-item.grid-mode:hover {
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+}
+
+.question-item.grid-mode:active {
+    cursor: grabbing;
+}
+
+/* Badges de Span (visual) */
+.grid-span-badge {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    font-size: 10px;
+    background: #eee;
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: #777;
+}
+
+/* Classes utilitárias para Spans (Grid CSS) */
+/* Serão aplicadas dinamicamente pelo PHP ou JS */
+.col-span-2 { grid-column: span 2; }
+.col-span-3 { grid-column: span 3; }
+.row-span-2 { grid-row: span 2; }
+.row-span-3 { grid-row: span 3; }
+
+/* Placeholder durante o Drag & Drop */
+.question-item.sortable-ghost {
+    opacity: 0.4;
+    background: #e1e1ff;
+    border: 2px dashed var(--cor-primaria);
+}
+
+.question-item.sortable-drag {
+    opacity: 0.9;
+    box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+    transform: scale(1.02);
+    z-index: 1000;
+}
+
+/* ==========================================================================
+   RESPONSIVIDADE
+   ========================================================================== */
+
+@media (max-width: 900px) {
+    /* Em tablets, grid de 2 colunas */
+    .questions-grid-container {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .col-span-3 { grid-column: span 2; } /* Em 2 colunas, max span é 2 */
+}
+
 @media (max-width: 768px) {
     body {
         padding: 10px;
@@ -387,13 +562,16 @@ h3 {
         max-width: 100%;
     }
 
-    .question-item {
-        padding: 16px;
-    }
-
     .btn-secundario {
         width: 100%;
         justify-content: center;
         text-align: center;
     }
+
+    /* Em celulares, volta para 1 coluna */
+    .questions-grid-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .col-span-2, .col-span-3 { grid-column: span 1; }
 }

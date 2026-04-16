@@ -24,51 +24,29 @@ if ($form_id <= 0) {
     exit;
 }
 
-// ==================== REORDENAÇÃO DE PERGUNTA (AJAX) ====================
-if (isset($_POST['acao']) && $_POST['acao'] === 'reordenar') {
+// ==================== ATUALIZAR POSIÇÃO GRID (AJAX) ====================
+if (isset($_POST['acao']) && $_POST['acao'] === 'atualizar_posicao_grid') {
     header('Content-Type: application/json');
     
-    $perguntaId = (int)($_POST['pergunta_id'] ?? 0);
-    $direcao = $_POST['direcao'] ?? 'subir';
-
     try {
+        $perguntaId = (int)($_POST['pergunta_id'] ?? 0);
+        $gridCol = max(1, min(3, (int)($_POST['grid_col'] ?? 1)));
+        $gridRow = max(1, (int)($_POST['grid_row'] ?? 1));
+        $colspan = max(1, min(3, (int)($_POST['grid_colspan'] ?? 1)));
+        $rowspan = max(1, min(5, (int)($_POST['grid_rowspan'] ?? 1)));
+        
         if ($perguntaId <= 0) throw new Exception("ID da pergunta inválido.");
-
-        // Busca a pergunta atual
-        $stmt = $db->prepare("SELECT ordem FROM formulario_perguntas WHERE id = ? AND formulario_id = ?");
-        $stmt->execute([$perguntaId, $form_id]);
-        $atual = $stmt->fetch(PDO::FETCH_ASSOC);
-        if (!$atual) throw new Exception("Pergunta não encontrada.");
-
-        $ordemAtual = (int)$atual['ordem'];
-        $novaOrdem = $direcao === 'subir' ? $ordemAtual - 1 : $ordemAtual + 1;
-
-        if ($novaOrdem < 1) {
-            throw new Exception("Não é possível mover além da primeira posição.");
-        }
-
-        // Busca a pergunta vizinha na nova posição
-        $stmt = $db->prepare("SELECT id FROM formulario_perguntas WHERE formulario_id = ? AND ordem = ? LIMIT 1");
-        $stmt->execute([$form_id, $novaOrdem]);
-        $vizinha = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if ($vizinha) {
-            // Troca as posições (atômico)
-            $db->beginTransaction();
-            $stmt = $db->prepare("UPDATE formulario_perguntas SET ordem = ? WHERE id = ?");
-            $stmt->execute([$novaOrdem, $perguntaId]);
-            $stmt->execute([$ordemAtual, $vizinha['id']]);
-            $db->commit();
-            echo json_encode(['sucesso' => true, 'mensagem' => 'Pergunta reordenada com sucesso!']);
-        } else {
-            // Move para posição vazia
-            $stmt = $db->prepare("UPDATE formulario_perguntas SET ordem = ? WHERE id = ?");
-            $stmt->execute([$novaOrdem, $perguntaId]);
-            echo json_encode(['sucesso' => true, 'mensagem' => 'Pergunta movida para posição ' . $novaOrdem . '.']);
-        }
+        
+        $stmt = $db->prepare("
+            UPDATE formulario_perguntas 
+            SET grid_col = ?, grid_row = ?, grid_colspan = ?, grid_rowspan = ?, use_grid = 1, data_atualizacao = NOW()
+            WHERE id = ? AND formulario_id = ?
+        ");
+        $stmt->execute([$gridCol, $gridRow, $colspan, $rowspan, $perguntaId, $form_id]);
+        
+        echo json_encode(['sucesso' => true, 'mensagem' => 'Posição atualizada!']);
     } catch (Exception $e) {
-        if (isset($db) && $db->inTransaction()) $db->rollBack();
-        echo json_encode(['sucesso' => false, 'erro' => 'Erro ao reordenar: ' . $e->getMessage()]);
+        echo json_encode(['sucesso' => false, 'erro' => $e->getMessage()]);
     }
     exit;
 }
@@ -82,20 +60,14 @@ if (isset($_GET['excluir'])) {
         $pergunta = $stmt->fetch();
         if (!$pergunta) throw new Exception("Pergunta não encontrada.");
 
+        $db->beginTransaction();
         $stmt = $db->prepare("DELETE FROM formulario_perguntas WHERE id = ?");
         $stmt->execute([$perguntaId]);
-
-        // Reordena as perguntas restantes
-        $stmt = $db->prepare("SELECT id FROM formulario_perguntas WHERE formulario_id = ? ORDER BY ordem ASC");
-        $stmt->execute([$form_id]);
-        $perguntasRestantes = $stmt->fetchAll(PDO::FETCH_COLUMN);
-        foreach ($perguntasRestantes as $novaOrdem => $idPergunta) {
-            $stmt = $db->prepare("UPDATE formulario_perguntas SET ordem = ? WHERE id = ?");
-            $stmt->execute([$novaOrdem + 1, $idPergunta]);
-        }
+        $db->commit();
 
         setMensagem('Pergunta "' . htmlspecialchars($pergunta['titulo']) . '" excluída com sucesso!');
     } catch (Exception $e) {
+        if (isset($db) && $db->inTransaction()) $db->rollBack();
         setMensagem('Não foi possível excluir a pergunta. ' . $e->getMessage(), 'erro');
     }
     header("Location: construtor_forms.php?form_id=$form_id");
@@ -122,8 +94,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['titulo'])) {
     $tamanho_maximo = (int)($_POST['tamanho_maximo'] ?? 255);
     $obrigatorio = (int)($_POST['obrigatorio'] ?? 0);
     $multipla_escolha = (int)($_POST['multipla_escolha'] ?? 0);
-    $ordem = (int)($_POST['ordem'] ?? 0);
     $opcoes = null;
+
+    // Campos de Grid (sempre ativos)
+    $grid_col = max(1, min(3, (int)($_POST['grid_col'] ?? 1)));
+    $grid_row = max(1, (int)($_POST['grid_row'] ?? 1));
+    $grid_colspan = max(1, min(3, (int)($_POST['grid_colspan'] ?? 1)));
+    $grid_rowspan = max(1, min(5, (int)($_POST['grid_rowspan'] ?? 1)));
 
     if (empty($titulo)) {
         setMensagem('Título da pergunta é obrigatório.', 'erro');
@@ -135,15 +112,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['titulo'])) {
                 if (empty($nome_unico)) $nome_unico = 'campo_' . time();
             }
 
-            // Calcula ordem automática se não informada (última posição + 1)
-            if ($ordem <= 0) {
-                $stmt = $db->prepare("SELECT MAX(ordem) AS max_ordem FROM formulario_perguntas WHERE formulario_id = ?");
-                $stmt->execute([$form_id]);
-                $max = $stmt->fetch(PDO::FETCH_ASSOC);
-                $ordem = ($max['max_ordem'] ?? 0) + 1;
-            }
-
-            // Tratamento para tipo "tabela"
+            // Tratamento para tipos especiais
             if ($tipo_input === 'tabela') {
                 $linhas = explode(',', trim($_POST['linhas_tabela'] ?? ''));
                 $colunas = explode(',', trim($_POST['colunas_tabela'] ?? ''));
@@ -154,21 +123,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['titulo'])) {
                     header("Location: construtor_forms.php?form_id=$form_id");
                     exit;
                 }
-                $opcoes = json_encode([
-                    'linhas' => $linhas,
-                    'colunas' => $colunas
-                ], JSON_UNESCAPED_UNICODE);
+                $opcoes = json_encode(['linhas' => $linhas, 'colunas' => $colunas], JSON_UNESCAPED_UNICODE);
             }
-            // Tratamento para tipo "sim_nao_justificativa"
             elseif ($tipo_input === 'sim_nao_justificativa') {
                 $justificativaCondicao = $_POST['justificativa_condicao'] ?? 'nao';
                 $placeholderJustificativa = trim($_POST['placeholder_justificativa'] ?? 'Justifique');
-                $opcoes = json_encode([
-                    'condicao' => $justificativaCondicao,
-                    'placeholder' => $placeholderJustificativa
-                ], JSON_UNESCAPED_UNICODE);
+                $opcoes = json_encode(['condicao' => $justificativaCondicao, 'placeholder' => $placeholderJustificativa], JSON_UNESCAPED_UNICODE);
             }
-            // Tratamento para tipos com opções
             elseif (in_array($tipo_input, ['radio', 'checkbox', 'select'])) {
                 $opcoesRaw = trim($_POST['opcoes'] ?? '');
                 if (!empty($opcoesRaw)) {
@@ -177,33 +138,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['titulo'])) {
                 }
             }
 
+            // INSERT com grid sempre ativo
             $sql = "INSERT INTO formulario_perguntas (
                 formulario_id, nome_unico, titulo, descricao, tipo_input, opcoes,
                 obrigatorio, multipla_escolha, tamanho_maximo, placeholder,
-                ativo, ordem, data_criacao, data_atualizacao
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())";
+                ativo, ordem, use_grid, grid_col, grid_row, grid_colspan, grid_rowspan, data_criacao, data_atualizacao
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, NOW(), NOW())";
 
             $stmt = $db->prepare($sql);
             $stmt->execute([
-                $form_id,
-                $nome_unico,
-                $titulo,
-                $descricao,
-                $tipo_input,
-                $opcoes,
-                $obrigatorio,
-                $multipla_escolha,
-                $tamanho_maximo,
-                $placeholder,
-                1,
-                $ordem
+                $form_id, $nome_unico, $titulo, $descricao, $tipo_input, $opcoes,
+                $obrigatorio, $multipla_escolha, $tamanho_maximo, $placeholder,
+                1, 0,  // ordem=0 (não usado), use_grid=1 (sempre)
+                $grid_col, $grid_row, $grid_colspan, $grid_rowspan
             ]);
 
-            setMensagem('Pergunta adicionada com sucesso na posição ' . $ordem . '!');
+            setMensagem('Pergunta adicionada com sucesso!');
         } catch (Exception $e) {
             $msgErro = $e->getMessage();
             if (strpos($msgErro, 'Duplicate entry') !== false && strpos($msgErro, 'unique_nome_unico_formulario') !== false) {
-                setMensagem('Já existe uma pergunta com este nome único neste formulário. Escolha outro nome.', 'erro');
+                setMensagem('Já existe uma pergunta com este nome único neste formulário.', 'erro');
             } else {
                 setMensagem('Erro ao salvar pergunta: ' . htmlspecialchars($msgErro), 'erro');
             }
@@ -213,8 +167,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['titulo'])) {
     exit;
 }
 
-// ==================== LISTAGEM DE PERGUNTAS (ORDENADAS) ====================
-$stmt = $db->prepare("SELECT * FROM formulario_perguntas WHERE formulario_id = ? ORDER BY ordem ASC");
+// ==================== LISTAGEM DE PERGUNTAS (SEMPRE EM GRID) ====================
+$stmt = $db->prepare("
+    SELECT * FROM formulario_perguntas 
+    WHERE formulario_id = ? 
+    ORDER BY grid_row ASC, grid_col ASC
+");
 $stmt->execute([$form_id]);
 $perguntas = $stmt->fetchAll();
 ?>
@@ -226,6 +184,7 @@ $perguntas = $stmt->fetchAll();
     <title>Construtor de Formulários</title>
     <link rel="stylesheet" href="construtor_forms.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <style>
         .question-item {
             background: #f9f8ff;
@@ -254,35 +213,6 @@ $perguntas = $stmt->fetchAll();
             display: flex;
             gap: 6px;
             margin-top: 10px;
-        }
-        .btn-reorder {
-            background: #e1e1ff;
-            border: none;
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            cursor: pointer;
-            color: var(--cor-primaria);
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-        }
-        .btn-reorder:hover {
-            background: var(--cor-primaria);
-            color: white;
-            transform: scale(1.1);
-        }
-        .btn-reorder:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
-        .form-row-ordem {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 20px;
-            margin-bottom: 20px;
         }
         .btn-delete-small {
             background: #ffebee;
@@ -319,6 +249,44 @@ $perguntas = $stmt->fetchAll();
             from { opacity: 1; }
             to { opacity: 0; transform: translateX(400px); }
         }
+        .grid-fields-container {
+            background: #f0f0ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border: 1px dashed var(--cor-primaria);
+        }
+        .grid-info {
+            font-size: 0.85em;
+            color: var(--cor-secundaria);
+            margin-top: 5px;
+        }
+        /* Estilos para o container grid na listagem */
+        .questions-grid-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            padding: 20px;
+            background: #f4f4fa;
+            border-radius: 16px;
+            min-height: 100px;
+        }
+        .question-item.grid-mode {
+            margin: 0;
+            cursor: grab;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 100%;
+            background: white;
+        }
+        .question-item.grid-mode:active { cursor: grabbing; }
+        .question-item.sortable-ghost { opacity: 0.4; background: #e1e1ff; border: 2px dashed var(--cor-primaria); }
+        .question-item.sortable-drag { opacity: 0.9; box-shadow: 0 15px 30px rgba(0,0,0,0.2); transform: scale(1.02); z-index: 1000; }
+        .col-span-2 { grid-column: span 2; }
+        .col-span-3 { grid-column: span 3; }
+        .row-span-2 { grid-row: span 2; }
+        .row-span-3 { grid-row: span 3; }
     </style>
 </head>
 <body>
@@ -331,7 +299,7 @@ $perguntas = $stmt->fetchAll();
         <h2>Construtor: <?= htmlspecialchars($formulario['nome']) ?> (ID: <?= $form_id ?>)</h2>
         <p>
             <a href="index.php" class="btn-secundario">Voltar</a>
-            <a href="render_forms.php?form_id=<?= $form_id ?>" class="btn-secundario" style="margin-left:12px;">
+            <a href="render_forms.php?form_id=<?= $form_id ?>&from=construtor" class="btn-secundario" style="margin-left:12px;">
                 Visualizar Formulário
             </a>
         </p>
@@ -416,12 +384,42 @@ $perguntas = $stmt->fetchAll();
                 </div>
             </div>
 
-            <!-- Ordem -->
-            <div class="form-row-ordem">
-                <div class="form-group">
-                    <label for="ordem">Posição na Lista</label>
-                    <input type="number" id="ordem" name="ordem" min="1" value="<?= count($perguntas) + 1 ?>" placeholder="Ex: 1">
-                    <small style="color:#666; display:block; margin-top:4px;">Deixe em branco para adicionar no final</small>
+            <!-- Configuração de Grid (SEMPRE VISÍVEL) -->
+            <div class="grid-fields-container">
+                <div class="form-row" style="grid-template-columns: repeat(4, 1fr);">
+                    <div class="form-group">
+                        <label for="grid_col">Coluna (1-3)</label>
+                        <select id="grid_col" name="grid_col">
+                            <option value="1">1ª</option>
+                            <option value="2">2ª</option>
+                            <option value="3">3ª</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="grid_row">Linha</label>
+                        <input type="number" id="grid_row" name="grid_row" min="1" value="1">
+                    </div>
+                    <div class="form-group">
+                        <label for="grid_colspan">Colspan</label>
+                        <select id="grid_colspan" name="grid_colspan">
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="grid_rowspan">Rowspan</label>
+                        <select id="grid_rowspan" name="grid_rowspan">
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid-info">
+                    <i class="fas fa-info-circle"></i> Use Colspan 3 para títulos de seção. Arraste as perguntas para reordenar visualmente.
                 </div>
             </div>
 
@@ -452,72 +450,44 @@ $perguntas = $stmt->fetchAll();
 
         <hr>
         <h3>Perguntas Cadastradas (<?= count($perguntas) ?>)</h3>
+
         <?php if ($perguntas): ?>
-            <?php foreach ($perguntas as $index => $p): ?>
-                <div class="question-item" data-id="<?= $p['id'] ?>">
-                    <span class="ordem-badge"><?= $p['ordem'] ?></span>
-                    <strong><?= htmlspecialchars($p['titulo']) ?></strong>
-                    <br><small>Tipo: <?= htmlspecialchars($p['tipo_input']) ?></small>
-                    <?php if (!empty($p['descricao'])): ?>
-                        <br><small>Descrição: <?= htmlspecialchars($p['descricao']) ?></small>
-                    <?php endif; ?>
-                    <?php if ($p['tipo_input'] === 'sim_nao_justificativa' && !is_null($p['opcoes']) && $p['opcoes'] !== 'null'): ?>
-                        <?php
-                        $dados = json_decode($p['opcoes'], true);
-                        if (is_array($dados)):
-                        ?>
-                            <br><small>Justificativa em: <?= $dados['condicao'] === 'sim' ? 'Sim' : 'Não' ?></small>
-                            <br><small>Placeholder: <?= htmlspecialchars($dados['placeholder']) ?></small>
-                        <?php endif; ?>
-                    <?php elseif ($p['tipo_input'] === 'tabela' && !is_null($p['opcoes']) && $p['opcoes'] !== 'null'): ?>
-                        <?php
-                        $dados = json_decode($p['opcoes'], true);
-                        if (is_array($dados)):
-                        ?>
-                            <br><small>Itens: <?= htmlspecialchars(implode(', ', $dados['linhas'] ?? [])) ?></small>
-                            <br><small>Opções: <?= htmlspecialchars(implode(', ', $dados['colunas'] ?? [])) ?></small>
-                        <?php endif; ?>
-                    <?php elseif (!is_null($p['opcoes']) && $p['opcoes'] !== 'null'): ?>
-                        <?php
-                        $opcoesArray = json_decode($p['opcoes'], true);
-                        if (is_array($opcoesArray)):
-                        ?>
-                            <br><small>Opções: <?= htmlspecialchars(implode(', ', $opcoesArray)) ?></small>
-                        <?php endif; ?>
-                    <?php endif; ?>
-                    <br><small>Obrigatório: <?= $p['obrigatorio'] ? 'Sim' : 'Não' ?></small>
-                    <div class="reorder-buttons">
-                        <?php if ($p['ordem'] > 1): ?>
-                            <button class="btn-reorder" title="Mover para cima" onclick="reordenarPergunta(<?= $p['id'] ?>, 'subir')">
-                                <i class="fas fa-arrow-up"></i>
-                            </button>
-                        <?php else: ?>
-                            <button class="btn-reorder" disabled title="Já está na primeira posição">
-                                <i class="fas fa-arrow-up"></i>
-                            </button>
+            <div id="questions-list" class="questions-grid-container">
+                <?php foreach ($perguntas as $index => $p): ?>
+                    <div class="question-item grid-mode" data-id="<?= $p['id'] ?>" 
+                         data-col="<?= $p['grid_col'] ?? 1 ?>" 
+                         data-row="<?= $p['grid_row'] ?? 1 ?>" 
+                         data-colspan="<?= $p['grid_colspan'] ?? 1 ?>" 
+                         data-rowspan="<?= $p['grid_rowspan'] ?? 1 ?>">
+                        
+                        <span class="ordem-badge">L<?= $p['grid_row'] ?></span>
+                        
+                        <strong><?= htmlspecialchars($p['titulo']) ?></strong>
+                        <br><small>Tipo: <?= htmlspecialchars($p['tipo_input']) ?></small>
+                        
+                        <br><small style="color:var(--cor-primaria);">
+                            <i class="fas fa-th"></i> C<?= $p['grid_col'] ?>/L<?= $p['grid_row'] ?> (<?= $p['grid_colspan'] ?>x<?= $p['grid_rowspan'] ?>)
+                        </small>
+
+                        <?php if (!empty($p['descricao'])): ?>
+                            <br><small>Descrição: <?= htmlspecialchars($p['descricao']) ?></small>
                         <?php endif; ?>
                         
-                        <?php if ($p['ordem'] < count($perguntas)): ?>
-                            <button class="btn-reorder" title="Mover para baixo" onclick="reordenarPergunta(<?= $p['id'] ?>, 'descer')">
-                                <i class="fas fa-arrow-down"></i>
-                            </button>
-                        <?php else: ?>
-                            <button class="btn-reorder" disabled title="Já está na última posição">
-                                <i class="fas fa-arrow-down"></i>
-                            </button>
-                        <?php endif; ?>
+                        <br><small>Obrigatório: <?= $p['obrigatorio'] ? 'Sim' : 'Não' ?></small>
                         
-                        <a href="javascript:void(0)" 
-                           class="btn-delete-small" 
-                           title="Excluir pergunta"
-                           onclick="abrirModalExclusaoPergunta(<?= $form_id ?>, <?= $p['id'] ?>, '<?= addslashes(htmlspecialchars($p['titulo'])) ?>')">
-                            <i class="fas fa-trash"></i>
-                        </a>
+                        <div class="reorder-buttons">
+                            <a href="javascript:void(0)" 
+                               class="btn-delete-small" 
+                               title="Excluir pergunta"
+                               onclick="abrirModalExclusaoPergunta(<?= $form_id ?>, <?= $p['id'] ?>, '<?= addslashes(htmlspecialchars($p['titulo'])) ?>')">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </div>
                     </div>
-                </div>
-            <?php endforeach; ?>
+                <?php endforeach; ?>
+            </div>
         <?php else: ?>
-            <div class="no-data">Nenhuma pergunta cadastrada ainda.</div>
+            <div class="no-data">Nenhuma pergunta cadastrada ainda. Adicione a primeira!</div>
         <?php endif; ?>
     </div>
 
@@ -541,76 +511,107 @@ $perguntas = $stmt->fetchAll();
     </div>
 
     <script>
+    // Funções de modal
     function abrirModalExclusaoPergunta(formId, perguntaId, titulo) {
         document.getElementById('titulo-pergunta-excluir').textContent = titulo;
-        document.getElementById('btn-confirmar-exclusao').href = 
-            '?form_id=' + formId + '&excluir=' + perguntaId;
+        document.getElementById('btn-confirmar-exclusao').href = '?form_id=' + formId + '&excluir=' + perguntaId;
         document.getElementById('modal-exclusao-pergunta').style.display = 'flex';
     }
-
     function fecharModalExclusaoPergunta() {
         document.getElementById('modal-exclusao-pergunta').style.display = 'none';
     }
 
-    function reordenarPergunta(perguntaId, direcao) {
-        fetch('', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: `acao=reordenar&pergunta_id=${perguntaId}&direcao=${direcao}`
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.sucesso) {
-                mostrarMensagem('success', data.mensagem);
-                setTimeout(() => location.reload(), 800);
-            } else {
-                mostrarMensagem('error', data.erro || 'Erro ao reordenar.');
-            }
-        })
-        .catch(error => {
-            mostrarMensagem('error', 'Erro na requisição: ' + error.message);
-        });
-    }
-
+    // Mensagens AJAX
     function mostrarMensagem(tipo, texto) {
-        // Remove mensagens antigas
-        const mensagensAntigas = document.querySelectorAll('.ajax-message');
-        mensagensAntigas.forEach(msg => msg.remove());
-        
-        // Cria nova mensagem
+        document.querySelectorAll('.ajax-message').forEach(msg => msg.remove());
         const mensagem = document.createElement('div');
         mensagem.className = `form-message ${tipo === 'success' ? 'success' : 'error'} ajax-message`;
         mensagem.innerHTML = texto;
         document.body.appendChild(mensagem);
-        
-        // Remove após 3 segundos
-        setTimeout(() => {
-            mensagem.remove();
-        }, 3000);
+        setTimeout(() => mensagem.remove(), 3000);
     }
 
-    // Controle de campos dinâmicos
-    document.addEventListener('DOMContentLoaded', function() {
-        const tipoInput = document.getElementById('tipo_input');
-        if (!tipoInput) return;
-        
-        tipoInput.addEventListener('change', function() {
-            const tipo = this.value;
-            document.getElementById('opcoes-container').style.display = 
-                ['radio', 'checkbox', 'select'].includes(tipo) ? 'block' : 'none';
-            document.getElementById('justificativa-container').style.display = 
-                tipo === 'sim_nao_justificativa' ? 'block' : 'none';
-            document.getElementById('tabela-container').style.display = 
-                tipo === 'tabela' ? 'block' : 'none';
-            document.getElementById('texto-container').style.display = 
-                ['texto', 'textarea', 'number'].includes(tipo) ? 'block' : 'none';
-            document.getElementById('multipla-container').style.display = 
-                tipo === 'checkbox' ? 'block' : 'none';
+    // Atualizar posição via AJAX após drag & drop
+    function atualizarPosicaoGridServidor(perguntaId, gridCol, gridRow, itemElement) {
+        const colspan = parseInt(itemElement.dataset.colspan) || 1;
+        const rowspan = parseInt(itemElement.dataset.rowspan) || 1;
+        const formData = new FormData();
+        formData.append('acao', 'atualizar_posicao_grid');
+        formData.append('pergunta_id', perguntaId);
+        formData.append('grid_col', gridCol);
+        formData.append('grid_row', gridRow);
+        formData.append('grid_colspan', colspan);
+        formData.append('grid_rowspan', rowspan);
+
+        fetch('', { method: 'POST', body: formData })
+        .then(r => r.json())
+        .then(data => {
+            if (data.sucesso) {
+                mostrarMensagem('success', 'Posição atualizada: C' + gridCol + ' / L' + gridRow);
+                const badge = itemElement.querySelector('.ordem-badge');
+                if (badge) badge.textContent = 'L' + gridRow;
+            } else {
+                mostrarMensagem('error', data.erro || 'Erro ao atualizar');
+                setTimeout(() => location.reload(), 1500);
+            }
+        })
+        .catch(err => {
+            mostrarMensagem('error', 'Erro: ' + err.message);
+            setTimeout(() => location.reload(), 1500);
         });
-        
-        // Dispara change inicial para configurar campos
-        tipoInput.dispatchEvent(new Event('change'));
+    }
+
+    // Inicialização do SortableJS para drag & drop
+    document.addEventListener('DOMContentLoaded', function() {
+        const questionsList = document.getElementById('questions-list');
+        if (questionsList && window.Sortable) {
+            new Sortable(questionsList, {
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                dragClass: 'sortable-drag',
+                onStart: function(evt) { evt.item.classList.add('dragging'); },
+                onEnd: function(evt) {
+                    evt.item.classList.remove('dragging');
+                    const item = evt.item;
+                    const newIndex = evt.newIndex;
+                    const perguntaId = item.dataset.id;
+                    if (!perguntaId) return;
+                    
+                    // Calcula coluna e linha baseado no índice (3 colunas)
+                    const gridCol = (newIndex % 3) + 1;
+                    const gridRow = Math.floor(newIndex / 3) + 1;
+                    
+                    item.dataset.col = gridCol;
+                    item.dataset.row = gridRow;
+                    atualizarPosicaoGridServidor(perguntaId, gridCol, gridRow, item);
+                }
+            });
+        }
+
+        // Controle de campos dinâmicos do formulário de adição
+        const tipoInput = document.getElementById('tipo_input');
+        if (tipoInput) {
+            tipoInput.addEventListener('change', function() {
+                const tipo = this.value;
+                document.getElementById('opcoes-container').style.display = ['radio', 'checkbox', 'select'].includes(tipo) ? 'block' : 'none';
+                document.getElementById('justificativa-container').style.display = tipo === 'sim_nao_justificativa' ? 'block' : 'none';
+                document.getElementById('tabela-container').style.display = tipo === 'tabela' ? 'block' : 'none';
+                document.getElementById('texto-container').style.display = ['texto', 'textarea', 'number'].includes(tipo) ? 'block' : 'none';
+                document.getElementById('multipla-container').style.display = tipo === 'checkbox' ? 'block' : 'none';
+            });
+            tipoInput.dispatchEvent(new Event('change'));
+        }
+
+        // Fechar modal ao clicar fora ou ESC
+        document.addEventListener('click', function(e) {
+            const modal = document.getElementById('modal-exclusao-pergunta');
+            if (modal && e.target === modal) fecharModalExclusaoPergunta();
+        });
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') fecharModalExclusaoPergunta();
+        });
     });
     </script>
+    <script src="construtor_forms.js"></script>
 </body>
 </html>
