@@ -43,48 +43,34 @@ try {
                          stripos($formulario['nome'], 'Evolucao Livre') !== false;
 
     // =========================================================================
-    // BUSCA PERGUNTAS (se não for Evolução Livre OU se tiver perguntas)
+    // VERIFICA SE COLUNAS DE GRID EXISTEM NO BANCO (Fallback Seguro)
     // =========================================================================
-    
-    $perguntas = [];
-    $use_grid = 0;
-    
-    if (!$is_evolucao_livre) {
-        // Busca perguntas ativas para formulários estruturados
-        $stmt = $db->prepare("SELECT * FROM formulario_perguntas WHERE formulario_id = ? AND ativo = 1");
-        $stmt->execute([$form_id]);
-        $todas_perguntas = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $cols = $db->query("SHOW COLUMNS FROM formulario_perguntas LIKE 'grid_col'")->fetch();
+    $hasGridColumns = (bool)$cols;
 
-        if ($todas_perguntas) {
-            // Detecta se deve usar grid
-            foreach ($todas_perguntas as $p) {
-                $grid_col = isset($p['grid_col']) ? (int)$p['grid_col'] : 0;
-                $grid_colspan = isset($p['grid_colspan']) ? (int)$p['grid_colspan'] : 1;
-                if ($grid_col > 0 || $grid_colspan > 1) {
-                    $use_grid = 1;
-                    break;
-                }
-            }
-
-            // Ordenação baseada no modo
-            if ($use_grid) {
-                usort($todas_perguntas, function($a, $b) {
-                    $rowA = isset($a['grid_row']) ? (int)$a['grid_row'] : 9999;
-                    $rowB = isset($b['grid_row']) ? (int)$b['grid_row'] : 9999;
-                    if ($rowA !== $rowB) return $rowA - $rowB;
-                    $colA = isset($a['grid_col']) ? (int)$a['grid_col'] : 9999;
-                    $colB = isset($b['grid_col']) ? (int)$b['grid_col'] : 9999;
-                    return $colA - $colB;
-                });
-            } else {
-                usort($todas_perguntas, function($a, $b) {
-                    return (isset($a['ordem']) ? (int)$a['ordem'] : 0) - (isset($b['ordem']) ? (int)$b['ordem'] : 0);
-                });
-            }
-            $perguntas = $todas_perguntas;
-        }
+    // =========================================================================
+    // BUSCA PERGUNTAS (com ordenação adaptativa)
+    // =========================================================================
+    if ($hasGridColumns) {
+        // Se colunas de grid existirem: ordena por grid_row, grid_col
+        $stmt = $db->prepare("
+            SELECT * FROM formulario_perguntas 
+            WHERE formulario_id = ? AND ativo = 1 
+            ORDER BY grid_row ASC, grid_col ASC
+        ");
+    } else {
+        // Fallback: ordena por ordem tradicional
+        $stmt = $db->prepare("
+            SELECT * FROM formulario_perguntas 
+            WHERE formulario_id = ? AND ativo = 1 
+            ORDER BY ordem ASC
+        ");
     }
-    // Se for Evolução Livre e não tiver perguntas, $perguntas permanece vazio → renderiza textarea livre
+    $stmt->execute([$form_id]);
+    $perguntas = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // Se for Evolução Livre E não tiver perguntas configuradas, usa modo textarea único
+    $usar_textarea_livre = $is_evolucao_livre && empty($perguntas);
 
 } catch (Exception $e) {
     die("<h2>Erro ao carregar formulário</h2><p>" . htmlspecialchars($e->getMessage()) . "</p>");
@@ -100,7 +86,7 @@ try {
     <link rel="stylesheet" href="render_forms.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
     <style>
-        /* Estilo específico para Evolução Livre */
+        /* Estilo específico para Evolução Livre (textarea único) */
         .evolucao-livre-container {
             background: #f8f9ff;
             border-radius: 12px;
@@ -123,7 +109,7 @@ try {
     </style>
 </head>
 <body>
-    <div class="form-container <?= $use_grid && !$is_evolucao_livre ? 'grid-layout' : '' ?>">
+    <div class="form-container <?= $hasGridColumns ? 'grid-layout' : '' ?>">
         <div class="form-header">
             <h1><?= htmlspecialchars($formulario['nome']) ?></h1>
             <?php if (!empty($formulario['descricao'])): ?>
@@ -158,9 +144,9 @@ try {
             <?php endif; ?>
 
             <!-- ==========================================================================
-                 CASO 1: EVOLUÇÃO LIVRE (sem perguntas configuradas)
+                 CASO 1: EVOLUÇÃO LIVRE (textarea único quando sem perguntas)
                  ========================================================================== -->
-            <?php if ($is_evolucao_livre && empty($perguntas)): ?>
+            <?php if ($usar_textarea_livre): ?>
                 <div class="evolucao-livre-container">
                     <label class="required">
                         <i class="fas fa-edit"></i> Descreva a evolução clínica
@@ -180,28 +166,29 @@ try {
                 </div>
 
             <!-- ==========================================================================
-                 CASO 2: FORMULÁRIO ESTRUTURADO (com perguntas configuradas)
+                 CASO 2: FORMULÁRIO ESTRUTURADO (Grid ou Lista Vertical)
                  ========================================================================== -->
             <?php else: ?>
-
-                <?php if ($use_grid): ?>
+                <?php if ($hasGridColumns): ?>
                     <div class="fields-grid">
                 <?php endif; ?>
 
                 <?php foreach ($perguntas as $p): ?>
                     <?php
+                    // Aplica classes de span APENAS se colunas de grid existirem no banco
                     $gridClasses = '';
-                    if ($use_grid) {
+                    if ($hasGridColumns) {
                         $colspan = isset($p['grid_colspan']) ? (int)$p['grid_colspan'] : 1;
                         $rowspan = isset($p['grid_rowspan']) ? (int)$p['grid_rowspan'] : 1;
+                        
                         if ($colspan > 1) $gridClasses .= ' col-span-' . $colspan;
                         if ($rowspan > 1) $gridClasses .= ' row-span-' . $rowspan;
                     }
                     ?>
 
                     <div class="form-group <?= $gridClasses ?>" 
-                         <?= $use_grid && isset($p['grid_col']) ? 'data-grid-col="' . (int)$p['grid_col'] . '"' : '' ?>
-                         <?= $use_grid && isset($p['grid_row']) ? 'data-grid-row="' . (int)$p['grid_row'] . '"' : '' ?>>
+                         <?= $hasGridColumns ? 'data-grid-col="'.(isset($p['grid_col']) ? (int)$p['grid_col'] : 1).'"' : '' ?>
+                         <?= $hasGridColumns ? 'data-grid-row="'.(isset($p['grid_row']) ? (int)$p['grid_row'] : 1).'"' : '' ?>>
                         
                         <label class="<?= $p['obrigatorio'] ? 'required' : '' ?>">
                             <?= htmlspecialchars($p['titulo']) ?>
@@ -342,15 +329,14 @@ try {
                     </div>
                 <?php endforeach; ?>
 
-                <?php if ($use_grid): ?>
+                <?php if ($hasGridColumns): ?>
                     </div> <!-- Fecha .fields-grid -->
                 <?php endif; ?>
-
-            <?php endif; // Fim do if/else Evolução Livre vs Estruturado ?>
+            <?php endif; ?>
 
             <!-- Campo de observações (sempre disponível para paciente_id informado) -->
             <?php if ($paciente_id !== null): ?>
-                <div class="form-group" style="margin-top: 30px; <?= $use_grid && !$is_evolucao_livre ? 'grid-column: 1 / -1;' : '' ?>">
+                <div class="form-group" style="margin-top: 30px; <?= $hasGridColumns ? 'grid-column: 1 / -1;' : '' ?>">
                     <label for="observacoes">Observações Complementares (opcional)</label>
                     <textarea name="observacoes" class="form-control" rows="3" placeholder="Adicione observações adicionais..."></textarea>
                 </div>
